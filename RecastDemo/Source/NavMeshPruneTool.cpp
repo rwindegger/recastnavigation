@@ -211,7 +211,7 @@ static void disableUnvisitedPolys(dtNavMesh* nav, NavmeshFlags* flags)
 			const dtPolyRef ref = base | (unsigned int)j;
 			if (!flags->getFlags(ref))
 			{
-				unsigned short f = 0;
+				dtPolyFlags f = 0;
 				nav->getPolyFlags(ref, &f);
 				nav->setPolyFlags(ref, f | SAMPLE_POLYFLAGS_DISABLED);
 			}

@@ -220,12 +220,12 @@ bool rcErodeWalkableArea(rcContext* ctx, int radius, rcCompactHeightfield& chf)
 	return true;
 }
 
-static void insertSort(unsigned char* a, const int n)
+static void insertSort(rcAreaId* a, const int n)
 {
 	int i, j;
 	for (i = 1; i < n; i++)
 	{
-		const unsigned char value = a[i];
+		const rcAreaId value = a[i];
 		for (j = i - 1; j >= 0 && a[j] > value; j--)
 			a[j+1] = a[j];
 		a[j+1] = value;
@@ -247,7 +247,7 @@ bool rcMedianFilterWalkableArea(rcContext* ctx, rcCompactHeightfield& chf)
 	
 	ctx->startTimer(RC_TIMER_MEDIAN_AREA);
 	
-	unsigned char* areas = (unsigned char*)rcAlloc(sizeof(unsigned char)*chf.spanCount, RC_ALLOC_TEMP);
+	rcAreaId* areas = (rcAreaId*)rcAlloc(sizeof(rcAreaId)*chf.spanCount, RC_ALLOC_TEMP);
 	if (!areas)
 	{
 		ctx->log(RC_LOG_ERROR, "medianFilterWalkableArea: Out of memory 'areas' (%d).", chf.spanCount);
@@ -255,7 +255,7 @@ bool rcMedianFilterWalkableArea(rcContext* ctx, rcCompactHeightfield& chf)
 	}
 	
 	// Init distance.
-	memset(areas, 0xff, sizeof(unsigned char)*chf.spanCount);
+	memset(areas, rcAreaId(~rcAreaId(0)), sizeof(rcAreaId)*chf.spanCount);
 	
 	for (int y = 0; y < h; ++y)
 	{
@@ -271,7 +271,7 @@ bool rcMedianFilterWalkableArea(rcContext* ctx, rcCompactHeightfield& chf)
 					continue;
 				}
 				
-				unsigned char nei[9];
+				rcAreaId nei[9];
 				for (int j = 0; j < 9; ++j)
 					nei[j] = chf.areas[i];
 				
@@ -303,7 +303,7 @@ bool rcMedianFilterWalkableArea(rcContext* ctx, rcCompactHeightfield& chf)
 		}
 	}
 	
-	memcpy(chf.areas, areas, sizeof(unsigned char)*chf.spanCount);
+	memcpy(chf.areas, areas, sizeof(rcAreaId)*chf.spanCount);
 	
 	rcFree(areas);
 
@@ -317,7 +317,7 @@ bool rcMedianFilterWalkableArea(rcContext* ctx, rcCompactHeightfield& chf)
 /// The value of spacial parameters are in world units.
 /// 
 /// @see rcCompactHeightfield, rcMedianFilterWalkableArea
-void rcMarkBoxArea(rcContext* ctx, const float* bmin, const float* bmax, unsigned char areaId,
+void rcMarkBoxArea(rcContext* ctx, const float* bmin, const float* bmax, rcAreaId areaId,
 				   rcCompactHeightfield& chf)
 {
 	rcAssert(ctx);
@@ -386,7 +386,7 @@ static int pointInPoly(int nvert, const float* verts, const float* p)
 /// 
 /// @see rcCompactHeightfield, rcMedianFilterWalkableArea
 void rcMarkConvexPolyArea(rcContext* ctx, const float* verts, const int nverts,
-						  const float hmin, const float hmax, unsigned char areaId,
+						  const float hmin, const float hmax, rcAreaId areaId,
 						  rcCompactHeightfield& chf)
 {
 	rcAssert(ctx);
@@ -536,7 +536,7 @@ int rcOffsetPoly(const float* verts, const int nverts, const float offset,
 /// 
 /// @see rcCompactHeightfield, rcMedianFilterWalkableArea
 void rcMarkCylinderArea(rcContext* ctx, const float* pos,
-						const float r, const float h, unsigned char areaId,
+						const float r, const float h, rcAreaId areaId,
 						rcCompactHeightfield& chf)
 {
 	rcAssert(ctx);

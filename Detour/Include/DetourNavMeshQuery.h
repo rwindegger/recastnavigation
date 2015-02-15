@@ -32,6 +32,7 @@
 
 /// Defines polygon filtering and traversal costs for navigation mesh query operations.
 /// @ingroup detour
+
 class dtQueryFilter
 {
 	float m_areaCost[DT_MAX_AREAS];		///< Cost per area type. (Used by default implementation.)

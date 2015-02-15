@@ -449,6 +449,11 @@ inline void dtSwapByte(unsigned char* a, unsigned char* b)
 	*b = tmp;
 }
 
+inline void dtSwapEndian(unsigned char* v)
+{
+	v = v;
+}
+
 inline void dtSwapEndian(unsigned short* v)
 {
 	unsigned char* x = (unsigned char*)v;
