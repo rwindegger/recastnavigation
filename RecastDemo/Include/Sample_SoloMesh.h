@@ -29,7 +29,7 @@ protected:
 	bool m_keepInterResults;
 	float m_totalBuildTimeMs;
 
-	rcAreaId* m_triareas;
+	rcArea* m_triareas;
 	rcHeightfield* m_solid;
 	rcCompactHeightfield* m_chf;
 	rcContourSet* m_cset;

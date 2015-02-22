@@ -144,7 +144,7 @@ static void drawMeshTile(duDebugDraw* dd, const dtNavMesh& mesh, const dtNavMesh
 			}
 			else
 			{
-				dtAreaId area = p->getArea();
+				dtArea area = p->getArea();
 				if (area == DT_NULL_AREA) // Treat zero area type as default.
 					col = duRGBA(0,192,255,64);
 				else
@@ -560,7 +560,7 @@ void duDebugDrawTileCacheLayerAreas(struct duDebugDraw* dd, const dtTileCacheLay
 			const int lidx = x+y*w;
 			const int lh = (int)layer.heights[lidx];
 			if (lh == 0xff) continue;
-			const dtAreaId area = layer.areas[lidx];
+			const dtArea area = layer.areas[lidx];
 			
 			unsigned int col;
 			if (area == DT_WALKABLE_AREA)

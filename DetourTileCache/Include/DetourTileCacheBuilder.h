@@ -44,7 +44,7 @@ struct dtTileCacheLayer
 	dtTileCacheLayerHeader* header;
 	unsigned char regCount;					///< Region count.
 	unsigned char* heights;
-	dtAreaId* areas;
+	dtArea* areas;
 	unsigned char* cons;
 	unsigned char* regs;
 };
@@ -54,7 +54,7 @@ struct dtTileCacheContour
 	int nverts;
 	unsigned char* verts;
 	unsigned char reg;
-	dtAreaId area;
+	dtArea area;
 };
 
 struct dtTileCacheContourSet
@@ -70,8 +70,8 @@ struct dtTileCachePolyMesh
 	int npolys;				///< Number of polygons.
 	unsigned short* verts;	///< Vertices of the mesh, 3 elements per vertex.
 	unsigned short* polys;	///< Polygons of the mesh, nvp*2 elements per polygon.
-	dtPolyFlags* flags;		///< Per polygon flags.
-	dtAreaId* areas;	///< Area ID of polygons.
+	dtFlags* flags;		///< Per polygon flags.
+	dtArea* areas;	///< Area ID of polygons.
 };
 
 
@@ -109,7 +109,7 @@ struct dtTileCacheCompressor
 dtStatus dtBuildTileCacheLayer(dtTileCacheCompressor* comp,
 							   dtTileCacheLayerHeader* header,
 							   const unsigned char* heights,
-							   const dtAreaId* areas,
+							   const dtArea* areas,
 							   const unsigned char* cons,
 							   unsigned char** outData, int* outDataSize);
 
@@ -126,7 +126,7 @@ dtTileCachePolyMesh* dtAllocTileCachePolyMesh(dtTileCacheAlloc* alloc);
 void dtFreeTileCachePolyMesh(dtTileCacheAlloc* alloc, dtTileCachePolyMesh* lmesh);
 
 dtStatus dtMarkCylinderArea(dtTileCacheLayer& layer, const float* orig, const float cs, const float ch,
-							const float* pos, const float radius, const float height, const dtAreaId areaId);
+							const float* pos, const float radius, const float height, const dtArea areaId);
 
 dtStatus dtBuildTileCacheRegions(dtTileCacheAlloc* alloc,
 								 dtTileCacheLayer& layer,

@@ -1294,8 +1294,8 @@ struct dtTileState
 
 struct dtPolyState
 {
-	dtPolyFlags flags;							// Flags (see dtPolyFlags).
-	dtAreaId area;							// Area ID of the polygon.
+	dtFlags flags;							// Flags (see dtFlags).
+	dtArea area;							// Area ID of the polygon.
 };
 
 ///  @see #storeTileState
@@ -1449,7 +1449,7 @@ const dtOffMeshConnection* dtNavMesh::getOffMeshConnectionByRef(dtPolyRef ref) c
 }
 
 
-dtStatus dtNavMesh::setPolyFlags(dtPolyRef ref, dtPolyFlags flags)
+dtStatus dtNavMesh::setPolyFlags(dtPolyRef ref, dtFlags flags)
 {
 	if (!ref) return DT_FAILURE;
 	unsigned int salt, it, ip;
@@ -1466,7 +1466,7 @@ dtStatus dtNavMesh::setPolyFlags(dtPolyRef ref, dtPolyFlags flags)
 	return DT_SUCCESS;
 }
 
-dtStatus dtNavMesh::getPolyFlags(dtPolyRef ref, dtPolyFlags* resultFlags) const
+dtStatus dtNavMesh::getPolyFlags(dtPolyRef ref, dtFlags* resultFlags) const
 {
 	if (!ref) return DT_FAILURE;
 	unsigned int salt, it, ip;
@@ -1482,7 +1482,7 @@ dtStatus dtNavMesh::getPolyFlags(dtPolyRef ref, dtPolyFlags* resultFlags) const
 	return DT_SUCCESS;
 }
 
-dtStatus dtNavMesh::setPolyArea(dtPolyRef ref, dtAreaId area)
+dtStatus dtNavMesh::setPolyArea(dtPolyRef ref, dtArea area)
 {
 	if (!ref) return DT_FAILURE;
 	unsigned int salt, it, ip;
@@ -1498,7 +1498,7 @@ dtStatus dtNavMesh::setPolyArea(dtPolyRef ref, dtAreaId area)
 	return DT_SUCCESS;
 }
 
-dtStatus dtNavMesh::getPolyArea(dtPolyRef ref, dtAreaId* resultArea) const
+dtStatus dtNavMesh::getPolyArea(dtPolyRef ref, dtArea* resultArea) const
 {
 	if (!ref) return DT_FAILURE;
 	unsigned int salt, it, ip;

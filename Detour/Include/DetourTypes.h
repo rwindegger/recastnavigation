@@ -19,19 +19,19 @@
 #ifndef DETOURTYPES_H
 #define DETOURTYPES_H
 
-typedef unsigned short dtAreaId;
-typedef unsigned int dtPolyFlags;
+typedef unsigned short dtArea;
+typedef unsigned int dtFlags;
 
 /// The maximum number of user defined area ids.
-/// This defaults to maximum possible based on dtAreaId typedef, but can be set smaller manually to safe space in dtQueryFilter etc
+/// This defaults to maximum possible based on dtArea typedef, but can be set smaller manually to safe space in dtQueryFilter etc
 /// The upper two bits are reserved for bit packing the type and area in dtPoly
 /// @ingroup detour
-static const int DT_MAX_AREAS = (dtAreaId(~dtAreaId(0)) >> 2) + 1;
+static const int DT_MAX_AREAS = (dtArea(~dtArea(0)) >> 2) + 1;
 
 /// Represents the null area.
-static const dtAreaId DT_NULL_AREA = 0;
+static const dtArea DT_NULL_AREA = 0;
 
 /// The default area id used to indicate a walkable polygon. (See DT_MAX_AREAS)
-static const dtAreaId DT_WALKABLE_AREA = (dtAreaId(~dtAreaId(0)) >> 2);
+static const dtArea DT_WALKABLE_AREA = (dtArea(~dtArea(0)) >> 2);
 
 #endif DETOURTYPES_H

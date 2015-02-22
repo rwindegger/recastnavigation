@@ -223,8 +223,8 @@ bool InputGeom::load(rcContext* ctx, const char* filePath)
 					   &v[0], &v[1], &v[2], &v[3], &v[4], &v[5], &rad, &bidir, &area, &flags);
 				m_offMeshConRads[m_offMeshConCount] = rad;
 				m_offMeshConDirs[m_offMeshConCount] = (unsigned char)bidir;
-				m_offMeshConAreas[m_offMeshConCount] = (rcAreaId)area;
-				m_offMeshConFlags[m_offMeshConCount] = (rcPolyFlags)flags;
+				m_offMeshConAreas[m_offMeshConCount] = (rcArea)area;
+				m_offMeshConFlags[m_offMeshConCount] = (rcFlags)flags;
 				m_offMeshConCount++;
 			}
 		}
@@ -371,7 +371,7 @@ bool InputGeom::raycastMesh(float* src, float* dst, float& tmin)
 }
 
 void InputGeom::addOffMeshConnection(const float* spos, const float* epos, const float rad,
-									 unsigned char bidir, rcAreaId area, rcPolyFlags flags)
+									 unsigned char bidir, rcArea area, rcFlags flags)
 {
 	if (m_offMeshConCount >= MAX_OFFMESH_CONNECTIONS) return;
 	float* v = &m_offMeshConVerts[m_offMeshConCount*3*2];
@@ -430,7 +430,7 @@ void InputGeom::drawOffMeshConnections(duDebugDraw* dd, bool hilight)
 }
 
 void InputGeom::addConvexVolume(const float* verts, const int nverts,
-								const float minh, const float maxh, rcAreaId area)
+								const float minh, const float maxh, rcArea area)
 {
 	if (m_volumeCount >= MAX_VOLUMES) return;
 	ConvexVolume* vol = &m_volumes[m_volumeCount++];

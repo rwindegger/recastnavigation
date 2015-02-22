@@ -395,7 +395,7 @@ void duDebugDrawHeightfieldLayer(duDebugDraw* dd, const struct rcHeightfieldLaye
 			const int lidx = x+y*w;
 			const int lh = (int)layer.heights[lidx];
 			if (h == 0xff) continue;
-			const rcAreaId area = layer.areas[lidx];
+			const rcArea area = layer.areas[lidx];
 			
 			unsigned int col;
 			if (area == RC_WALKABLE_AREA)

@@ -29,7 +29,7 @@ struct ConvexVolume
 	float verts[MAX_CONVEXVOL_PTS*3];
 	float hmin, hmax;
 	int nverts;
-	rcAreaId area;
+	rcArea area;
 };
 
 class InputGeom
@@ -44,8 +44,8 @@ class InputGeom
 	float m_offMeshConVerts[MAX_OFFMESH_CONNECTIONS*3*2];
 	float m_offMeshConRads[MAX_OFFMESH_CONNECTIONS];
 	unsigned char m_offMeshConDirs[MAX_OFFMESH_CONNECTIONS];
-	rcAreaId m_offMeshConAreas[MAX_OFFMESH_CONNECTIONS];
-	rcPolyFlags m_offMeshConFlags[MAX_OFFMESH_CONNECTIONS];
+	rcArea m_offMeshConAreas[MAX_OFFMESH_CONNECTIONS];
+	rcFlags m_offMeshConFlags[MAX_OFFMESH_CONNECTIONS];
 	unsigned int m_offMeshConId[MAX_OFFMESH_CONNECTIONS];
 	int m_offMeshConCount;
 	///@}
@@ -79,11 +79,11 @@ public:
 	const float* getOffMeshConnectionVerts() const { return m_offMeshConVerts; }
 	const float* getOffMeshConnectionRads() const { return m_offMeshConRads; }
 	const unsigned char* getOffMeshConnectionDirs() const { return m_offMeshConDirs; }
-	const rcAreaId* getOffMeshConnectionAreas() const { return m_offMeshConAreas; }
-	const rcPolyFlags* getOffMeshConnectionFlags() const { return m_offMeshConFlags; }
+	const rcArea* getOffMeshConnectionAreas() const { return m_offMeshConAreas; }
+	const rcFlags* getOffMeshConnectionFlags() const { return m_offMeshConFlags; }
 	const unsigned int* getOffMeshConnectionId() const { return m_offMeshConId; }
 	void addOffMeshConnection(const float* spos, const float* epos, const float rad,
-		unsigned char bidir, rcAreaId area, rcPolyFlags flags);
+		unsigned char bidir, rcArea area, rcFlags flags);
 	void deleteOffMeshConnection(int i);
 	void drawOffMeshConnections(struct duDebugDraw* dd, bool hilight = false);
 	///@}
@@ -93,7 +93,7 @@ public:
 	int getConvexVolumeCount() const { return m_volumeCount; }
 	const ConvexVolume* getConvexVolumes() const { return m_volumes; }
 	void addConvexVolume(const float* verts, const int nverts,
-		const float minh, const float maxh, rcAreaId area);
+		const float minh, const float maxh, rcArea area);
 	void deleteConvexVolume(int i);
 	void drawConvexVolumes(struct duDebugDraw* dd, bool hilight = false);
 	///@}

@@ -65,7 +65,7 @@ struct dtTileCacheMeshProcess
 	virtual ~dtTileCacheMeshProcess() { }
 
 	virtual void process(struct dtNavMeshCreateParams* params,
-		dtAreaId* polyAreas, dtPolyFlags* polyFlags) = 0;
+		dtArea* polyAreas, dtFlags* polyFlags) = 0;
 };
 
 

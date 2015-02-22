@@ -728,7 +728,7 @@ static bool removeVertex(rcContext* ctx, rcPolyMesh& mesh, const unsigned short 
 	}
 
 	int nedgesAreaIds = 0;
-	rcScopedDelete<rcAreaId> edgesAreaIds = (rcAreaId*)rcAlloc(sizeof(rcAreaId)*numRemovedVerts*nvp, RC_ALLOC_TEMP);
+	rcScopedDelete<rcArea> edgesAreaIds = (rcArea*)rcAlloc(sizeof(rcArea)*numRemovedVerts*nvp, RC_ALLOC_TEMP);
 	if (!edgesAreaIds)
 	{
 		ctx->log(RC_LOG_WARNING, "removeVertex: Out of memory 'edgesAreaIds' (%d).", numRemovedVerts*nvp);
@@ -752,7 +752,7 @@ static bool removeVertex(rcContext* ctx, rcPolyMesh& mesh, const unsigned short 
 	}
 
 	int nharea = 0;
-	rcScopedDelete<rcAreaId> harea = (rcAreaId*)rcAlloc(sizeof(rcAreaId)*numRemovedVerts*nvp, RC_ALLOC_TEMP);
+	rcScopedDelete<rcArea> harea = (rcArea*)rcAlloc(sizeof(rcArea)*numRemovedVerts*nvp, RC_ALLOC_TEMP);
 	if (!harea)
 	{
 		ctx->log(RC_LOG_WARNING, "removeVertex: Out of memory 'harea' (%d).", numRemovedVerts*nvp);
@@ -838,7 +838,7 @@ static bool removeVertex(rcContext* ctx, rcPolyMesh& mesh, const unsigned short 
 			const int ea = edges[i*3+0];
 			const int eb = edges[i*3+1];
 			const int r = edges[i*3+2];
-			const rcAreaId a = edgesAreaIds[i];
+			const rcArea a = edgesAreaIds[i];
 			bool add = false;
 			if (hole[0] == eb)
 			{
@@ -926,7 +926,7 @@ static bool removeVertex(rcContext* ctx, rcPolyMesh& mesh, const unsigned short 
 		ctx->log(RC_LOG_ERROR, "removeVertex: Out of memory 'pregs' (%d).", ntris);
 		return false;
 	}
-	rcScopedDelete<rcAreaId> pareas = (rcAreaId*)rcAlloc(sizeof(rcAreaId)*ntris, RC_ALLOC_TEMP);
+	rcScopedDelete<rcArea> pareas = (rcArea*)rcAlloc(sizeof(rcArea)*ntris, RC_ALLOC_TEMP);
 	if (!pareas)
 	{
 		ctx->log(RC_LOG_ERROR, "removeVertex: Out of memory 'pareas' (%d).", ntris);
@@ -1086,7 +1086,7 @@ bool rcBuildPolyMesh(rcContext* ctx, rcContourSet& cset, const int nvp, rcPolyMe
 		ctx->log(RC_LOG_ERROR, "rcBuildPolyMesh: Out of memory 'mesh.regs' (%d).", maxTris);
 		return false;
 	}
-	mesh.areas = (rcAreaId*)rcAlloc(sizeof(rcAreaId)*maxTris, RC_ALLOC_PERM);
+	mesh.areas = (rcArea*)rcAlloc(sizeof(rcArea)*maxTris, RC_ALLOC_PERM);
 	if (!mesh.areas)
 	{
 		ctx->log(RC_LOG_ERROR, "rcBuildPolyMesh: Out of memory 'mesh.areas' (%d).", maxTris);
@@ -1101,7 +1101,7 @@ bool rcBuildPolyMesh(rcContext* ctx, rcContourSet& cset, const int nvp, rcPolyMe
 	memset(mesh.verts, 0, sizeof(unsigned short)*maxVertices*3);
 	memset(mesh.polys, 0xff, sizeof(unsigned short)*maxTris*nvp*2);
 	memset(mesh.regs, 0, sizeof(unsigned short)*maxTris);
-	memset(mesh.areas, 0, sizeof(rcAreaId)*maxTris);
+	memset(mesh.areas, 0, sizeof(rcArea)*maxTris);
 	
 	rcScopedDelete<int> nextVert = (int*)rcAlloc(sizeof(int)*maxVertices, RC_ALLOC_TEMP);
 	if (!nextVert)
@@ -1327,13 +1327,13 @@ bool rcBuildPolyMesh(rcContext* ctx, rcContourSet& cset, const int nvp, rcPolyMe
 	}
 
 	// Just allocate the mesh flags array. The user is resposible to fill it.
-	mesh.flags = (rcPolyFlags*)rcAlloc(sizeof(rcPolyFlags)*mesh.npolys, RC_ALLOC_PERM);
+	mesh.flags = (rcFlags*)rcAlloc(sizeof(rcFlags)*mesh.npolys, RC_ALLOC_PERM);
 	if (!mesh.flags)
 	{
 		ctx->log(RC_LOG_ERROR, "rcBuildPolyMesh: Out of memory 'mesh.flags' (%d).", mesh.npolys);
 		return false;
 	}
-	memset(mesh.flags, 0, sizeof(rcPolyFlags) * mesh.npolys);
+	memset(mesh.flags, 0, sizeof(rcFlags) * mesh.npolys);
 	
 	if (mesh.nverts > 0xffff)
 	{
@@ -1402,21 +1402,21 @@ bool rcMergePolyMeshes(rcContext* ctx, rcPolyMesh** meshes, const int nmeshes, r
 	}
 	memset(mesh.regs, 0, sizeof(unsigned short)*maxPolys);
 
-	mesh.areas = (rcAreaId*)rcAlloc(sizeof(rcAreaId)*maxPolys, RC_ALLOC_PERM);
+	mesh.areas = (rcArea*)rcAlloc(sizeof(rcArea)*maxPolys, RC_ALLOC_PERM);
 	if (!mesh.areas)
 	{
 		ctx->log(RC_LOG_ERROR, "rcMergePolyMeshes: Out of memory 'mesh.areas' (%d).", maxPolys);
 		return false;
 	}
-	memset(mesh.areas, 0, sizeof(rcAreaId)*maxPolys);
+	memset(mesh.areas, 0, sizeof(rcArea)*maxPolys);
 
-	mesh.flags = (rcPolyFlags*)rcAlloc(sizeof(rcPolyFlags)*maxPolys, RC_ALLOC_PERM);
+	mesh.flags = (rcFlags*)rcAlloc(sizeof(rcFlags)*maxPolys, RC_ALLOC_PERM);
 	if (!mesh.flags)
 	{
 		ctx->log(RC_LOG_ERROR, "rcMergePolyMeshes: Out of memory 'mesh.flags' (%d).", maxPolys);
 		return false;
 	}
-	memset(mesh.flags, 0, sizeof(rcPolyFlags)*maxPolys);
+	memset(mesh.flags, 0, sizeof(rcFlags)*maxPolys);
 	
 	rcScopedDelete<int> nextVert = (int*)rcAlloc(sizeof(int)*maxVerts, RC_ALLOC_TEMP);
 	if (!nextVert)
@@ -1575,21 +1575,21 @@ bool rcCopyPolyMesh(rcContext* ctx, const rcPolyMesh& src, rcPolyMesh& dst)
 	}
 	memcpy(dst.regs, src.regs, sizeof(unsigned short)*src.npolys);
 	
-	dst.areas = (rcAreaId*)rcAlloc(sizeof(rcAreaId)*src.npolys, RC_ALLOC_PERM);
+	dst.areas = (rcArea*)rcAlloc(sizeof(rcArea)*src.npolys, RC_ALLOC_PERM);
 	if (!dst.areas)
 	{
 		ctx->log(RC_LOG_ERROR, "rcCopyPolyMesh: Out of memory 'dst.areas' (%d).", src.npolys);
 		return false;
 	}
-	memcpy(dst.areas, src.areas, sizeof(rcAreaId)*src.npolys);
+	memcpy(dst.areas, src.areas, sizeof(rcArea)*src.npolys);
 	
-	dst.flags = (rcPolyFlags*)rcAlloc(sizeof(rcPolyFlags)*src.npolys, RC_ALLOC_PERM);
+	dst.flags = (rcFlags*)rcAlloc(sizeof(rcFlags)*src.npolys, RC_ALLOC_PERM);
 	if (!dst.flags)
 	{
 		ctx->log(RC_LOG_ERROR, "rcCopyPolyMesh: Out of memory 'dst.flags' (%d).", src.npolys);
 		return false;
 	}
-	memcpy(dst.flags, src.flags, sizeof(rcPolyFlags)*src.npolys);
+	memcpy(dst.flags, src.flags, sizeof(rcFlags)*src.npolys);
 	
 	return true;
 }

@@ -1038,7 +1038,7 @@ void CrowdTool::handleClick(const float* s, const float* p, bool shift)
 			navquery->findNearestPoly(p, ext, &filter, &ref, tgt);
 			if (ref)
 			{
-				dtPolyFlags flags = 0;
+				dtFlags flags = 0;
 				if (dtStatusSucceed(nav->getPolyFlags(ref, &flags)))
 				{
 					flags ^= SAMPLE_POLYFLAGS_DISABLED;

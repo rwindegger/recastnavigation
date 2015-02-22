@@ -185,7 +185,7 @@ struct MeshProcess : public dtTileCacheMeshProcess
 	}
 	
 	virtual void process(struct dtNavMeshCreateParams* params,
-		dtAreaId* polyAreas, dtPolyFlags* polyFlags)
+		dtArea* polyAreas, dtFlags* polyFlags)
 	{
 		// Update poly flags from areas.
 		for (int i = 0; i < params->polyCount; ++i)
@@ -260,7 +260,7 @@ struct RasterizationContext
 	}
 	
 	rcHeightfield* solid;
-	rcAreaId* triareas;
+	rcArea* triareas;
 	rcHeightfieldLayerSet* lset;
 	rcCompactHeightfield* chf;
 	TileCacheData tiles[MAX_LAYERS];
@@ -319,7 +319,7 @@ static int rasterizeTileLayers(BuildContext* ctx, InputGeom* geom,
 	// Allocate array that can hold triangle flags.
 	// If you have multiple meshes you need to process, allocate
 	// and array which can hold the max number of triangles you need to process.
-	rc.triareas = new rcAreaId[chunkyMesh->maxTrisPerChunk];
+	rc.triareas = new rcArea[chunkyMesh->maxTrisPerChunk];
 	if (!rc.triareas)
 	{
 		ctx->log(RC_LOG_ERROR, "buildNavigation: Out of memory 'm_triareas' (%d).", chunkyMesh->maxTrisPerChunk);
@@ -344,7 +344,7 @@ static int rasterizeTileLayers(BuildContext* ctx, InputGeom* geom,
 		const int* tris = &chunkyMesh->tris[node.i*3];
 		const int ntris = node.n;
 		
-		memset(rc.triareas, 0, ntris*sizeof(rcAreaId));
+		memset(rc.triareas, 0, ntris*sizeof(rcArea));
 		rcMarkWalkableTriangles(ctx, tcfg.walkableSlopeAngle,
 								verts, nverts, tris, ntris, rc.triareas);
 		

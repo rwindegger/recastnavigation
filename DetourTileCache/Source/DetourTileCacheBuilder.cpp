@@ -114,7 +114,7 @@ struct dtLayerMonotoneRegion
 	unsigned char neis[DT_LAYER_MAX_NEIS];
 	unsigned char nneis;
 	unsigned char regId;
-	dtAreaId areaId;
+	dtArea areaId;
 };
 
 struct dtTempContour
@@ -1775,23 +1775,23 @@ dtStatus dtBuildTileCachePolyMesh(dtTileCacheAlloc* alloc,
 	if (!mesh.polys)
 		return DT_FAILURE | DT_OUT_OF_MEMORY;
 
-	mesh.areas = (dtAreaId*)alloc->alloc(sizeof(dtAreaId)*maxTris);
+	mesh.areas = (dtArea*)alloc->alloc(sizeof(dtArea)*maxTris);
 	if (!mesh.areas)
 		return DT_FAILURE | DT_OUT_OF_MEMORY;
 
-	mesh.flags = (dtPolyFlags*)alloc->alloc(sizeof(dtPolyFlags)*maxTris);
+	mesh.flags = (dtFlags*)alloc->alloc(sizeof(dtFlags)*maxTris);
 	if (!mesh.flags)
 		return DT_FAILURE | DT_OUT_OF_MEMORY;
 
 	// Just allocate and clean the mesh flags array. The user is resposible for filling it.
-	memset(mesh.flags, 0, sizeof(dtPolyFlags) * maxTris);
+	memset(mesh.flags, 0, sizeof(dtFlags) * maxTris);
 		
 	mesh.nverts = 0;
 	mesh.npolys = 0;
 	
 	memset(mesh.verts, 0, sizeof(unsigned short)*maxVertices*3);
 	memset(mesh.polys, 0xff, sizeof(unsigned short)*maxTris*MAX_VERTS_PER_POLY*2);
-	memset(mesh.areas, 0, sizeof(dtAreaId)*maxTris);
+	memset(mesh.areas, 0, sizeof(dtArea)*maxTris);
 	
 	unsigned short firstVert[VERTEX_BUCKET_COUNT2];
 	for (int i = 0; i < VERTEX_BUCKET_COUNT2; ++i)
@@ -1950,7 +1950,7 @@ dtStatus dtBuildTileCachePolyMesh(dtTileCacheAlloc* alloc,
 }
 
 dtStatus dtMarkCylinderArea(dtTileCacheLayer& layer, const float* orig, const float cs, const float ch,
-							const float* pos, const float radius, const float height, const dtAreaId areaId)
+							const float* pos, const float radius, const float height, const dtArea areaId)
 {
 	float bmin[3], bmax[3];
 	bmin[0] = pos[0] - radius;
@@ -2008,7 +2008,7 @@ dtStatus dtMarkCylinderArea(dtTileCacheLayer& layer, const float* orig, const fl
 dtStatus dtBuildTileCacheLayer(dtTileCacheCompressor* comp,
 							   dtTileCacheLayerHeader* header,
 							   const unsigned char* heights,
-							   const dtAreaId* areas,
+							   const dtArea* areas,
 							   const unsigned char* cons,
 							   unsigned char** outData, int* outDataSize)
 {
@@ -2024,13 +2024,13 @@ dtStatus dtBuildTileCacheLayer(dtTileCacheCompressor* comp,
 	memcpy(data, header, sizeof(dtTileCacheLayerHeader));
 	
 	// Concatenate grid data for compression.
-	const int bufferSize = gridSize*2*sizeof(char) + gridSize*sizeof(dtAreaId);
+	const int bufferSize = gridSize*2*sizeof(char) + gridSize*sizeof(dtArea);
 	unsigned char* buffer = (unsigned char*)dtAlloc(bufferSize, DT_ALLOC_TEMP);
 	if (!buffer)
 		return DT_FAILURE | DT_OUT_OF_MEMORY;
 	memcpy(buffer, heights, gridSize);
-	memcpy(buffer+gridSize, areas, gridSize*sizeof(dtAreaId));
-	memcpy(buffer+(gridSize + gridSize*sizeof(dtAreaId)), cons, gridSize);
+	memcpy(buffer+gridSize, areas, gridSize*sizeof(dtArea));
+	memcpy(buffer+(gridSize + gridSize*sizeof(dtArea)), cons, gridSize);
 	
 	// Compress
 	unsigned char* compressed = data + headerSize;
@@ -2078,7 +2078,7 @@ dtStatus dtDecompressTileCacheLayer(dtTileCacheAlloc* alloc, dtTileCacheCompress
 	const int layerSize = dtAlign4(sizeof(dtTileCacheLayer));
 	const int headerSize = dtAlign4(sizeof(dtTileCacheLayerHeader));
 	const int gridSize = (int)compressedHeader->width * (int)compressedHeader->height;
-	const int bufferSize = layerSize + headerSize + gridSize*3 + gridSize*sizeof(dtAreaId);
+	const int bufferSize = layerSize + headerSize + gridSize*3 + gridSize*sizeof(dtArea);
 	
 	unsigned char* buffer = (unsigned char*)alloc->alloc(bufferSize);
 	if (!buffer)
@@ -2104,9 +2104,9 @@ dtStatus dtDecompressTileCacheLayer(dtTileCacheAlloc* alloc, dtTileCacheCompress
 	
 	layer->header = header;
 	layer->heights = grids;
-	layer->areas = (dtAreaId*)(grids + gridSize);
-	layer->cons = grids + gridSize+gridSize*sizeof(dtAreaId);
-	layer->regs = grids + gridSize*2+gridSize*sizeof(dtAreaId);
+	layer->areas = (dtArea*)(grids + gridSize);
+	layer->cons = grids + gridSize+gridSize*sizeof(dtArea);
+	layer->regs = grids + gridSize*2+gridSize*sizeof(dtArea);
 	
 	*layerOut = layer;
 	

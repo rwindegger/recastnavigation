@@ -19,7 +19,7 @@
 #ifndef RECASTTYPES_H
 #define RECASTTYPES_H
 
-typedef unsigned short rcAreaId;
-typedef unsigned int rcPolyFlags;
+typedef unsigned short rcArea;
+typedef unsigned int rcFlags;
 
 #endif

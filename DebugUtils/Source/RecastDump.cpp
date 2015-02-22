@@ -309,7 +309,7 @@ bool duDumpCompactHeightfield(struct rcCompactHeightfield& chf, duFileIO* io)
 	if (chf.dist)
 		io->write(chf.dist, sizeof(unsigned short)*chf.spanCount);
 	if (chf.areas)
-		io->write(chf.areas, sizeof(rcAreaId)*chf.spanCount);
+		io->write(chf.areas, sizeof(rcArea)*chf.spanCount);
 
 	return true;
 }
@@ -396,13 +396,13 @@ bool duReadCompactHeightfield(struct rcCompactHeightfield& chf, duFileIO* io)
 	}
 	if (tmp & 8)
 	{
-		chf.areas = (rcAreaId*)rcAlloc(sizeof(rcAreaId)*chf.spanCount, RC_ALLOC_PERM);
+		chf.areas = (rcArea*)rcAlloc(sizeof(rcArea)*chf.spanCount, RC_ALLOC_PERM);
 		if (!chf.areas)
 		{
 			printf("duReadCompactHeightfield: Could not alloc areas (%d)\n", chf.spanCount);
 			return false;
 		}
-		io->read(chf.areas, sizeof(rcAreaId)*chf.spanCount);
+		io->read(chf.areas, sizeof(rcArea)*chf.spanCount);
 	}
 	
 	return true;
