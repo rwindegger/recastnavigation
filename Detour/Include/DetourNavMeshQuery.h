@@ -19,6 +19,7 @@
 #ifndef DETOURNAVMESHQUERY_H
 #define DETOURNAVMESHQUERY_H
 
+#include "DetourTypes.h"
 #include "DetourNavMesh.h"
 #include "DetourStatus.h"
 
@@ -36,8 +37,8 @@
 class dtQueryFilter
 {
 	float m_areaCost[DT_MAX_AREAS];		///< Cost per area type. (Used by default implementation.)
-	unsigned short m_includeFlags;		///< Flags for polygons that can be visited. (Used by default implementation.)
-	unsigned short m_excludeFlags;		///< Flags for polygons that should not be visted. (Used by default implementation.)
+	dtPolyFlags m_includeFlags;		///< Flags for polygons that can be visited. (Used by default implementation.)
+	dtPolyFlags m_excludeFlags;		///< Flags for polygons that should not be visted. (Used by default implementation.)
 	
 public:
 	dtQueryFilter();
@@ -91,30 +92,30 @@ public:
 	/// Returns the traversal cost of the area.
 	///  @param[in]		i		The id of the area.
 	/// @returns The traversal cost of the area.
-	inline float getAreaCost(const int i) const { return m_areaCost[i]; }
+	inline float getAreaCost(const dtAreaId i) const { return m_areaCost[i]; }
 
 	/// Sets the traversal cost of the area.
 	///  @param[in]		i		The id of the area.
 	///  @param[in]		cost	The new cost of traversing the area.
-	inline void setAreaCost(const int i, const float cost) { m_areaCost[i] = cost; } 
+	inline void setAreaCost(const dtAreaId i, const float cost) { m_areaCost[i] = cost; } 
 
 	/// Returns the include flags for the filter.
 	/// Any polygons that include one or more of these flags will be
 	/// included in the operation.
-	inline unsigned short getIncludeFlags() const { return m_includeFlags; }
+	inline dtPolyFlags getIncludeFlags() const { return m_includeFlags; }
 
 	/// Sets the include flags for the filter.
 	/// @param[in]		flags	The new flags.
-	inline void setIncludeFlags(const unsigned short flags) { m_includeFlags = flags; }
+	inline void setIncludeFlags(const dtPolyFlags flags) { m_includeFlags = flags; }
 
 	/// Returns the exclude flags for the filter.
 	/// Any polygons that include one ore more of these flags will be
 	/// excluded from the operation.
-	inline unsigned short getExcludeFlags() const { return m_excludeFlags; }
+	inline dtPolyFlags getExcludeFlags() const { return m_excludeFlags; }
 
 	/// Sets the exclude flags for the filter.
 	/// @param[in]		flags		The new flags.
-	inline void setExcludeFlags(const unsigned short flags) { m_excludeFlags = flags; }	
+	inline void setExcludeFlags(const dtPolyFlags flags) { m_excludeFlags = flags; }	
 
 	///@}
 

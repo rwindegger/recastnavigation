@@ -168,16 +168,16 @@ struct dtPoly
 	dtAreaId areaAndtype;
 
 	/// Sets the user defined area id. [Limit: < #DT_MAX_AREAS]
-	inline void setArea(dtAreaId a) { areaAndtype = (areaAndtype >> (sizeof(dtAreaId)*4 - 2) << (sizeof(dtAreaId)*4 - 2)) | ((a << 2) >> 2); }
+	inline void setArea(dtAreaId a) { areaAndtype = (areaAndtype >> (sizeof(dtAreaId)*8 - 2) << (sizeof(dtAreaId)*8 - 2)) | ((a << 2) >> 2); }
 
 	/// Sets the polygon type. (See: #dtPolyTypes.)
-	inline void setType(unsigned char t) { areaAndtype = ((areaAndtype << 2) >> 2) | (t << (sizeof(dtAreaId)*4 - 2)); }
+	inline void setType(unsigned char t) { areaAndtype = ((areaAndtype << 2) >> 2) | (dtAreaId(t) << (sizeof(dtAreaId)*8 - 2)); }
 
 	/// Gets the user defined area id.
 	inline dtAreaId getArea() const { return (areaAndtype << 2) >> 2; }
 
 	/// Gets the polygon type. (See: #dtPolyTypes)
-	inline unsigned char getType() const { return (unsigned char)(areaAndtype >> (sizeof(dtAreaId)*4 - 2)); }
+	inline unsigned char getType() const { return (unsigned char)(areaAndtype >> (sizeof(dtAreaId)*8 - 2)); }
 };
 
 /// Defines the location of detail sub-mesh data within a dtMeshTile.
