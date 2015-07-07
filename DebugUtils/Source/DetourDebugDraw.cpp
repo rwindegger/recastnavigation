@@ -144,7 +144,8 @@ static void drawMeshTile(duDebugDraw* dd, const dtNavMesh& mesh, const dtNavMesh
 			}
 			else
 			{
-				if (p->getArea() == 0) // Treat zero area type as default.
+				dtArea area = p->getArea();
+				if (area == DT_NULL_AREA) // Treat zero area type as default.
 					col = duRGBA(0,192,255,64);
 				else
 					col = duIntToCol(p->getArea(), 64);
@@ -559,12 +560,12 @@ void duDebugDrawTileCacheLayerAreas(struct duDebugDraw* dd, const dtTileCacheLay
 			const int lidx = x+y*w;
 			const int lh = (int)layer.heights[lidx];
 			if (lh == 0xff) continue;
-			const unsigned char area = layer.areas[lidx];
+			const dtArea area = layer.areas[lidx];
 			
 			unsigned int col;
-			if (area == 63)
+			if (area == DT_WALKABLE_AREA)
 				col = duLerpCol(color, duRGBA(0,192,255,64), 32);
-			else if (area == 0)
+			else if (area == DT_NULL_AREA)
 				col = duLerpCol(color, duRGBA(0,0,0,64), 32);
 			else
 				col = duLerpCol(color, duIntToCol(area, 255), 32);
@@ -745,9 +746,9 @@ void duDebugDrawTileCachePolyMesh(duDebugDraw* dd, const struct dtTileCachePolyM
 		const unsigned short* p = &lmesh.polys[i*nvp*2];
 		
 		unsigned int color;
-		if (lmesh.areas[i] == DT_TILECACHE_WALKABLE_AREA)
+		if (lmesh.areas[i] == DT_WALKABLE_AREA)
 			color = duRGBA(0,192,255,64);
-		else if (lmesh.areas[i] == DT_TILECACHE_NULL_AREA)
+		else if (lmesh.areas[i] == DT_NULL_AREA)
 			color = duRGBA(0,0,0,64);
 		else
 			color = duIntToCol(lmesh.areas[i], 255);

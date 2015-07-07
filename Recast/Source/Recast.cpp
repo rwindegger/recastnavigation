@@ -247,7 +247,7 @@ static void calcTriNormal(const float* v0, const float* v1, const float* v2, flo
 void rcMarkWalkableTriangles(rcContext* ctx, const float walkableSlopeAngle,
 							 const float* verts, int /*nv*/,
 							 const int* tris, int nt,
-							 unsigned char* areas)
+							 rcArea* areas)
 {
 	rcIgnoreUnused(ctx);
 	
@@ -276,7 +276,7 @@ void rcMarkWalkableTriangles(rcContext* ctx, const float walkableSlopeAngle,
 void rcClearUnwalkableTriangles(rcContext* ctx, const float walkableSlopeAngle,
 								const float* verts, int /*nv*/,
 								const int* tris, int nt,
-								unsigned char* areas)
+								rcArea* areas)
 {
 	rcIgnoreUnused(ctx);
 	
@@ -361,13 +361,13 @@ bool rcBuildCompactHeightfield(rcContext* ctx, const int walkableHeight, const i
 		return false;
 	}
 	memset(chf.spans, 0, sizeof(rcCompactSpan)*spanCount);
-	chf.areas = (unsigned char*)rcAlloc(sizeof(unsigned char)*spanCount, RC_ALLOC_PERM);
+	chf.areas = (rcArea*)rcAlloc(sizeof(rcArea)*spanCount, RC_ALLOC_PERM);
 	if (!chf.areas)
 	{
 		ctx->log(RC_LOG_ERROR, "rcBuildCompactHeightfield: Out of memory 'chf.areas' (%d)", spanCount);
 		return false;
 	}
-	memset(chf.areas, RC_NULL_AREA, sizeof(unsigned char)*spanCount);
+	memset(chf.areas, RC_NULL_AREA, sizeof(rcArea)*spanCount);
 	
 	const int MAX_HEIGHT = 0xffff;
 	
