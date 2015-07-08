@@ -19,6 +19,8 @@
 #ifndef DETOURCOMMON_H
 #define DETOURCOMMON_H
 
+#include "SharedConfig.h"
+
 /**
 @defgroup detour Detour
 
@@ -474,6 +476,15 @@ inline void dtSwapEndian(int* v)
 {
 	unsigned char* x = (unsigned char*)v;
 	dtSwapByte(x+0, x+3); dtSwapByte(x+1, x+2);
+}
+
+inline void dtSwapEndian(uint64_t* v)
+{
+	unsigned char* x = (unsigned char*)v;
+	dtSwapByte( x + 0, x + 7 ); 
+	dtSwapByte( x + 1, x + 6 );
+	dtSwapByte( x + 2, x + 5 );
+	dtSwapByte( x + 3, x + 4 );
 }
 
 inline void dtSwapEndian(float* v)

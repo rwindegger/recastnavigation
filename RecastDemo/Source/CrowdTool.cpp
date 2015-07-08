@@ -155,7 +155,7 @@ void CrowdToolState::init(class Sample* sample)
 		crowd->init(MAX_AGENTS, m_sample->getAgentRadius(), nav);
 		
 		// Make polygons with 'disabled' flag invalid.
-		crowd->getEditableFilter()->setExcludeFlags(SAMPLE_POLYFLAGS_DISABLED);
+		crowd->getEditableFilter()->setExcludeFlags(AREAFLAGS_DISABLED);
 		
 		// Setup local avoidance params to different qualities.
 		dtObstacleAvoidanceParams params;
@@ -1038,11 +1038,11 @@ void CrowdTool::handleClick(const float* s, const float* p, bool shift)
 			navquery->findNearestPoly(p, ext, &filter, &ref, tgt);
 			if (ref)
 			{
-				unsigned short flags = 0;
-				if (dtStatusSucceed(nav->getPolyFlags(ref, &flags)))
+				navAreaMask areaMask = 0;
+				if (dtStatusSucceed(nav->getPolyFlags(ref, &areaMask)))
 				{
-					flags ^= SAMPLE_POLYFLAGS_DISABLED;
-					nav->setPolyFlags(ref, flags);
+					areaMask ^= AREAFLAGS_DISABLED;
+					nav->setPolyFlags(ref, areaMask);
 				}
 			}
 		}

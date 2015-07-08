@@ -33,11 +33,11 @@ static int getCornerHeight(int x, int y, int i, int dir,
 	int ch = (int)s.y;
 	int dirp = (dir+1) & 0x3;
 	
-	unsigned int regs[4] = {0,0,0,0};
+	uint64_t regs[ 4 ] = { 0, 0, 0, 0 };
 	
 	// Combine region and area codes in order to prevent
 	// border vertices which are in between two areas to be removed. 
-	regs[0] = chf.spans[i].reg | (chf.areas[i] << 16);
+	regs[ 0 ] = (uint64_t)chf.spans[ i ].reg | ( chf.areaMasks[ i ] << 32 );
 	
 	if (rcGetCon(s, dir) != RC_NOT_CONNECTED)
 	{
@@ -46,7 +46,7 @@ static int getCornerHeight(int x, int y, int i, int dir,
 		const int ai = (int)chf.cells[ax+ay*chf.width].index + rcGetCon(s, dir);
 		const rcCompactSpan& as = chf.spans[ai];
 		ch = rcMax(ch, (int)as.y);
-		regs[1] = chf.spans[ai].reg | (chf.areas[ai] << 16);
+		regs[1] = (uint64_t)chf.spans[ai].reg | (chf.areaMasks[ai] << 32);
 		if (rcGetCon(as, dirp) != RC_NOT_CONNECTED)
 		{
 			const int ax2 = ax + rcGetDirOffsetX(dirp);
@@ -54,7 +54,7 @@ static int getCornerHeight(int x, int y, int i, int dir,
 			const int ai2 = (int)chf.cells[ax2+ay2*chf.width].index + rcGetCon(as, dirp);
 			const rcCompactSpan& as2 = chf.spans[ai2];
 			ch = rcMax(ch, (int)as2.y);
-			regs[2] = chf.spans[ai2].reg | (chf.areas[ai2] << 16);
+			regs[2] = (uint64_t)chf.spans[ai2].reg | (chf.areaMasks[ai2] << 32);
 		}
 	}
 	if (rcGetCon(s, dirp) != RC_NOT_CONNECTED)
@@ -64,7 +64,7 @@ static int getCornerHeight(int x, int y, int i, int dir,
 		const int ai = (int)chf.cells[ax+ay*chf.width].index + rcGetCon(s, dirp);
 		const rcCompactSpan& as = chf.spans[ai];
 		ch = rcMax(ch, (int)as.y);
-		regs[3] = chf.spans[ai].reg | (chf.areas[ai] << 16);
+		regs[3] = (uint64_t)chf.spans[ai].reg | (chf.areaMasks[ai] << 32);
 		if (rcGetCon(as, dir) != RC_NOT_CONNECTED)
 		{
 			const int ax2 = ax + rcGetDirOffsetX(dir);
@@ -72,7 +72,7 @@ static int getCornerHeight(int x, int y, int i, int dir,
 			const int ai2 = (int)chf.cells[ax2+ay2*chf.width].index + rcGetCon(as, dir);
 			const rcCompactSpan& as2 = chf.spans[ai2];
 			ch = rcMax(ch, (int)as2.y);
-			regs[2] = chf.spans[ai2].reg | (chf.areas[ai2] << 16);
+			regs[2] = (uint64_t)chf.spans[ai2].reg | (chf.areaMasks[ai2] << 32);
 		}
 	}
 
@@ -88,7 +88,7 @@ static int getCornerHeight(int x, int y, int i, int dir,
 		// followed by two interior cells and none of the regions are out of bounds.
 		const bool twoSameExts = (regs[a] & regs[b] & RC_BORDER_REG) != 0 && regs[a] == regs[b];
 		const bool twoInts = ((regs[c] | regs[d]) & RC_BORDER_REG) == 0;
-		const bool intsSameArea = (regs[c]>>16) == (regs[d]>>16);
+		const bool intsSameArea = (regs[c]>>32) == (regs[d]>>32);
 		const bool noZeros = regs[a] != 0 && regs[b] != 0 && regs[c] != 0 && regs[d] != 0;
 		if (twoSameExts && twoInts && intsSameArea && noZeros)
 		{
@@ -112,7 +112,7 @@ static void walkContour(int x, int y, int i,
 	unsigned char startDir = dir;
 	int starti = i;
 	
-	const unsigned char area = chf.areas[i];
+	const navAreaMask area = chf.areaMasks[ i ];
 	
 	int iter = 0;
 	while (++iter < 40000)
@@ -139,7 +139,7 @@ static void walkContour(int x, int y, int i,
 				const int ay = y + rcGetDirOffsetY(dir);
 				const int ai = (int)chf.cells[ax+ay*chf.width].index + rcGetCon(s, dir);
 				r = (int)chf.spans[ai].reg;
-				if (area != chf.areas[ai])
+				if (area != chf.areaMasks[ai])
 					isAreaBorder = true;
 			}
 			if (isBorderVertex)
@@ -700,7 +700,7 @@ bool rcBuildContours(rcContext* ctx, rcCompactHeightfield& chf,
 				const unsigned short reg = chf.spans[i].reg;
 				if (!reg || (reg & RC_BORDER_REG))
 					continue;
-				const unsigned char area = chf.areas[i];
+				const navAreaMask areaMask = chf.areaMasks[ i ];
 				
 				verts.resize(0);
 				simplified.resize(0);
@@ -791,7 +791,7 @@ bool rcBuildContours(rcContext* ctx, rcCompactHeightfield& chf,
 					cont->cz /= cont->nverts;*/
 					
 					cont->reg = reg;
-					cont->area = area;
+					cont->areaMask = areaMask;
 				}
 			}
 		}

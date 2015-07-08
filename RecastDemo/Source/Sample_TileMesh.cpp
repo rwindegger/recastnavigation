@@ -176,7 +176,7 @@ Sample_TileMesh::Sample_TileMesh() :
 	m_keepInterResults(false),
 	m_buildAll(true),
 	m_totalBuildTimeMs(0),
-	m_triareas(0),
+	m_triareaMasks(0),
 	m_solid(0),
 	m_chf(0),
 	m_cset(0),
@@ -207,8 +207,8 @@ Sample_TileMesh::~Sample_TileMesh()
 
 void Sample_TileMesh::cleanup()
 {
-	delete [] m_triareas;
-	m_triareas = 0;
+	delete [] m_triareaMasks;
+	m_triareaMasks = 0;
 	rcFreeHeightField(m_solid);
 	m_solid = 0;
 	rcFreeCompactHeightfield(m_chf);
@@ -580,7 +580,7 @@ void Sample_TileMesh::handleRender()
 			duDebugDrawNavMeshPortals(&dd, *m_navMesh);
 		if (m_drawMode == DRAWMODE_NAVMESH_NODES)
 			duDebugDrawNavMeshNodes(&dd, *m_navQuery);
-		duDebugDrawNavMeshPolysWithFlags(&dd, *m_navMesh, SAMPLE_POLYFLAGS_DISABLED, duRGBA(0,0,0,128));
+		duDebugDrawNavMeshPolysWithFlags(&dd, *m_navMesh, AREAFLAGS_DISABLED, duRGBA(0,0,0,128));
 	}
 	
 	
@@ -958,10 +958,10 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 	// Allocate array that can hold triangle flags.
 	// If you have multiple meshes you need to process, allocate
 	// and array which can hold the max number of triangles you need to process.
-	m_triareas = new unsigned char[chunkyMesh->maxTrisPerChunk];
-	if (!m_triareas)
+	m_triareaMasks = new navAreaMask[chunkyMesh->maxTrisPerChunk];
+	if (!m_triareaMasks)
 	{
-		m_ctx->log(RC_LOG_ERROR, "buildNavigation: Out of memory 'm_triareas' (%d).", chunkyMesh->maxTrisPerChunk);
+		m_ctx->log(RC_LOG_ERROR, "buildNavigation: Out of memory 'm_triareaMask' (%d).", chunkyMesh->maxTrisPerChunk);
 		return 0;
 	}
 	
@@ -985,17 +985,17 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 		
 		m_tileTriCount += nctris;
 		
-		memset(m_triareas, 0, nctris*sizeof(unsigned char));
+		memset(m_triareaMasks, 0, nctris*sizeof(navAreaMask));
 		rcMarkWalkableTriangles(m_ctx, m_cfg.walkableSlopeAngle,
-								verts, nverts, ctris, nctris, m_triareas);
+								verts, nverts, ctris, nctris, m_triareaMasks);
 		
-		rcRasterizeTriangles(m_ctx, verts, nverts, ctris, m_triareas, nctris, *m_solid, m_cfg.walkableClimb);
+		rcRasterizeTriangles(m_ctx, verts, nverts, ctris, m_triareaMasks, nctris, *m_solid, m_cfg.walkableClimb);
 	}
 	
 	if (!m_keepInterResults)
 	{
-		delete [] m_triareas;
-		m_triareas = 0;
+		delete [] m_triareaMasks;
+		m_triareaMasks = 0;
 	}
 	
 	// Once all geometry is rasterized, we do initial pass of filtering to
@@ -1036,7 +1036,7 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 	// (Optional) Mark areas.
 	const ConvexVolume* vols = m_geom->getConvexVolumes();
 	for (int i  = 0; i < m_geom->getConvexVolumeCount(); ++i)
-		rcMarkConvexPolyArea(m_ctx, vols[i].verts, vols[i].nverts, vols[i].hmin, vols[i].hmax, (unsigned char)vols[i].area, *m_chf);
+		rcMarkConvexPolyArea(m_ctx, vols[i].verts, vols[i].nverts, vols[i].hmin, vols[i].hmax, vols[i].areaMask, *m_chf);
 	
 	if (m_monotonePartitioning)
 	{
@@ -1131,7 +1131,7 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 		}
 		
 		// Update poly flags from areas.
-		for (int i = 0; i < m_pmesh->npolys; ++i)
+		/*for (int i = 0; i < m_pmesh->npolys; ++i)
 		{
 			if (m_pmesh->areas[i] == RC_WALKABLE_AREA)
 				m_pmesh->areas[i] = SAMPLE_POLYAREA_GROUND;
@@ -1140,25 +1140,24 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 				m_pmesh->areas[i] == SAMPLE_POLYAREA_GRASS ||
 				m_pmesh->areas[i] == SAMPLE_POLYAREA_ROAD)
 			{
-				m_pmesh->flags[i] = SAMPLE_POLYFLAGS_WALK;
+				m_pmesh->flags[i] = AREAFLAGS_WALK;
 			}
 			else if (m_pmesh->areas[i] == SAMPLE_POLYAREA_WATER)
 			{
-				m_pmesh->flags[i] = SAMPLE_POLYFLAGS_SWIM;
+				m_pmesh->flags[i] = AREAFLAGS_SWIM;
 			}
 			else if (m_pmesh->areas[i] == SAMPLE_POLYAREA_DOOR)
 			{
-				m_pmesh->flags[i] = SAMPLE_POLYFLAGS_WALK | SAMPLE_POLYFLAGS_DOOR;
+				m_pmesh->flags[i] = AREAFLAGS_WALK | AREAFLAGS_DOOR;
 			}
-		}
+		}*/
 		
 		dtNavMeshCreateParams params;
 		memset(&params, 0, sizeof(params));
 		params.verts = m_pmesh->verts;
 		params.vertCount = m_pmesh->nverts;
 		params.polys = m_pmesh->polys;
-		params.polyAreas = m_pmesh->areas;
-		params.polyFlags = m_pmesh->flags;
+		params.areaMasks = m_pmesh->areaMasks;
 		params.polyCount = m_pmesh->npolys;
 		params.nvp = m_pmesh->nvp;
 		params.detailMeshes = m_dmesh->meshes;
@@ -1169,8 +1168,7 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 		params.offMeshConVerts = m_geom->getOffMeshConnectionVerts();
 		params.offMeshConRad = m_geom->getOffMeshConnectionRads();
 		params.offMeshConDir = m_geom->getOffMeshConnectionDirs();
-		params.offMeshConAreas = m_geom->getOffMeshConnectionAreas();
-		params.offMeshConFlags = m_geom->getOffMeshConnectionFlags();
+		params.offMeshConAreaFlags = m_geom->getOffMeshConnectionAreaMask();
 		params.offMeshConUserID = m_geom->getOffMeshConnectionId();
 		params.offMeshConCount = m_geom->getOffMeshConnectionCount();
 		params.walkableHeight = m_agentHeight;

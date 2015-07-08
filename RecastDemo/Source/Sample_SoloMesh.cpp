@@ -46,7 +46,7 @@
 Sample_SoloMesh::Sample_SoloMesh() :
 	m_keepInterResults(true),
 	m_totalBuildTimeMs(0),
-	m_triareas(0),
+	m_triareaMasks(0),
 	m_solid(0),
 	m_chf(0),
 	m_cset(0),
@@ -64,8 +64,8 @@ Sample_SoloMesh::~Sample_SoloMesh()
 	
 void Sample_SoloMesh::cleanup()
 {
-	delete [] m_triareas;
-	m_triareas = 0;
+	delete [] m_triareaMasks;
+	m_triareaMasks = 0;
 	rcFreeHeightField(m_solid);
 	m_solid = 0;
 	rcFreeCompactHeightfield(m_chf);
@@ -255,7 +255,7 @@ void Sample_SoloMesh::handleRender()
 			duDebugDrawNavMeshBVTree(&dd, *m_navMesh);
 		if (m_drawMode == DRAWMODE_NAVMESH_NODES)
 			duDebugDrawNavMeshNodes(&dd, *m_navQuery);
-		duDebugDrawNavMeshPolysWithFlags(&dd, *m_navMesh, SAMPLE_POLYFLAGS_DISABLED, duRGBA(0,0,0,128));
+		duDebugDrawNavMeshPolysWithFlags(&dd, *m_navMesh, AREAFLAGS_DISABLED, duRGBA(0,0,0,128));
 	}
 		
 	glDepthMask(GL_TRUE);
@@ -426,24 +426,24 @@ bool Sample_SoloMesh::handleBuild()
 	// Allocate array that can hold triangle area types.
 	// If you have multiple meshes you need to process, allocate
 	// and array which can hold the max number of triangles you need to process.
-	m_triareas = new unsigned char[ntris];
-	if (!m_triareas)
+	m_triareaMasks = new navAreaMask[ntris];
+	if (!m_triareaMasks)
 	{
-		m_ctx->log(RC_LOG_ERROR, "buildNavigation: Out of memory 'm_triareas' (%d).", ntris);
+		m_ctx->log(RC_LOG_ERROR, "buildNavigation: Out of memory 'm_triareaMasks' (%d).", ntris);
 		return false;
 	}
 	
 	// Find triangles which are walkable based on their slope and rasterize them.
 	// If your input data is multiple meshes, you can transform them here, calculate
 	// the are type for each of the meshes and rasterize them.
-	memset(m_triareas, 0, ntris*sizeof(unsigned char));
-	rcMarkWalkableTriangles(m_ctx, m_cfg.walkableSlopeAngle, verts, nverts, tris, ntris, m_triareas);
-	rcRasterizeTriangles(m_ctx, verts, nverts, tris, m_triareas, ntris, *m_solid, m_cfg.walkableClimb);
+	memset(m_triareaMasks, 0, ntris*sizeof(navAreaMask));
+	rcMarkWalkableTriangles(m_ctx, m_cfg.walkableSlopeAngle, verts, nverts, tris, ntris, m_triareaMasks);
+	rcRasterizeTriangles(m_ctx, verts, nverts, tris, m_triareaMasks, ntris, *m_solid, m_cfg.walkableClimb);
 
 	if (!m_keepInterResults)
 	{
-		delete [] m_triareas;
-		m_triareas = 0;
+		delete [] m_triareaMasks;
+		m_triareaMasks = 0;
 	}
 	
 	//
@@ -493,7 +493,7 @@ bool Sample_SoloMesh::handleBuild()
 	// (Optional) Mark areas.
 	const ConvexVolume* vols = m_geom->getConvexVolumes();
 	for (int i  = 0; i < m_geom->getConvexVolumeCount(); ++i)
-		rcMarkConvexPolyArea(m_ctx, vols[i].verts, vols[i].nverts, vols[i].hmin, vols[i].hmax, (unsigned char)vols[i].area, *m_chf);
+		rcMarkConvexPolyArea(m_ctx, vols[i].verts, vols[i].nverts, vols[i].hmin, vols[i].hmax, vols[i].areaMask, *m_chf);
 	
 	if (m_monotonePartitioning)
 	{
@@ -596,7 +596,7 @@ bool Sample_SoloMesh::handleBuild()
 		int navDataSize = 0;
 
 		// Update poly flags from areas.
-		for (int i = 0; i < m_pmesh->npolys; ++i)
+		/*for (int i = 0; i < m_pmesh->npolys; ++i)
 		{
 			if (m_pmesh->areas[i] == RC_WALKABLE_AREA)
 				m_pmesh->areas[i] = SAMPLE_POLYAREA_GROUND;
@@ -605,17 +605,17 @@ bool Sample_SoloMesh::handleBuild()
 				m_pmesh->areas[i] == SAMPLE_POLYAREA_GRASS ||
 				m_pmesh->areas[i] == SAMPLE_POLYAREA_ROAD)
 			{
-				m_pmesh->flags[i] = SAMPLE_POLYFLAGS_WALK;
+				m_pmesh->flags[i] = AREAFLAGS_WALK;
 			}
 			else if (m_pmesh->areas[i] == SAMPLE_POLYAREA_WATER)
 			{
-				m_pmesh->flags[i] = SAMPLE_POLYFLAGS_SWIM;
+				m_pmesh->flags[i] = AREAFLAGS_SWIM;
 			}
 			else if (m_pmesh->areas[i] == SAMPLE_POLYAREA_DOOR)
 			{
-				m_pmesh->flags[i] = SAMPLE_POLYFLAGS_WALK | SAMPLE_POLYFLAGS_DOOR;
+				m_pmesh->flags[i] = AREAFLAGS_WALK | AREAFLAGS_DOOR;
 			}
-		}
+		}*/
 
 
 		dtNavMeshCreateParams params;
@@ -623,8 +623,7 @@ bool Sample_SoloMesh::handleBuild()
 		params.verts = m_pmesh->verts;
 		params.vertCount = m_pmesh->nverts;
 		params.polys = m_pmesh->polys;
-		params.polyAreas = m_pmesh->areas;
-		params.polyFlags = m_pmesh->flags;
+		params.areaMasks = m_pmesh->areaMasks;
 		params.polyCount = m_pmesh->npolys;
 		params.nvp = m_pmesh->nvp;
 		params.detailMeshes = m_dmesh->meshes;
@@ -635,8 +634,7 @@ bool Sample_SoloMesh::handleBuild()
 		params.offMeshConVerts = m_geom->getOffMeshConnectionVerts();
 		params.offMeshConRad = m_geom->getOffMeshConnectionRads();
 		params.offMeshConDir = m_geom->getOffMeshConnectionDirs();
-		params.offMeshConAreas = m_geom->getOffMeshConnectionAreas();
-		params.offMeshConFlags = m_geom->getOffMeshConnectionFlags();
+		params.offMeshConAreaFlags = m_geom->getOffMeshConnectionAreaMask();
 		params.offMeshConUserID = m_geom->getOffMeshConnectionId();
 		params.offMeshConCount = m_geom->getOffMeshConnectionCount();
 		params.walkableHeight = m_agentHeight;

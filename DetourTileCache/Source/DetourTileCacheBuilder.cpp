@@ -92,8 +92,7 @@ void dtFreeTileCachePolyMesh(dtTileCacheAlloc* alloc, dtTileCachePolyMesh* lmesh
 	if (!lmesh) return;
 	alloc->free(lmesh->verts);
 	alloc->free(lmesh->polys);
-	alloc->free(lmesh->flags);
-	alloc->free(lmesh->areas);
+	alloc->free(lmesh->areaMasks);
 	alloc->free(lmesh);
 }
 
@@ -1284,23 +1283,24 @@ static int triangulate(int n, const unsigned char* verts, unsigned short* indice
 	return ntris;
 }
 
-
-static int countPolyVerts(const unsigned short* p)
+template<typename T>
+static int countPolyVerts( const T* p )
 {
-	for (int i = 0; i < MAX_VERTS_PER_POLY; ++i)
-		if (p[i] == DT_TILECACHE_NULL_IDX)
+	for ( int i = 0; i < MAX_VERTS_PER_POLY; ++i )
+		if ( p[ i ] == DT_TILECACHE_NULL_IDX )
 			return i;
 	return MAX_VERTS_PER_POLY;
 }
 
-inline bool uleft(const unsigned short* a, const unsigned short* b, const unsigned short* c)
+template<typename T>
+inline bool uleft(const T* a, const T* b, const T* c)
 {
-	return ((int)b[0] - (int)a[0]) * ((int)c[2] - (int)a[2]) -
-	((int)c[0] - (int)a[0]) * ((int)b[2] - (int)a[2]) < 0;
+	return ((T)b[0] - (T)a[0]) * ((T)c[2] - (T)a[2]) -
+			((T)c[0] - (T)a[0]) * ((T)b[2] - (T)a[2]) < 0;
 }
 
-static int getPolyMergeValue(unsigned short* pa, unsigned short* pb,
-							 const unsigned short* verts, int& ea, int& eb)
+template<typename T, typename U>
+static int getPolyMergeValue(T* pa, T* pb, const U* verts, int& ea, int& eb)
 {
 	const int na = countPolyVerts(pa);
 	const int nb = countPolyVerts(pb);
@@ -1315,14 +1315,14 @@ static int getPolyMergeValue(unsigned short* pa, unsigned short* pb,
 	
 	for (int i = 0; i < na; ++i)
 	{
-		unsigned short va0 = pa[i];
-		unsigned short va1 = pa[(i+1) % na];
+		T va0 = pa[ i ];
+		T va1 = pa[ ( i + 1 ) % na ];
 		if (va0 > va1)
 			dtSwap(va0, va1);
 		for (int j = 0; j < nb; ++j)
 		{
-			unsigned short vb0 = pb[j];
-			unsigned short vb1 = pb[(j+1) % nb];
+			T vb0 = pb[ j ];
+			T vb1 = pb[ ( j + 1 ) % nb ];
 			if (vb0 > vb1)
 				dtSwap(vb0, vb1);
 			if (va0 == vb0 && va1 == vb1)
@@ -1339,7 +1339,7 @@ static int getPolyMergeValue(unsigned short* pa, unsigned short* pb,
 		return -1;
 	
 	// Check to see if the merged polygon would be convex.
-	unsigned short va, vb, vc;
+	T va, vb, vc;
 	
 	va = pa[(ea+na-1) % na];
 	vb = pa[ea];
@@ -1362,15 +1362,16 @@ static int getPolyMergeValue(unsigned short* pa, unsigned short* pb,
 	return dx*dx + dy*dy;
 }
 
-static void mergePolys(unsigned short* pa, unsigned short* pb, int ea, int eb)
+template<typename T>
+static void mergePolys(T* pa, T* pb, int ea, int eb)
 {
-	unsigned short tmp[MAX_VERTS_PER_POLY*2];
+	T tmp[MAX_VERTS_PER_POLY*2];
 	
 	const int na = countPolyVerts(pa);
 	const int nb = countPolyVerts(pb);
 	
 	// Merge polygons.
-	memset(tmp, 0xff, sizeof(unsigned short)*MAX_VERTS_PER_POLY*2);
+	memset(tmp, 0xff, sizeof(T)*MAX_VERTS_PER_POLY*2);
 	int n = 0;
 	// Add pa
 	for (int i = 0; i < na-1; ++i)
@@ -1379,11 +1380,11 @@ static void mergePolys(unsigned short* pa, unsigned short* pb, int ea, int eb)
 	for (int i = 0; i < nb-1; ++i)
 		tmp[n++] = pb[(eb+1+i) % nb];
 	
-	memcpy(pa, tmp, sizeof(unsigned short)*MAX_VERTS_PER_POLY);
+	memcpy(pa, tmp, sizeof(T)*MAX_VERTS_PER_POLY);
 }
 
 
-static void pushFront(unsigned short v, unsigned short* arr, int& an)
+static void pushFront(navIndexType v, navIndexType* arr, int& an)
 {
 	an++;
 	for (int i = an-1; i > 0; --i)
@@ -1391,7 +1392,7 @@ static void pushFront(unsigned short v, unsigned short* arr, int& an)
 	arr[0] = v;
 }
 
-static void pushBack(unsigned short v, unsigned short* arr, int& an)
+static void pushBack(navIndexType v, navIndexType* arr, int& an)
 {
 	arr[an] = v;
 	an++;
@@ -1512,11 +1513,11 @@ static dtStatus removeVertex(dtTileCachePolyMesh& mesh, const unsigned short rem
 	}
 	
 	int nedges = 0;
-	unsigned short edges[MAX_REM_EDGES*3];
+	navIndexType edges[ MAX_REM_EDGES * 3 ];
 	int nhole = 0;
-	unsigned short hole[MAX_REM_EDGES];
+	navIndexType hole[ MAX_REM_EDGES ];
 	int nharea = 0;
-	unsigned short harea[MAX_REM_EDGES];
+	navAreaMask harea[ MAX_REM_EDGES ];
 	
 	for (int i = 0; i < mesh.npolys; ++i)
 	{
@@ -1534,10 +1535,10 @@ static dtStatus removeVertex(dtTileCachePolyMesh& mesh, const unsigned short rem
 				{
 					if (nedges >= MAX_REM_EDGES)
 						return DT_FAILURE | DT_BUFFER_TOO_SMALL;
-					unsigned short* e = &edges[nedges*3];
+					navIndexType* e = &edges[nedges*3];
 					e[0] = p[k];
 					e[1] = p[j];
-					e[2] = mesh.areas[i];
+					e[2] = mesh.areaMasks[i];
 					nedges++;
 				}
 			}
@@ -1545,7 +1546,7 @@ static dtStatus removeVertex(dtTileCachePolyMesh& mesh, const unsigned short rem
 			unsigned short* p2 = &mesh.polys[(mesh.npolys-1)*MAX_VERTS_PER_POLY*2];
 			memcpy(p,p2,sizeof(unsigned short)*MAX_VERTS_PER_POLY);
 			memset(p+MAX_VERTS_PER_POLY,0xff,sizeof(unsigned short)*MAX_VERTS_PER_POLY);
-			mesh.areas[i] = mesh.areas[mesh.npolys-1];
+			mesh.areaMasks[i] = mesh.areaMasks[mesh.npolys-1];
 			mesh.npolys--;
 			--i;
 		}
@@ -1588,9 +1589,9 @@ static dtStatus removeVertex(dtTileCachePolyMesh& mesh, const unsigned short rem
 		
 		for (int i = 0; i < nedges; ++i)
 		{
-			const unsigned short ea = edges[i*3+0];
-			const unsigned short eb = edges[i*3+1];
-			const unsigned short a = edges[i*3+2];
+			const navIndexType ea = edges[i*3+0];
+			const navIndexType eb = edges[ i * 3 + 1 ];
+			const navIndexType a = edges[ i * 3 + 2 ];
 			bool add = false;
 			if (hole[0] == eb)
 			{
@@ -1634,7 +1635,7 @@ static dtStatus removeVertex(dtTileCachePolyMesh& mesh, const unsigned short rem
 	// Generate temp vertex array for triangulation.
 	for (int i = 0; i < nhole; ++i)
 	{
-		const unsigned short pi = hole[i];
+		const navIndexType pi = hole[ i ];
 		tverts[i*4+0] = (unsigned char)mesh.verts[pi*3+0];
 		tverts[i*4+1] = (unsigned char)mesh.verts[pi*3+1];
 		tverts[i*4+2] = (unsigned char)mesh.verts[pi*3+2];
@@ -1653,8 +1654,8 @@ static dtStatus removeVertex(dtTileCachePolyMesh& mesh, const unsigned short rem
 	if (ntris > MAX_REM_EDGES)
 		return DT_FAILURE | DT_BUFFER_TOO_SMALL;
 	
-	unsigned short polys[MAX_REM_EDGES*MAX_VERTS_PER_POLY];
-	unsigned char pareas[MAX_REM_EDGES];
+	navIndexType polys[MAX_REM_EDGES*MAX_VERTS_PER_POLY];
+	navAreaMask pareas[MAX_REM_EDGES];
 	
 	// Build initial polygons.
 	int npolys = 0;
@@ -1667,7 +1668,7 @@ static dtStatus removeVertex(dtTileCachePolyMesh& mesh, const unsigned short rem
 			polys[npolys*MAX_VERTS_PER_POLY+0] = hole[t[0]];
 			polys[npolys*MAX_VERTS_PER_POLY+1] = hole[t[1]];
 			polys[npolys*MAX_VERTS_PER_POLY+2] = hole[t[2]];
-			pareas[npolys] = (unsigned char)harea[t[0]];
+			pareas[npolys] = harea[t[0]];
 			npolys++;
 		}
 	}
@@ -1686,10 +1687,10 @@ static dtStatus removeVertex(dtTileCachePolyMesh& mesh, const unsigned short rem
 			
 			for (int j = 0; j < npolys-1; ++j)
 			{
-				unsigned short* pj = &polys[j*MAX_VERTS_PER_POLY];
+				navIndexType* pj = &polys[j*MAX_VERTS_PER_POLY];
 				for (int k = j+1; k < npolys; ++k)
 				{
-					unsigned short* pk = &polys[k*MAX_VERTS_PER_POLY];
+					navIndexType* pk = &polys[ k*MAX_VERTS_PER_POLY ];
 					int ea, eb;
 					int v = getPolyMergeValue(pj, pk, mesh.verts, ea, eb);
 					if (v > bestMergeVal)
@@ -1706,10 +1707,10 @@ static dtStatus removeVertex(dtTileCachePolyMesh& mesh, const unsigned short rem
 			if (bestMergeVal > 0)
 			{
 				// Found best, merge.
-				unsigned short* pa = &polys[bestPa*MAX_VERTS_PER_POLY];
-				unsigned short* pb = &polys[bestPb*MAX_VERTS_PER_POLY];
+				navIndexType* pa = &polys[bestPa*MAX_VERTS_PER_POLY];
+				navIndexType* pb = &polys[bestPb*MAX_VERTS_PER_POLY];
 				mergePolys(pa, pb, bestEa, bestEb);
-				memcpy(pb, &polys[(npolys-1)*MAX_VERTS_PER_POLY], sizeof(unsigned short)*MAX_VERTS_PER_POLY);
+				memcpy(pb, &polys[(npolys-1)*MAX_VERTS_PER_POLY], sizeof(navIndexType)*MAX_VERTS_PER_POLY);
 				pareas[bestPb] = pareas[npolys-1];
 				npolys--;
 			}
@@ -1728,8 +1729,8 @@ static dtStatus removeVertex(dtTileCachePolyMesh& mesh, const unsigned short rem
 		unsigned short* p = &mesh.polys[mesh.npolys*MAX_VERTS_PER_POLY*2];
 		memset(p,0xff,sizeof(unsigned short)*MAX_VERTS_PER_POLY*2);
 		for (int j = 0; j < MAX_VERTS_PER_POLY; ++j)
-			p[j] = polys[i*MAX_VERTS_PER_POLY+j];
-		mesh.areas[mesh.npolys] = pareas[i];
+			p[j] = (unsigned short)polys[i*MAX_VERTS_PER_POLY+j];
+		mesh.areaMasks[mesh.npolys] = pareas[i];
 		mesh.npolys++;
 		if (mesh.npolys > maxTris)
 			return DT_FAILURE | DT_BUFFER_TOO_SMALL;
@@ -1774,23 +1775,16 @@ dtStatus dtBuildTileCachePolyMesh(dtTileCacheAlloc* alloc,
 	if (!mesh.polys)
 		return DT_FAILURE | DT_OUT_OF_MEMORY;
 
-	mesh.areas = (unsigned char*)alloc->alloc(sizeof(unsigned char)*maxTris);
-	if (!mesh.areas)
+	mesh.areaMasks = (navAreaMask*)alloc->alloc( sizeof( navAreaMask )*maxTris );
+	if (!mesh.areaMasks)
 		return DT_FAILURE | DT_OUT_OF_MEMORY;
-
-	mesh.flags = (unsigned short*)alloc->alloc(sizeof(unsigned short)*maxTris);
-	if (!mesh.flags)
-		return DT_FAILURE | DT_OUT_OF_MEMORY;
-
-	// Just allocate and clean the mesh flags array. The user is resposible for filling it.
-	memset(mesh.flags, 0, sizeof(unsigned short) * maxTris);
-		
+	
 	mesh.nverts = 0;
 	mesh.npolys = 0;
 	
 	memset(mesh.verts, 0, sizeof(unsigned short)*maxVertices*3);
 	memset(mesh.polys, 0xff, sizeof(unsigned short)*maxTris*MAX_VERTS_PER_POLY*2);
-	memset(mesh.areas, 0, sizeof(unsigned char)*maxTris);
+	memset(mesh.areaMasks, 0, sizeof(unsigned char)*maxTris);
 	
 	unsigned short firstVert[VERTEX_BUCKET_COUNT2];
 	for (int i = 0; i < VERTEX_BUCKET_COUNT2; ++i)
@@ -1915,7 +1909,7 @@ dtStatus dtBuildTileCachePolyMesh(dtTileCacheAlloc* alloc,
 			unsigned short* q = &polys[j*MAX_VERTS_PER_POLY];
 			for (int k = 0; k < MAX_VERTS_PER_POLY; ++k)
 				p[k] = q[k];
-			mesh.areas[mesh.npolys] = cont.area;
+			mesh.areaMasks[mesh.npolys] = cont.area;
 			mesh.npolys++;
 			if (mesh.npolys > maxTris)
 				return DT_FAILURE | DT_BUFFER_TOO_SMALL;
@@ -2007,13 +2001,15 @@ dtStatus dtMarkCylinderArea(dtTileCacheLayer& layer, const float* orig, const fl
 dtStatus dtBuildTileCacheLayer(dtTileCacheCompressor* comp,
 							   dtTileCacheLayerHeader* header,
 							   const unsigned char* heights,
-							   const unsigned char* areas,
+							   const navAreaMask* areaMasks,
 							   const unsigned char* cons,
 							   unsigned char** outData, int* outDataSize)
 {
 	const int headerSize = dtAlign4(sizeof(dtTileCacheLayerHeader));
 	const int gridSize = (int)header->width * (int)header->height;
-	const int maxDataSize = headerSize + comp->maxCompressedSize(gridSize*3);
+	const int bufferSize = (gridSize * 2) + (gridSize*sizeof(navAreaMask));
+
+	const int maxDataSize = headerSize + comp->maxCompressedSize(bufferSize);
 	unsigned char* data = (unsigned char*)dtAlloc(maxDataSize, DT_ALLOC_PERM);
 	if (!data)
 		return DT_FAILURE | DT_OUT_OF_MEMORY;
@@ -2023,13 +2019,13 @@ dtStatus dtBuildTileCacheLayer(dtTileCacheCompressor* comp,
 	memcpy(data, header, sizeof(dtTileCacheLayerHeader));
 	
 	// Concatenate grid data for compression.
-	const int bufferSize = gridSize*3;
+	
 	unsigned char* buffer = (unsigned char*)dtAlloc(bufferSize, DT_ALLOC_TEMP);
 	if (!buffer)
 		return DT_FAILURE | DT_OUT_OF_MEMORY;
-	memcpy(buffer, heights, gridSize);
-	memcpy(buffer+gridSize, areas, gridSize);
-	memcpy(buffer+gridSize*2, cons, gridSize);
+	memcpy(buffer, heights, gridSize);	
+	memcpy(buffer+gridSize, cons, gridSize);
+	memcpy(buffer+gridSize*2, areaMasks, gridSize*sizeof(navAreaMask));
 	
 	// Compress
 	unsigned char* compressed = data + headerSize;
@@ -2077,7 +2073,7 @@ dtStatus dtDecompressTileCacheLayer(dtTileCacheAlloc* alloc, dtTileCacheCompress
 	const int layerSize = dtAlign4(sizeof(dtTileCacheLayer));
 	const int headerSize = dtAlign4(sizeof(dtTileCacheLayerHeader));
 	const int gridSize = (int)compressedHeader->width * (int)compressedHeader->height;
-	const int bufferSize = layerSize + headerSize + gridSize*4;
+	const int bufferSize = layerSize + headerSize + (gridSize * 2) + (gridSize*sizeof(navAreaMask));
 	
 	unsigned char* buffer = (unsigned char*)alloc->alloc(bufferSize);
 	if (!buffer)
@@ -2102,10 +2098,10 @@ dtStatus dtDecompressTileCacheLayer(dtTileCacheAlloc* alloc, dtTileCacheCompress
 	}
 	
 	layer->header = header;
-	layer->heights = grids;
-	layer->areas = grids + gridSize;
-	layer->cons = grids + gridSize*2;
-	layer->regs = grids + gridSize*3;
+	layer->heights = grids;	
+	layer->cons = grids + gridSize;
+	layer->areas = grids + gridSize*2;
+	layer->regs = grids + gridSize*2+(gridSize*sizeof(navAreaMask));
 	
 	*layerOut = layer;
 	

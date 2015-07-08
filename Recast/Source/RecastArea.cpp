@@ -61,7 +61,7 @@ bool rcErodeWalkableArea(rcContext* ctx, int radius, rcCompactHeightfield& chf)
 			const rcCompactCell& c = chf.cells[x+y*w];
 			for (int i = (int)c.index, ni = (int)(c.index+c.count); i < ni; ++i)
 			{
-				if (chf.areas[i] == RC_NULL_AREA)
+				if (chf.areaMasks[i] == RC_NULL_AREA)
 				{
 					dist[i] = 0;
 				}
@@ -76,7 +76,7 @@ bool rcErodeWalkableArea(rcContext* ctx, int radius, rcCompactHeightfield& chf)
 							const int nx = x + rcGetDirOffsetX(dir);
 							const int ny = y + rcGetDirOffsetY(dir);
 							const int nidx = (int)chf.cells[nx+ny*w].index + rcGetCon(s, dir);
-							if (chf.areas[nidx] != RC_NULL_AREA)
+							if (chf.areaMasks[nidx] != RC_NULL_AREA)
 							{
 								nc++;
 							}
@@ -211,7 +211,7 @@ bool rcErodeWalkableArea(rcContext* ctx, int radius, rcCompactHeightfield& chf)
 	const unsigned char thr = (unsigned char)(radius*2);
 	for (int i = 0; i < chf.spanCount; ++i)
 		if (dist[i] < thr)
-			chf.areas[i] = RC_NULL_AREA;
+			chf.areaMasks[i] = RC_NULL_AREA;
 	
 	rcFree(dist);
 	
@@ -220,12 +220,12 @@ bool rcErodeWalkableArea(rcContext* ctx, int radius, rcCompactHeightfield& chf)
 	return true;
 }
 
-static void insertSort(unsigned char* a, const int n)
+static void insertSort(navAreaMask * a, const int n)
 {
 	int i, j;
 	for (i = 1; i < n; i++)
 	{
-		const unsigned char value = a[i];
+		const navAreaMask value = a[ i ];
 		for (j = i - 1; j >= 0 && a[j] > value; j--)
 			a[j+1] = a[j];
 		a[j+1] = value;
@@ -247,15 +247,15 @@ bool rcMedianFilterWalkableArea(rcContext* ctx, rcCompactHeightfield& chf)
 	
 	ctx->startTimer(RC_TIMER_MEDIAN_AREA);
 	
-	unsigned char* areas = (unsigned char*)rcAlloc(sizeof(unsigned char)*chf.spanCount, RC_ALLOC_TEMP);
-	if (!areas)
+	navAreaMask* areaMasks = (navAreaMask*)rcAlloc(sizeof(navAreaMask)*chf.spanCount, RC_ALLOC_TEMP);
+	if (!areaMasks)
 	{
-		ctx->log(RC_LOG_ERROR, "medianFilterWalkableArea: Out of memory 'areas' (%d).", chf.spanCount);
+		ctx->log(RC_LOG_ERROR, "medianFilterWalkableArea: Out of memory 'areaMasks' (%d).", chf.spanCount);
 		return false;
 	}
 	
 	// Init distance.
-	memset(areas, 0xff, sizeof(unsigned char)*chf.spanCount);
+	memset(areaMasks, 0xff, sizeof(navAreaMask)*chf.spanCount);
 	
 	for (int y = 0; y < h; ++y)
 	{
@@ -265,15 +265,15 @@ bool rcMedianFilterWalkableArea(rcContext* ctx, rcCompactHeightfield& chf)
 			for (int i = (int)c.index, ni = (int)(c.index+c.count); i < ni; ++i)
 			{
 				const rcCompactSpan& s = chf.spans[i];
-				if (chf.areas[i] == RC_NULL_AREA)
+				if (chf.areaMasks[i] == RC_NULL_AREA)
 				{
-					areas[i] = chf.areas[i];
+					areaMasks[i] = chf.areaMasks[i];
 					continue;
 				}
 				
-				unsigned char nei[9];
+				navAreaMask nei[ 9 ];
 				for (int j = 0; j < 9; ++j)
-					nei[j] = chf.areas[i];
+					nei[j] = chf.areaMasks[i];
 				
 				for (int dir = 0; dir < 4; ++dir)
 				{
@@ -282,8 +282,8 @@ bool rcMedianFilterWalkableArea(rcContext* ctx, rcCompactHeightfield& chf)
 						const int ax = x + rcGetDirOffsetX(dir);
 						const int ay = y + rcGetDirOffsetY(dir);
 						const int ai = (int)chf.cells[ax+ay*w].index + rcGetCon(s, dir);
-						if (chf.areas[ai] != RC_NULL_AREA)
-							nei[dir*2+0] = chf.areas[ai];
+						if (chf.areaMasks[ai] != RC_NULL_AREA)
+							nei[dir*2+0] = chf.areaMasks[ai];
 						
 						const rcCompactSpan& as = chf.spans[ai];
 						const int dir2 = (dir+1) & 0x3;
@@ -292,20 +292,20 @@ bool rcMedianFilterWalkableArea(rcContext* ctx, rcCompactHeightfield& chf)
 							const int ax2 = ax + rcGetDirOffsetX(dir2);
 							const int ay2 = ay + rcGetDirOffsetY(dir2);
 							const int ai2 = (int)chf.cells[ax2+ay2*w].index + rcGetCon(as, dir2);
-							if (chf.areas[ai2] != RC_NULL_AREA)
-								nei[dir*2+1] = chf.areas[ai2];
+							if (chf.areaMasks[ai2] != RC_NULL_AREA)
+								nei[dir*2+1] = chf.areaMasks[ai2];
 						}
 					}
 				}
 				insertSort(nei, 9);
-				areas[i] = nei[4];
+				areaMasks[i] = nei[4];
 			}
 		}
 	}
 	
-	memcpy(chf.areas, areas, sizeof(unsigned char)*chf.spanCount);
+	memcpy(chf.areaMasks, areaMasks, sizeof(areaMasks)*chf.spanCount);
 	
-	rcFree(areas);
+	rcFree(areaMasks);
 
 	ctx->stopTimer(RC_TIMER_MEDIAN_AREA);
 	
@@ -317,7 +317,7 @@ bool rcMedianFilterWalkableArea(rcContext* ctx, rcCompactHeightfield& chf)
 /// The value of spacial parameters are in world units.
 /// 
 /// @see rcCompactHeightfield, rcMedianFilterWalkableArea
-void rcMarkBoxArea(rcContext* ctx, const float* bmin, const float* bmax, unsigned char areaId,
+void rcMarkBoxArea(rcContext* ctx, const float* bmin, const float* bmax, navAreaMask areaId,
 				   rcCompactHeightfield& chf)
 {
 	rcAssert(ctx);
@@ -351,8 +351,8 @@ void rcMarkBoxArea(rcContext* ctx, const float* bmin, const float* bmax, unsigne
 				rcCompactSpan& s = chf.spans[i];
 				if ((int)s.y >= miny && (int)s.y <= maxy)
 				{
-					if (chf.areas[i] != RC_NULL_AREA)
-						chf.areas[i] = areaId;
+					if (chf.areaMasks[i] != RC_NULL_AREA)
+						chf.areaMasks[ i ] = areaId;
 				}
 			}
 		}
@@ -386,7 +386,7 @@ static int pointInPoly(int nvert, const float* verts, const float* p)
 /// 
 /// @see rcCompactHeightfield, rcMedianFilterWalkableArea
 void rcMarkConvexPolyArea(rcContext* ctx, const float* verts, const int nverts,
-						  const float hmin, const float hmax, unsigned char areaId,
+						  const float hmin, const float hmax, navAreaMask areaId,
 						  rcCompactHeightfield& chf)
 {
 	rcAssert(ctx);
@@ -431,7 +431,7 @@ void rcMarkConvexPolyArea(rcContext* ctx, const float* verts, const int nverts,
 			for (int i = (int)c.index, ni = (int)(c.index+c.count); i < ni; ++i)
 			{
 				rcCompactSpan& s = chf.spans[i];
-				if (chf.areas[i] == RC_NULL_AREA)
+				if (chf.areaMasks[i] == RC_NULL_AREA)
 					continue;
 				if ((int)s.y >= miny && (int)s.y <= maxy)
 				{
@@ -442,7 +442,7 @@ void rcMarkConvexPolyArea(rcContext* ctx, const float* verts, const int nverts,
 
 					if (pointInPoly(nverts, verts, p))
 					{
-						chf.areas[i] = areaId;
+						chf.areaMasks[i] |= areaId;
 					}
 				}
 			}
@@ -579,7 +579,7 @@ void rcMarkCylinderArea(rcContext* ctx, const float* pos,
 			{
 				rcCompactSpan& s = chf.spans[i];
 				
-				if (chf.areas[i] == RC_NULL_AREA)
+				if (chf.areaMasks[i] == RC_NULL_AREA)
 					continue;
 				
 				if ((int)s.y >= miny && (int)s.y <= maxy)
@@ -591,7 +591,7 @@ void rcMarkCylinderArea(rcContext* ctx, const float* pos,
 					
 					if (dx*dx + dz*dz < r2)
 					{
-						chf.areas[i] = areaId;
+						chf.areaMasks[i] |= areaId;
 					}
 				}
 			}

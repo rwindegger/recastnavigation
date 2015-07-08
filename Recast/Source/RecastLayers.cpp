@@ -125,7 +125,7 @@ bool rcBuildHeightfieldLayers(rcContext* ctx, rcCompactHeightfield& chf,
 			for (int i = (int)c.index, ni = (int)(c.index+c.count); i < ni; ++i)
 			{
 				const rcCompactSpan& s = chf.spans[i];
-				if (chf.areas[i] == RC_NULL_AREA) continue;
+				if (chf.areaMasks[i] == RC_NULL_AREA) continue;
 
 				unsigned char sid = 0xff;
 
@@ -135,7 +135,7 @@ bool rcBuildHeightfieldLayers(rcContext* ctx, rcCompactHeightfield& chf,
 					const int ax = x + rcGetDirOffsetX(0);
 					const int ay = y + rcGetDirOffsetY(0);
 					const int ai = (int)chf.cells[ax+ay*w].index + rcGetCon(s, 0);
-					if (chf.areas[ai] != RC_NULL_AREA && srcReg[ai] != 0xff)
+					if (chf.areaMasks[ai] != RC_NULL_AREA && srcReg[ai] != 0xff)
 						sid = srcReg[ai];
 				}
 				
@@ -496,13 +496,13 @@ bool rcBuildHeightfieldLayers(rcContext* ctx, rcCompactHeightfield& chf,
 		}
 		memset(layer->heights, 0xff, gridSize);
 
-		layer->areas = (unsigned char*)rcAlloc(gridSize, RC_ALLOC_PERM);
-		if (!layer->areas)
+		layer->areaMasks = (navAreaMask*)rcAlloc(gridSize * sizeof(navAreaMask), RC_ALLOC_PERM);
+		if (!layer->areaMasks)
 		{
-			ctx->log(RC_LOG_ERROR, "rcBuildHeightfieldLayers: Out of memory 'areas' (%d).", gridSize);
+			ctx->log(RC_LOG_ERROR, "rcBuildHeightfieldLayers: Out of memory 'areaMasks' (%d).", gridSize);
 			return false;
 		}
-		memset(layer->areas, 0, gridSize);
+		memset(layer->areaMasks, 0, gridSize * sizeof(navAreaMask));
 
 		layer->cons = (unsigned char*)rcAlloc(gridSize, RC_ALLOC_PERM);
 		if (!layer->cons)
@@ -570,7 +570,7 @@ bool rcBuildHeightfieldLayers(rcContext* ctx, rcCompactHeightfield& chf,
 					// Store height and area type.
 					const int idx = x+y*lw;
 					layer->heights[idx] = (unsigned char)(s.y - hmin);
-					layer->areas[idx] = chf.areas[j];
+					layer->areaMasks[idx] = chf.areaMasks[j];
 					
 					// Check connection.
 					unsigned char portal = 0;
@@ -584,7 +584,7 @@ bool rcBuildHeightfieldLayers(rcContext* ctx, rcCompactHeightfield& chf,
 							const int ai = (int)chf.cells[ax+ay*w].index + rcGetCon(s, dir);
 							unsigned char alid = srcReg[ai] != 0xff ? regs[srcReg[ai]].layerId : 0xff;
 							// Portal mask
-							if (chf.areas[ai] != RC_NULL_AREA && lid != alid)
+							if (chf.areaMasks[ai] != RC_NULL_AREA && lid != alid)
 							{
 								portal |= (unsigned char)(1<<dir);
 								// Update height so that it matches on both sides of the portal.
@@ -593,7 +593,7 @@ bool rcBuildHeightfieldLayers(rcContext* ctx, rcCompactHeightfield& chf,
 									layer->heights[idx] = rcMax(layer->heights[idx], (unsigned char)(as.y - hmin));
 							}
 							// Valid connection mask
-							if (chf.areas[ai] != RC_NULL_AREA && lid == alid)
+							if (chf.areaMasks[ai] != RC_NULL_AREA && lid == alid)
 							{
 								const int nx = ax - borderSize;
 								const int ny = ay - borderSize;

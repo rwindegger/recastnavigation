@@ -144,10 +144,10 @@ static void drawMeshTile(duDebugDraw* dd, const dtNavMesh& mesh, const dtNavMesh
 			}
 			else
 			{
-				if (p->getArea() == 0) // Treat zero area type as default.
+				if (p->areaMask == 0) // Treat zero area type as default.
 					col = duRGBA(0,192,255,64);
 				else
-					col = duIntToCol(p->getArea(), 64);
+					col = duIntToCol(p->areaMask, 64);
 			}
 		}
 		
@@ -184,7 +184,7 @@ static void drawMeshTile(duDebugDraw* dd, const dtNavMesh& mesh, const dtNavMesh
 			if (query && query->isInClosedList(base | (dtPolyRef)i))
 				col = duRGBA(255,196,0,220);
 			else
-				col = duDarkenCol(duIntToCol(p->getArea(), 220));
+				col = duDarkenCol(duIntToCol(p->areaMask, 220));
 			
 			const dtOffMeshConnection* con = &tile->offMeshCons[i - tile->header->offMeshBase];
 			const float* va = &tile->verts[p->verts[0]*3];
@@ -421,7 +421,7 @@ void duDebugDrawNavMeshPortals(duDebugDraw* dd, const dtNavMesh& mesh)
 }
 
 void duDebugDrawNavMeshPolysWithFlags(struct duDebugDraw* dd, const dtNavMesh& mesh,
-									  const unsigned short polyFlags, const unsigned int col)
+									  const navAreaMask areaMask, const unsigned int col)
 {
 	if (!dd) return;
 	
@@ -434,7 +434,7 @@ void duDebugDrawNavMeshPolysWithFlags(struct duDebugDraw* dd, const dtNavMesh& m
 		for (int j = 0; j < tile->header->polyCount; ++j)
 		{
 			const dtPoly* p = &tile->polys[j];
-			if ((p->flags & polyFlags) == 0) continue;
+			if ((p->areaMask & areaMask) == 0) continue;
 			duDebugDrawNavMeshPoly(dd, mesh, base|(dtPolyRef)j, col);
 		}
 	}
@@ -745,12 +745,12 @@ void duDebugDrawTileCachePolyMesh(duDebugDraw* dd, const struct dtTileCachePolyM
 		const unsigned short* p = &lmesh.polys[i*nvp*2];
 		
 		unsigned int color;
-		if (lmesh.areas[i] == DT_TILECACHE_WALKABLE_AREA)
+		if (lmesh.areaMasks[i] == DT_TILECACHE_WALKABLE_AREA)
 			color = duRGBA(0,192,255,64);
-		else if (lmesh.areas[i] == DT_TILECACHE_NULL_AREA)
+		else if (lmesh.areaMasks[i] == DT_TILECACHE_NULL_AREA)
 			color = duRGBA(0,0,0,64);
 		else
-			color = duIntToCol(lmesh.areas[i], 255);
+			color = duIntToCol(lmesh.areaMasks[i], 255);
 		
 		unsigned short vi[3];
 		for (int j = 2; j < nvp; ++j)

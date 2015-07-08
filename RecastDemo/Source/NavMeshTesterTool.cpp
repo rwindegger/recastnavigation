@@ -170,8 +170,8 @@ NavMeshTesterTool::NavMeshTesterTool() :
 	m_pathIterNum(0),
 	m_steerPointCount(0)
 {
-	m_filter.setIncludeFlags(SAMPLE_POLYFLAGS_ALL ^ SAMPLE_POLYFLAGS_DISABLED);
-	m_filter.setExcludeFlags(0);
+	m_filter.setIncludeFlags((navAreaMask)-1 ^ AREAFLAGS_DISABLED);
+	m_filter.setExcludeFlags(AREAFLAGS_DISABLED);
 
 	m_polyPickExt[0] = 2;
 	m_polyPickExt[1] = 4;
@@ -195,12 +195,12 @@ void NavMeshTesterTool::init(Sample* sample)
 	if (m_navQuery)
 	{
 		// Change costs.
-		m_filter.setAreaCost(SAMPLE_POLYAREA_GROUND, 1.0f);
+		/*m_filter.setAreaCost(SAMPLE_POLYAREA_GROUND, 1.0f);
 		m_filter.setAreaCost(SAMPLE_POLYAREA_WATER, 10.0f);
 		m_filter.setAreaCost(SAMPLE_POLYAREA_ROAD, 1.0f);
 		m_filter.setAreaCost(SAMPLE_POLYAREA_DOOR, 1.0f);
 		m_filter.setAreaCost(SAMPLE_POLYAREA_GRASS, 2.0f);
-		m_filter.setAreaCost(SAMPLE_POLYAREA_JUMP, 1.5f);
+		m_filter.setAreaCost(SAMPLE_POLYAREA_JUMP, 1.5f);*/
 	}
 	
 	m_neighbourhoodRadius = sample->getAgentRadius() * 20.0f;
@@ -352,24 +352,20 @@ void NavMeshTesterTool::handleMenu()
 	imguiLabel("Include Flags");
 
 	imguiIndent();
-	if (imguiCheck("Walk", (m_filter.getIncludeFlags() & SAMPLE_POLYFLAGS_WALK) != 0))
+
+	if (imguiCheck("Swim", (m_filter.getIncludeFlags() & AREAFLAGS_SWIM) != 0))
 	{
-		m_filter.setIncludeFlags(m_filter.getIncludeFlags() ^ SAMPLE_POLYFLAGS_WALK);
+		m_filter.setIncludeFlags(m_filter.getIncludeFlags() ^ AREAFLAGS_SWIM);
 		recalc();
 	}
-	if (imguiCheck("Swim", (m_filter.getIncludeFlags() & SAMPLE_POLYFLAGS_SWIM) != 0))
+	if (imguiCheck("Door", (m_filter.getIncludeFlags() & AREAFLAGS_DOOR) != 0))
 	{
-		m_filter.setIncludeFlags(m_filter.getIncludeFlags() ^ SAMPLE_POLYFLAGS_SWIM);
+		m_filter.setIncludeFlags(m_filter.getIncludeFlags() ^ AREAFLAGS_DOOR);
 		recalc();
 	}
-	if (imguiCheck("Door", (m_filter.getIncludeFlags() & SAMPLE_POLYFLAGS_DOOR) != 0))
+	if (imguiCheck("Jump", (m_filter.getIncludeFlags() & AREAFLAGS_JUMP) != 0))
 	{
-		m_filter.setIncludeFlags(m_filter.getIncludeFlags() ^ SAMPLE_POLYFLAGS_DOOR);
-		recalc();
-	}
-	if (imguiCheck("Jump", (m_filter.getIncludeFlags() & SAMPLE_POLYFLAGS_JUMP) != 0))
-	{
-		m_filter.setIncludeFlags(m_filter.getIncludeFlags() ^ SAMPLE_POLYFLAGS_JUMP);
+		m_filter.setIncludeFlags(m_filter.getIncludeFlags() ^ AREAFLAGS_JUMP);
 		recalc();
 	}
 	imguiUnindent();
@@ -378,24 +374,20 @@ void NavMeshTesterTool::handleMenu()
 	imguiLabel("Exclude Flags");
 	
 	imguiIndent();
-	if (imguiCheck("Walk", (m_filter.getExcludeFlags() & SAMPLE_POLYFLAGS_WALK) != 0))
+
+	if (imguiCheck("Swim", (m_filter.getExcludeFlags() & AREAFLAGS_SWIM) != 0))
 	{
-		m_filter.setExcludeFlags(m_filter.getExcludeFlags() ^ SAMPLE_POLYFLAGS_WALK);
+		m_filter.setExcludeFlags(m_filter.getExcludeFlags() ^ AREAFLAGS_SWIM);
 		recalc();
 	}
-	if (imguiCheck("Swim", (m_filter.getExcludeFlags() & SAMPLE_POLYFLAGS_SWIM) != 0))
+	if (imguiCheck("Door", (m_filter.getExcludeFlags() & AREAFLAGS_DOOR) != 0))
 	{
-		m_filter.setExcludeFlags(m_filter.getExcludeFlags() ^ SAMPLE_POLYFLAGS_SWIM);
+		m_filter.setExcludeFlags(m_filter.getExcludeFlags() ^ AREAFLAGS_DOOR);
 		recalc();
 	}
-	if (imguiCheck("Door", (m_filter.getExcludeFlags() & SAMPLE_POLYFLAGS_DOOR) != 0))
+	if (imguiCheck("Jump", (m_filter.getExcludeFlags() & AREAFLAGS_JUMP) != 0))
 	{
-		m_filter.setExcludeFlags(m_filter.getExcludeFlags() ^ SAMPLE_POLYFLAGS_DOOR);
-		recalc();
-	}
-	if (imguiCheck("Jump", (m_filter.getExcludeFlags() & SAMPLE_POLYFLAGS_JUMP) != 0))
-	{
-		m_filter.setExcludeFlags(m_filter.getExcludeFlags() ^ SAMPLE_POLYFLAGS_JUMP);
+		m_filter.setExcludeFlags(m_filter.getExcludeFlags() ^ AREAFLAGS_JUMP);
 		recalc();
 	}
 	imguiUnindent();

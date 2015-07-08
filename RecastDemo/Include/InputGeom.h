@@ -19,6 +19,7 @@
 #ifndef INPUTGEOM_H
 #define INPUTGEOM_H
 
+#include "SharedConfig.h"
 #include "ChunkyTriMesh.h"
 #include "MeshLoaderObj.h"
 
@@ -28,7 +29,7 @@ struct ConvexVolume
 	float verts[MAX_CONVEXVOL_PTS*3];
 	float hmin, hmax;
 	int nverts;
-	int area;
+	navAreaMask areaMask;
 };
 
 class InputGeom
@@ -43,8 +44,7 @@ class InputGeom
 	float m_offMeshConVerts[MAX_OFFMESH_CONNECTIONS*3*2];
 	float m_offMeshConRads[MAX_OFFMESH_CONNECTIONS];
 	unsigned char m_offMeshConDirs[MAX_OFFMESH_CONNECTIONS];
-	unsigned char m_offMeshConAreas[MAX_OFFMESH_CONNECTIONS];
-	unsigned short m_offMeshConFlags[MAX_OFFMESH_CONNECTIONS];
+	navAreaMask m_offMeshConAreaMask[MAX_OFFMESH_CONNECTIONS];
 	unsigned int m_offMeshConId[MAX_OFFMESH_CONNECTIONS];
 	int m_offMeshConCount;
 	///@}
@@ -78,11 +78,10 @@ public:
 	const float* getOffMeshConnectionVerts() const { return m_offMeshConVerts; }
 	const float* getOffMeshConnectionRads() const { return m_offMeshConRads; }
 	const unsigned char* getOffMeshConnectionDirs() const { return m_offMeshConDirs; }
-	const unsigned char* getOffMeshConnectionAreas() const { return m_offMeshConAreas; }
-	const unsigned short* getOffMeshConnectionFlags() const { return m_offMeshConFlags; }
+	const navAreaMask* getOffMeshConnectionAreaMask() const { return m_offMeshConAreaMask; }
 	const unsigned int* getOffMeshConnectionId() const { return m_offMeshConId; }
 	void addOffMeshConnection(const float* spos, const float* epos, const float rad,
-							  unsigned char bidir, unsigned char area, unsigned short flags);
+							  unsigned char bidir, navAreaMask areaMask);
 	void deleteOffMeshConnection(int i);
 	void drawOffMeshConnections(struct duDebugDraw* dd, bool hilight = false);
 	///@}
@@ -92,7 +91,7 @@ public:
 	int getConvexVolumeCount() const { return m_volumeCount; }
 	const ConvexVolume* getConvexVolumes() const { return m_volumes; }
 	void addConvexVolume(const float* verts, const int nverts,
-						 const float minh, const float maxh, unsigned char area);
+						 const float minh, const float maxh, navAreaMask areaMask);
 	void deleteConvexVolume(int i);
 	void drawConvexVolumes(struct duDebugDraw* dd, bool hilight = false);
 	///@}

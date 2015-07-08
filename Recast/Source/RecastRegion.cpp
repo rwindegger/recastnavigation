@@ -46,7 +46,7 @@ static void calculateDistanceField(rcCompactHeightfield& chf, unsigned short* sr
 			for (int i = (int)c.index, ni = (int)(c.index+c.count); i < ni; ++i)
 			{
 				const rcCompactSpan& s = chf.spans[i];
-				const unsigned char area = chf.areas[i];
+				const navAreaMask area = chf.areaMasks[ i ];
 				
 				int nc = 0;
 				for (int dir = 0; dir < 4; ++dir)
@@ -56,7 +56,7 @@ static void calculateDistanceField(rcCompactHeightfield& chf, unsigned short* sr
 						const int ax = x + rcGetDirOffsetX(dir);
 						const int ay = y + rcGetDirOffsetY(dir);
 						const int ai = (int)chf.cells[ax+ay*w].index + rcGetCon(s, dir);
-						if (area == chf.areas[ai])
+						if (area == chf.areaMasks[ai])
 							nc++;
 					}
 				}
@@ -249,7 +249,7 @@ static bool floodRegion(int x, int y, int i,
 {
 	const int w = chf.width;
 	
-	const unsigned char area = chf.areas[i];
+	const navAreaMask area = chf.areaMasks[i];
 	
 	// Flood fill mark region.
 	stack.resize(0);
@@ -280,7 +280,7 @@ static bool floodRegion(int x, int y, int i,
 				const int ax = cx + rcGetDirOffsetX(dir);
 				const int ay = cy + rcGetDirOffsetY(dir);
 				const int ai = (int)chf.cells[ax+ay*w].index + rcGetCon(cs, dir);
-				if (chf.areas[ai] != area)
+				if (chf.areaMasks[ai] != area)
 					continue;
 				unsigned short nr = srcReg[ai];
 				if (nr & RC_BORDER_REG) // Do not take borders into account.
@@ -296,7 +296,7 @@ static bool floodRegion(int x, int y, int i,
 					const int ax2 = ax + rcGetDirOffsetX(dir2);
 					const int ay2 = ay + rcGetDirOffsetY(dir2);
 					const int ai2 = (int)chf.cells[ax2+ay2*w].index + rcGetCon(as, dir2);
-					if (chf.areas[ai2] != area)
+					if (chf.areaMasks[ai2] != area)
 						continue;
 					unsigned short nr2 = srcReg[ai2];
 					if (nr2 != 0 && nr2 != r)
@@ -319,7 +319,7 @@ static bool floodRegion(int x, int y, int i,
 				const int ax = cx + rcGetDirOffsetX(dir);
 				const int ay = cy + rcGetDirOffsetY(dir);
 				const int ai = (int)chf.cells[ax+ay*w].index + rcGetCon(cs, dir);
-				if (chf.areas[ai] != area)
+				if (chf.areaMasks[ai] != area)
 					continue;
 				if (chf.dist[ai] >= lev && srcReg[ai] == 0)
 				{
@@ -354,7 +354,7 @@ static unsigned short* expandRegions(int maxIter, unsigned short level,
 			const rcCompactCell& c = chf.cells[x+y*w];
 			for (int i = (int)c.index, ni = (int)(c.index+c.count); i < ni; ++i)
 			{
-				if (chf.dist[i] >= level && srcReg[i] == 0 && chf.areas[i] != RC_NULL_AREA)
+				if (chf.dist[i] >= level && srcReg[i] == 0 && chf.areaMasks[i] != RC_NULL_AREA)
 				{
 					stack.push(x);
 					stack.push(y);
@@ -385,7 +385,7 @@ static unsigned short* expandRegions(int maxIter, unsigned short level,
 			
 			unsigned short r = srcReg[i];
 			unsigned short d2 = 0xffff;
-			const unsigned char area = chf.areas[i];
+			const navAreaMask area = chf.areaMasks[i];
 			const rcCompactSpan& s = chf.spans[i];
 			for (int dir = 0; dir < 4; ++dir)
 			{
@@ -393,7 +393,7 @@ static unsigned short* expandRegions(int maxIter, unsigned short level,
 				const int ax = x + rcGetDirOffsetX(dir);
 				const int ay = y + rcGetDirOffsetY(dir);
 				const int ai = (int)chf.cells[ax+ay*w].index + rcGetCon(s, dir);
-				if (chf.areas[ai] != area) continue;
+				if (chf.areaMasks[ai] != area) continue;
 				if (srcReg[ai] > 0 && (srcReg[ai] & RC_BORDER_REG) == 0)
 				{
 					if ((int)srcDist[ai]+2 < (int)d2)
@@ -446,7 +446,7 @@ struct rcRegion
 	
 	int spanCount;					// Number of spans belonging to this region
 	unsigned short id;				// ID of the region
-	unsigned char areaType;			// Are type.
+	navAreaMask areaType;			// Are type.
 	bool remap;
 	bool visited;
 	rcIntArray connections;
@@ -743,7 +743,7 @@ static bool filterSmallRegions(rcContext* ctx, int minRegionArea, int mergeRegio
 				if (reg.connections.size() > 0)
 					continue;
 				
-				reg.areaType = chf.areas[i];
+				reg.areaType = chf.areaMasks[i];
 				
 				// Check if this cell is next to a border.
 				int ndir = -1;
@@ -1010,7 +1010,7 @@ static void paintRectRegion(int minx, int maxx, int miny, int maxy, unsigned sho
 			const rcCompactCell& c = chf.cells[x+y*w];
 			for (int i = (int)c.index, ni = (int)(c.index+c.count); i < ni; ++i)
 			{
-				if (chf.areas[i] != RC_NULL_AREA)
+				if (chf.areaMasks[i] != RC_NULL_AREA)
 					srcReg[i] = regId;
 			}
 		}
@@ -1107,7 +1107,7 @@ bool rcBuildRegionsMonotone(rcContext* ctx, rcCompactHeightfield& chf,
 			for (int i = (int)c.index, ni = (int)(c.index+c.count); i < ni; ++i)
 			{
 				const rcCompactSpan& s = chf.spans[i];
-				if (chf.areas[i] == RC_NULL_AREA) continue;
+				if (chf.areaMasks[i] == RC_NULL_AREA) continue;
 				
 				// -x
 				unsigned short previd = 0;
@@ -1116,7 +1116,7 @@ bool rcBuildRegionsMonotone(rcContext* ctx, rcCompactHeightfield& chf,
 					const int ax = x + rcGetDirOffsetX(0);
 					const int ay = y + rcGetDirOffsetY(0);
 					const int ai = (int)chf.cells[ax+ay*w].index + rcGetCon(s, 0);
-					if ((srcReg[ai] & RC_BORDER_REG) == 0 && chf.areas[i] == chf.areas[ai])
+					if ((srcReg[ai] & RC_BORDER_REG) == 0 && chf.areaMasks[i] == chf.areaMasks[ai])
 						previd = srcReg[ai];
 				}
 				
@@ -1134,7 +1134,7 @@ bool rcBuildRegionsMonotone(rcContext* ctx, rcCompactHeightfield& chf,
 					const int ax = x + rcGetDirOffsetX(3);
 					const int ay = y + rcGetDirOffsetY(3);
 					const int ai = (int)chf.cells[ax+ay*w].index + rcGetCon(s, 3);
-					if (srcReg[ai] && (srcReg[ai] & RC_BORDER_REG) == 0 && chf.areas[i] == chf.areas[ai])
+					if (srcReg[ai] && (srcReg[ai] & RC_BORDER_REG) == 0 && chf.areaMasks[i] == chf.areaMasks[ai])
 					{
 						unsigned short nr = srcReg[ai];
 						if (!sweeps[previd].nei || sweeps[previd].nei == nr)
@@ -1296,7 +1296,7 @@ bool rcBuildRegions(rcContext* ctx, rcCompactHeightfield& chf,
 				const rcCompactCell& c = chf.cells[x+y*w];
 				for (int i = (int)c.index, ni = (int)(c.index+c.count); i < ni; ++i)
 				{
-					if (chf.dist[i] < level || srcReg[i] != 0 || chf.areas[i] == RC_NULL_AREA)
+					if (chf.dist[i] < level || srcReg[i] != 0 || chf.areaMasks[i] == RC_NULL_AREA)
 						continue;
 					if (floodRegion(x, y, i, level, regionId, chf, srcReg, srcDist, stack))
 						regionId++;

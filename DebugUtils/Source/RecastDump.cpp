@@ -171,7 +171,7 @@ bool duDumpContourSet(struct rcContourSet& cset, duFileIO* io)
 		io->write(&cont.nverts, sizeof(cont.nverts));
 		io->write(&cont.nrverts, sizeof(cont.nrverts));
 		io->write(&cont.reg, sizeof(cont.reg));
-		io->write(&cont.area, sizeof(cont.area));
+		io->write(&cont.areaMask, sizeof(cont.areaMask));
 		io->write(cont.verts, sizeof(int)*4*cont.nverts);
 		io->write(cont.rverts, sizeof(int)*4*cont.nrverts);
 	}
@@ -235,7 +235,7 @@ bool duReadContourSet(struct rcContourSet& cset, duFileIO* io)
 		io->read(&cont.nverts, sizeof(cont.nverts));
 		io->read(&cont.nrverts, sizeof(cont.nrverts));
 		io->read(&cont.reg, sizeof(cont.reg));
-		io->read(&cont.area, sizeof(cont.area));
+		io->read(&cont.areaMask, sizeof(cont.areaMask));
 
 		cont.verts = (int*)rcAlloc(sizeof(int)*4*cont.nverts, RC_ALLOC_PERM);
 		if (!cont.verts)
@@ -298,7 +298,7 @@ bool duDumpCompactHeightfield(struct rcCompactHeightfield& chf, duFileIO* io)
 	if (chf.cells) tmp |= 1;
 	if (chf.spans) tmp |= 2;
 	if (chf.dist) tmp |= 4;
-	if (chf.areas) tmp |= 8;
+	if (chf.areaMasks) tmp |= 8;
 
 	io->write(&tmp, sizeof(tmp));
 
@@ -308,8 +308,8 @@ bool duDumpCompactHeightfield(struct rcCompactHeightfield& chf, duFileIO* io)
 		io->write(chf.spans, sizeof(rcCompactSpan)*chf.spanCount);
 	if (chf.dist)
 		io->write(chf.dist, sizeof(unsigned short)*chf.spanCount);
-	if (chf.areas)
-		io->write(chf.areas, sizeof(unsigned char)*chf.spanCount);
+	if (chf.areaMasks)
+		io->write(chf.areaMasks, sizeof(navAreaMask)*chf.spanCount);
 
 	return true;
 }
@@ -396,13 +396,13 @@ bool duReadCompactHeightfield(struct rcCompactHeightfield& chf, duFileIO* io)
 	}
 	if (tmp & 8)
 	{
-		chf.areas = (unsigned char*)rcAlloc(sizeof(unsigned char)*chf.spanCount, RC_ALLOC_PERM);
-		if (!chf.areas)
+		chf.areaMasks = (navAreaMask*)rcAlloc(sizeof(navAreaMask)*chf.spanCount, RC_ALLOC_PERM);
+		if (!chf.areaMasks)
 		{
 			printf("duReadCompactHeightfield: Could not alloc areas (%d)\n", chf.spanCount);
 			return false;
 		}
-		io->read(chf.areas, sizeof(unsigned char)*chf.spanCount);
+		io->read(chf.areaMasks, sizeof(navAreaMask)*chf.spanCount);
 	}
 	
 	return true;

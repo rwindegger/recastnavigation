@@ -1266,8 +1266,7 @@ struct dtTileState
 
 struct dtPolyState
 {
-	unsigned short flags;						// Flags (see dtPolyFlags).
-	unsigned char area;							// Area ID of the polygon.
+	navAreaMask		areaMask;				// Flags (see dtPolyFlags).
 };
 
 ///  @see #storeTileState
@@ -1304,8 +1303,7 @@ dtStatus dtNavMesh::storeTileState(const dtMeshTile* tile, unsigned char* data, 
 	{
 		const dtPoly* p = &tile->polys[i];
 		dtPolyState* s = &polyStates[i];
-		s->flags = p->flags;
-		s->area = p->getArea();
+		s->areaMask = p->areaMask;
 	}
 	
 	return DT_SUCCESS;
@@ -1339,8 +1337,7 @@ dtStatus dtNavMesh::restoreTileState(dtMeshTile* tile, const unsigned char* data
 	{
 		dtPoly* p = &tile->polys[i];
 		const dtPolyState* s = &polyStates[i];
-		p->flags = s->flags;
-		p->setArea(s->area);
+		p->areaMask = s->areaMask;
 	}
 	
 	return DT_SUCCESS;
@@ -1421,7 +1418,7 @@ const dtOffMeshConnection* dtNavMesh::getOffMeshConnectionByRef(dtPolyRef ref) c
 }
 
 
-dtStatus dtNavMesh::setPolyFlags(dtPolyRef ref, unsigned short flags)
+dtStatus dtNavMesh::setPolyFlags(dtPolyRef ref, navAreaMask areaMask)
 {
 	if (!ref) return DT_FAILURE;
 	unsigned int salt, it, ip;
@@ -1433,12 +1430,12 @@ dtStatus dtNavMesh::setPolyFlags(dtPolyRef ref, unsigned short flags)
 	dtPoly* poly = &tile->polys[ip];
 	
 	// Change flags.
-	poly->flags = flags;
+	poly->areaMask = areaMask;
 	
 	return DT_SUCCESS;
 }
 
-dtStatus dtNavMesh::getPolyFlags(dtPolyRef ref, unsigned short* resultFlags) const
+dtStatus dtNavMesh::getPolyFlags(dtPolyRef ref, navAreaMask* resultFlags) const
 {
 	if (!ref) return DT_FAILURE;
 	unsigned int salt, it, ip;
@@ -1449,40 +1446,7 @@ dtStatus dtNavMesh::getPolyFlags(dtPolyRef ref, unsigned short* resultFlags) con
 	if (ip >= (unsigned int)tile->header->polyCount) return DT_FAILURE | DT_INVALID_PARAM;
 	const dtPoly* poly = &tile->polys[ip];
 
-	*resultFlags = poly->flags;
+	*resultFlags = poly->areaMask;
 	
 	return DT_SUCCESS;
 }
-
-dtStatus dtNavMesh::setPolyArea(dtPolyRef ref, unsigned char area)
-{
-	if (!ref) return DT_FAILURE;
-	unsigned int salt, it, ip;
-	decodePolyId(ref, salt, it, ip);
-	if (it >= (unsigned int)m_maxTiles) return DT_FAILURE | DT_INVALID_PARAM;
-	if (m_tiles[it].salt != salt || m_tiles[it].header == 0) return DT_FAILURE | DT_INVALID_PARAM;
-	dtMeshTile* tile = &m_tiles[it];
-	if (ip >= (unsigned int)tile->header->polyCount) return DT_FAILURE | DT_INVALID_PARAM;
-	dtPoly* poly = &tile->polys[ip];
-	
-	poly->setArea(area);
-	
-	return DT_SUCCESS;
-}
-
-dtStatus dtNavMesh::getPolyArea(dtPolyRef ref, unsigned char* resultArea) const
-{
-	if (!ref) return DT_FAILURE;
-	unsigned int salt, it, ip;
-	decodePolyId(ref, salt, it, ip);
-	if (it >= (unsigned int)m_maxTiles) return DT_FAILURE | DT_INVALID_PARAM;
-	if (m_tiles[it].salt != salt || m_tiles[it].header == 0) return DT_FAILURE | DT_INVALID_PARAM;
-	const dtMeshTile* tile = &m_tiles[it];
-	if (ip >= (unsigned int)tile->header->polyCount) return DT_FAILURE | DT_INVALID_PARAM;
-	const dtPoly* poly = &tile->polys[ip];
-	
-	*resultArea = poly->getArea();
-	
-	return DT_SUCCESS;
-}
-

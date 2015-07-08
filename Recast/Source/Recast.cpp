@@ -105,7 +105,7 @@ void rcFreeCompactHeightfield(rcCompactHeightfield* chf)
 	rcFree(chf->cells);
 	rcFree(chf->spans);
 	rcFree(chf->dist);
-	rcFree(chf->areas);
+	rcFree(chf->areaMasks);
 	rcFree(chf);
 }
 
@@ -123,7 +123,7 @@ void rcFreeHeightfieldLayerSet(rcHeightfieldLayerSet* lset)
 	for (int i = 0; i < lset->nlayers; ++i)
 	{
 		rcFree(lset->layers[i].heights);
-		rcFree(lset->layers[i].areas);
+		rcFree(lset->layers[i].areaMasks);
 		rcFree(lset->layers[i].cons);
 	}
 	rcFree(lset->layers);
@@ -163,8 +163,7 @@ void rcFreePolyMesh(rcPolyMesh* pmesh)
 	rcFree(pmesh->verts);
 	rcFree(pmesh->polys);
 	rcFree(pmesh->regs);
-	rcFree(pmesh->flags);
-	rcFree(pmesh->areas);
+	rcFree(pmesh->areaMasks);
 	rcFree(pmesh);
 }
 
@@ -247,7 +246,7 @@ static void calcTriNormal(const float* v0, const float* v1, const float* v2, flo
 void rcMarkWalkableTriangles(rcContext* ctx, const float walkableSlopeAngle,
 							 const float* verts, int /*nv*/,
 							 const int* tris, int nt,
-							 unsigned char* areas)
+							 navAreaMask* areaMask)
 {
 	rcIgnoreUnused(ctx);
 	
@@ -261,7 +260,7 @@ void rcMarkWalkableTriangles(rcContext* ctx, const float walkableSlopeAngle,
 		calcTriNormal(&verts[tri[0]*3], &verts[tri[1]*3], &verts[tri[2]*3], norm);
 		// Check if the face is walkable.
 		if (norm[1] > walkableThr)
-			areas[i] = RC_WALKABLE_AREA;
+			areaMask[i] = RC_WALKABLE_AREA;
 	}
 }
 
@@ -307,7 +306,7 @@ int rcGetHeightFieldSpanCount(rcContext* ctx, rcHeightfield& hf)
 		{
 			for (rcSpan* s = hf.spans[x + y*w]; s; s = s->next)
 			{
-				if (s->area != RC_NULL_AREA)
+				if (s->areaMask != RC_NULL_AREA)
 					spanCount++;
 			}
 		}
@@ -361,13 +360,13 @@ bool rcBuildCompactHeightfield(rcContext* ctx, const int walkableHeight, const i
 		return false;
 	}
 	memset(chf.spans, 0, sizeof(rcCompactSpan)*spanCount);
-	chf.areas = (unsigned char*)rcAlloc(sizeof(unsigned char)*spanCount, RC_ALLOC_PERM);
-	if (!chf.areas)
+	chf.areaMasks = (navAreaMask*)rcAlloc( sizeof( navAreaMask )*spanCount, RC_ALLOC_PERM );
+	if (!chf.areaMasks)
 	{
 		ctx->log(RC_LOG_ERROR, "rcBuildCompactHeightfield: Out of memory 'chf.areas' (%d)", spanCount);
 		return false;
 	}
-	memset(chf.areas, RC_NULL_AREA, sizeof(unsigned char)*spanCount);
+	memset(chf.areaMasks, RC_NULL_AREA, sizeof(navAreaMask)*spanCount);
 	
 	const int MAX_HEIGHT = 0xffff;
 	
@@ -385,13 +384,13 @@ bool rcBuildCompactHeightfield(rcContext* ctx, const int walkableHeight, const i
 			c.count = 0;
 			while (s)
 			{
-				if (s->area != RC_NULL_AREA)
+				if (s->areaMask != RC_NULL_AREA)
 				{
 					const int bot = (int)s->smax;
 					const int top = s->next ? (int)s->next->smin : MAX_HEIGHT;
 					chf.spans[idx].y = (unsigned short)rcClamp(bot, 0, 0xffff);
 					chf.spans[idx].h = (unsigned char)rcClamp(top - bot, 0, 0xff);
-					chf.areas[idx] = s->area;
+					chf.areaMasks[idx] = s->areaMask;
 					idx++;
 					c.count++;
 				}

@@ -184,11 +184,10 @@ struct MeshProcess : public dtTileCacheMeshProcess
 		m_geom = geom;
 	}
 	
-	virtual void process(struct dtNavMeshCreateParams* params,
-						 unsigned char* polyAreas, unsigned short* polyFlags)
+	virtual void process(struct dtNavMeshCreateParams* params, navAreaMask* areaMasks)
 	{
 		// Update poly flags from areas.
-		for (int i = 0; i < params->polyCount; ++i)
+		/*for (int i = 0; i < params->polyCount; ++i)
 		{
 			if (polyAreas[i] == DT_TILECACHE_WALKABLE_AREA)
 				polyAreas[i] = SAMPLE_POLYAREA_GROUND;
@@ -197,17 +196,17 @@ struct MeshProcess : public dtTileCacheMeshProcess
 				polyAreas[i] == SAMPLE_POLYAREA_GRASS ||
 				polyAreas[i] == SAMPLE_POLYAREA_ROAD)
 			{
-				polyFlags[i] = SAMPLE_POLYFLAGS_WALK;
+				polyFlags[i] = AREAFLAGS_WALK;
 			}
 			else if (polyAreas[i] == SAMPLE_POLYAREA_WATER)
 			{
-				polyFlags[i] = SAMPLE_POLYFLAGS_SWIM;
+				polyFlags[i] = AREAFLAGS_SWIM;
 			}
 			else if (polyAreas[i] == SAMPLE_POLYAREA_DOOR)
 			{
-				polyFlags[i] = SAMPLE_POLYFLAGS_WALK | SAMPLE_POLYFLAGS_DOOR;
+				polyFlags[i] = AREAFLAGS_WALK | AREAFLAGS_DOOR;
 			}
-		}
+		}*/
 
 		// Pass in off-mesh connections.
 		if (m_geom)
@@ -215,8 +214,7 @@ struct MeshProcess : public dtTileCacheMeshProcess
 			params->offMeshConVerts = m_geom->getOffMeshConnectionVerts();
 			params->offMeshConRad = m_geom->getOffMeshConnectionRads();
 			params->offMeshConDir = m_geom->getOffMeshConnectionDirs();
-			params->offMeshConAreas = m_geom->getOffMeshConnectionAreas();
-			params->offMeshConFlags = m_geom->getOffMeshConnectionFlags();
+			params->offMeshConAreaFlags = m_geom->getOffMeshConnectionAreaMask();
 			params->offMeshConUserID = m_geom->getOffMeshConnectionId();
 			params->offMeshConCount = m_geom->getOffMeshConnectionCount();	
 		}
@@ -238,7 +236,7 @@ struct RasterizationContext
 {
 	RasterizationContext() :
 		solid(0),
-		triareas(0),
+		triareaMask( 0 ),
 		lset(0),
 		chf(0),
 		ntiles(0)
@@ -249,7 +247,7 @@ struct RasterizationContext
 	~RasterizationContext()
 	{
 		rcFreeHeightField(solid);
-		delete [] triareas;
+		delete [] triareaMask;
 		rcFreeHeightfieldLayerSet(lset);
 		rcFreeCompactHeightfield(chf);
 		for (int i = 0; i < MAX_LAYERS; ++i)
@@ -260,7 +258,7 @@ struct RasterizationContext
 	}
 	
 	rcHeightfield* solid;
-	unsigned char* triareas;
+	navAreaMask* triareaMask;
 	rcHeightfieldLayerSet* lset;
 	rcCompactHeightfield* chf;
 	TileCacheData tiles[MAX_LAYERS];
@@ -319,8 +317,8 @@ static int rasterizeTileLayers(BuildContext* ctx, InputGeom* geom,
 	// Allocate array that can hold triangle flags.
 	// If you have multiple meshes you need to process, allocate
 	// and array which can hold the max number of triangles you need to process.
-	rc.triareas = new unsigned char[chunkyMesh->maxTrisPerChunk];
-	if (!rc.triareas)
+	rc.triareaMask = new navAreaMask[chunkyMesh->maxTrisPerChunk];
+	if (!rc.triareaMask)
 	{
 		ctx->log(RC_LOG_ERROR, "buildNavigation: Out of memory 'm_triareas' (%d).", chunkyMesh->maxTrisPerChunk);
 		return 0;
@@ -344,11 +342,11 @@ static int rasterizeTileLayers(BuildContext* ctx, InputGeom* geom,
 		const int* tris = &chunkyMesh->tris[node.i*3];
 		const int ntris = node.n;
 		
-		memset(rc.triareas, 0, ntris*sizeof(unsigned char));
+		memset(rc.triareaMask, 0, ntris*sizeof(navAreaMask));
 		rcMarkWalkableTriangles(ctx, tcfg.walkableSlopeAngle,
-								verts, nverts, tris, ntris, rc.triareas);
+								verts, nverts, tris, ntris, rc.triareaMask);
 		
-		rcRasterizeTriangles(ctx, verts, nverts, tris, rc.triareas, ntris, *rc.solid, tcfg.walkableClimb);
+		rcRasterizeTriangles(ctx, verts, nverts, tris, rc.triareaMask, ntris, *rc.solid, tcfg.walkableClimb);
 	}
 	
 	// Once all geometry is rasterized, we do initial pass of filtering to
@@ -384,7 +382,7 @@ static int rasterizeTileLayers(BuildContext* ctx, InputGeom* geom,
 	{
 		rcMarkConvexPolyArea(ctx, vols[i].verts, vols[i].nverts,
 							 vols[i].hmin, vols[i].hmax,
-							 (unsigned char)vols[i].area, *rc.chf);
+							 vols[i].areaMask, *rc.chf);
 	}
 	
 	rc.lset = rcAllocHeightfieldLayerSet();
@@ -427,7 +425,7 @@ static int rasterizeTileLayers(BuildContext* ctx, InputGeom* geom,
 		header.hmin = (unsigned short)layer->hmin;
 		header.hmax = (unsigned short)layer->hmax;
 
-		dtStatus status = dtBuildTileCacheLayer(&comp, &header, layer->heights, layer->areas, layer->cons,
+		dtStatus status = dtBuildTileCacheLayer(&comp, &header, layer->heights, layer->areaMasks, layer->cons,
 												&tile->data, &tile->dataSize);
 		if (dtStatusFailed(status))
 		{
@@ -1062,7 +1060,7 @@ void Sample_TempObstacles::handleRender()
 			duDebugDrawNavMeshPortals(&dd, *m_navMesh);
 		if (m_drawMode == DRAWMODE_NAVMESH_NODES)
 			duDebugDrawNavMeshNodes(&dd, *m_navQuery);
-		duDebugDrawNavMeshPolysWithFlags(&dd, *m_navMesh, SAMPLE_POLYFLAGS_DISABLED, duRGBA(0,0,0,128));
+		duDebugDrawNavMeshPolysWithFlags(&dd, *m_navMesh, AREAFLAGS_DISABLED, duRGBA(0,0,0,128));
 	}
 	
 	

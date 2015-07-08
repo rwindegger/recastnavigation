@@ -63,7 +63,7 @@ public:
 		}
 		m_size = n;
 	}
-	inline void push(int item) { resize(m_size+1); m_data[m_size-1] = item; }
+	inline void push(dtPolyRef item) { resize(m_size+1); m_data[m_size-1] = item; }
 	inline dtPolyRef pop() { if (m_size > 0) m_size--; return m_data[m_size]; }
 	inline const dtPolyRef& operator[](int i) const { return m_data[i]; }
 	inline dtPolyRef& operator[](int i) { return m_data[i]; }
@@ -211,9 +211,9 @@ static void disableUnvisitedPolys(dtNavMesh* nav, NavmeshFlags* flags)
 			const dtPolyRef ref = base | (unsigned int)j;
 			if (!flags->getFlags(ref))
 			{
-				unsigned short f = 0;
+				navAreaMask f = 0;
 				nav->getPolyFlags(ref, &f);
-				nav->setPolyFlags(ref, f | SAMPLE_POLYFLAGS_DISABLED);
+				nav->setPolyFlags(ref, f | AREAFLAGS_DISABLED);
 			}
 		}
 	}

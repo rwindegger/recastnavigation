@@ -29,7 +29,7 @@ protected:
 	bool m_keepInterResults;
 	float m_totalBuildTimeMs;
 
-	unsigned char* m_triareas;
+	navAreaMask* m_triareaMasks;
 	rcHeightfield* m_solid;
 	rcCompactHeightfield* m_chf;
 	rcContourSet* m_cset;

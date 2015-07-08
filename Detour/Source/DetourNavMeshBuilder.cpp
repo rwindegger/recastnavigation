@@ -490,9 +490,8 @@ bool dtCreateNavMeshData(dtNavMeshCreateParams* params, unsigned char** outData,
 	{
 		dtPoly* p = &navPolys[i];
 		p->vertCount = 0;
-		p->flags = params->polyFlags[i];
-		p->setArea(params->polyAreas[i]);
-		p->setType(DT_POLYTYPE_GROUND);
+		p->areaMask = params->areaMasks[i];
+		p->setPolyType(DT_POLYTYPE_GROUND);
 		for (int j = 0; j < nvp; ++j)
 		{
 			if (src[j] == MESH_NULL_IDX) break;
@@ -533,9 +532,8 @@ bool dtCreateNavMeshData(dtNavMeshCreateParams* params, unsigned char** outData,
 			p->vertCount = 2;
 			p->verts[0] = (unsigned short)(offMeshVertsBase + n*2+0);
 			p->verts[1] = (unsigned short)(offMeshVertsBase + n*2+1);
-			p->flags = params->offMeshConFlags[i];
-			p->setArea(params->offMeshConAreas[i]);
-			p->setType(DT_POLYTYPE_OFFMESH_CONNECTION);
+			p->areaMask = params->offMeshConAreaFlags[i];
+			p->setPolyType(DT_POLYTYPE_OFFMESH_CONNECTION);
 			n++;
 		}
 	}
@@ -730,7 +728,7 @@ bool dtNavMeshDataSwapEndian(unsigned char* data, const int /*dataSize*/)
 			dtSwapEndian(&p->verts[j]);
 			dtSwapEndian(&p->neis[j]);
 		}
-		dtSwapEndian(&p->flags);
+		dtSwapEndian(&p->areaMask);
 	}
 
 	// Links are rebuild when tile is added, no need to swap.
