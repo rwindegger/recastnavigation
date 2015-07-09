@@ -84,7 +84,13 @@ float dtQueryFilter::getCost(const float* pa, const float* pb,
 							 const dtPolyRef /*curRef*/, const dtMeshTile* /*curTile*/, const dtPoly* curPoly,
 							 const dtPolyRef /*nextRef*/, const dtMeshTile* /*nextTile*/, const dtPoly* /*nextPoly*/) const
 {
-	return dtVdist(pa, pb) * m_areaCost[curPoly->getArea()];
+	float cost = 1.0f;
+	for ( int i = 0; i < MAX_AREA_COSTS; ++i )
+	{
+		if ( ( m_costMask[ i ] & curPoly->areaMask ) == m_costMask[ i ] )
+			cost = m_areaCost[ i ] > cost ? m_areaCost[ i ] : cost;
+	}
+	return dtVdist( pa, pb ) * cost;
 }
 #else
 inline bool dtQueryFilter::passFilter(const dtPolyRef /*ref*/,

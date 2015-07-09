@@ -617,10 +617,12 @@ void dtNavMesh::baseOffMeshLinks(dtMeshTile* tile)
 	}
 }
 
-void dtNavMesh::closestPointOnPolyInTile(const dtMeshTile* tile, unsigned int ip,
-										 const float* pos, float* closest) const
+void dtNavMesh::closestPointOnPoly(dtPolyRef ref, const float* pos, float* closest, bool* posOverPoly) const
 {
-	const dtPoly* poly = &tile->polys[ip];
+	const dtMeshTile* tile = 0;
+	const dtPoly* poly = 0;
+	getTileAndPolyByRefUnsafe(ref, &tile, &poly);
+	
 	// Off-mesh connections don't have detail polygons.
 	if (poly->getType() == DT_POLYTYPE_OFFMESH_CONNECTION)
 	{
@@ -630,9 +632,12 @@ void dtNavMesh::closestPointOnPolyInTile(const dtMeshTile* tile, unsigned int ip
 		const float d1 = dtVdist(pos, v1);
 		const float u = d0 / (d0+d1);
 		dtVlerp(closest, v0, v1, u);
+		if (posOverPoly)
+			*posOverPoly = false;
 		return;
 	}
 	
+	const unsigned int ip = (unsigned int)(poly - tile->polys);
 	const dtPolyDetail* pd = &tile->detailMeshes[ip];
 
 	// Clamp point to be inside the polygon.
@@ -660,6 +665,14 @@ void dtNavMesh::closestPointOnPolyInTile(const dtMeshTile* tile, unsigned int ip
 		const float* va = &verts[imin*3];
 		const float* vb = &verts[((imin+1)%nv)*3];
 		dtVlerp(closest, va, vb, edget[imin]);
+		
+		if (posOverPoly)
+			*posOverPoly = false;
+	}
+	else
+	{
+		if (posOverPoly)
+			*posOverPoly = true;
 	}
 	
 	// Find height at the location.
@@ -702,8 +715,24 @@ dtPolyRef dtNavMesh::findNearestPolyInTile(const dtMeshTile* tile,
 	{
 		dtPolyRef ref = polys[i];
 		float closestPtPoly[3];
-		closestPointOnPolyInTile(tile, decodePolyIdPoly(ref), center, closestPtPoly);
-		float d = dtVdistSqr(center, closestPtPoly);
+		float diff[3];
+		bool posOverPoly = false;
+		float d = 0;
+		closestPointOnPoly(ref, center, closestPtPoly, &posOverPoly);
+
+		// If a point is directly over a polygon and closer than
+		// climb height, favor that instead of straight line nearest point.
+		dtVsub(diff, center, closestPtPoly);
+		if (posOverPoly)
+		{
+			d = dtAbs(diff[1]) - tile->header->walkableClimb;
+			d = d > 0 ? d*d : 0;			
+		}
+		else
+		{
+			d = dtVlenSqr(diff);
+		}
+		
 		if (d < nearestDistanceSqr)
 		{
 			if (nearestPt)
@@ -1035,6 +1064,31 @@ int dtNavMesh::getTilesAt(const int x, const int y, dtMeshTile const** tiles, co
 	return n;
 }
 
+void dtNavMesh::queryTiles(const float bmin[3], const float bmax[3], dtTileCallback callback, void * userdata) const 
+{
+	const int tx0 = (int)dtMathFloorf((bmin[0]-m_params.orig[0]) / m_tileWidth);
+	const int tx1 = (int)dtMathFloorf((bmax[0]-m_params.orig[0]) / m_tileWidth);
+	const int ty0 = (int)dtMathFloorf((bmin[2]-m_params.orig[2]) / m_tileHeight);
+	const int ty1 = (int)dtMathFloorf((bmax[2]-m_params.orig[2]) / m_tileHeight);
+
+	for (int ty = ty0; ty <= ty1; ++ty)
+	{
+		for (int tx = tx0; tx <= tx1; ++tx)
+		{
+			enum { MaxTiles = 32 };
+			const dtMeshTile * tmpTiles[ MaxTiles ];
+
+			const int ntiles = getTilesAt(tx,ty,tmpTiles,MaxTiles);
+			for (int i = 0; i < ntiles; ++i)
+			{
+				if (dtOverlapBounds(bmin,bmax, tmpTiles[ i ]->header->bmin, tmpTiles[ i ]->header->bmax))
+				{
+					callback( tmpTiles[i], userdata );
+				}
+			}
+		}
+	}
+}
 
 dtTileRef dtNavMesh::getTileRefAt(const int x, const int y, const int layer) const
 {
@@ -1064,6 +1118,20 @@ const dtMeshTile* dtNavMesh::getTileByRef(dtTileRef ref) const
 	if ((int)tileIndex >= m_maxTiles)
 		return 0;
 	const dtMeshTile* tile = &m_tiles[tileIndex];
+	if (tile->salt != tileSalt)
+		return 0;
+	return tile;
+}
+
+dtMeshTile* dtNavMesh::getTileByRef(dtTileRef ref)
+{
+	if (!ref)
+		return 0;
+	unsigned int tileIndex = decodePolyIdTile((dtPolyRef)ref);
+	unsigned int tileSalt = decodePolyIdSalt((dtPolyRef)ref);
+	if ((int)tileIndex >= m_maxTiles)
+		return 0;
+	dtMeshTile* tile = &m_tiles[tileIndex];
 	if (tile->salt != tileSalt)
 		return 0;
 	return tile;
@@ -1450,3 +1518,4 @@ dtStatus dtNavMesh::getPolyFlags(dtPolyRef ref, navAreaMask* resultFlags) const
 	
 	return DT_SUCCESS;
 }
+

@@ -23,11 +23,6 @@
 #include "DetourAlloc.h"
 #include "DetourStatus.h"
 
-// Undefine (or define in a build cofnig) the following line to use 64bit polyref.
-// Generally not needed, useful for very large worlds.
-// Note: tiles build using 32bit refs are not compatible with 64bit refs!
-//#define DT_POLYREF64 1
-
 #ifdef DT_POLYREF64
 // TODO: figure out a multiplatform version of uint64_t
 // - maybe: https://code.google.com/p/msinttypes/
@@ -90,10 +85,6 @@ static const unsigned int DT_NULL_LINK = 0xffffffff;
 
 /// A flag that indicates that an off-mesh connection can be traversed in both directions. (Is bidirectional.)
 static const unsigned int DT_OFFMESH_CON_BIDIR = 1;
-
-/// The maximum number of user defined area ids.
-/// @ingroup detour
-//static const int DT_MAX_AREAS = 64;
 
 /// Tile flags used for various functions and fields.
 /// For an example, see dtNavMesh::addTile().
@@ -292,6 +283,8 @@ struct dtNavMeshParams
 	int maxPolys;					///< The maximum number of polygons each tile can contain.
 };
 
+typedef void( *dtTileCallback )( const dtMeshTile * tile, void * userdata );
+
 /// A navigation mesh based on tiles of convex polygons.
 /// @ingroup detour
 class dtNavMesh
@@ -362,6 +355,8 @@ public:
 	int getTilesAt(const int x, const int y,
 				   dtMeshTile const** tiles, const int maxTiles) const;
 	
+	void queryTiles( const float mins[ 3 ], const float maxs[ 3 ], dtTileCallback callback, void * userdata ) const;
+
 	/// Gets the tile reference for the tile at specified grid location.
 	///  @param[in]	x		The tile's x-location. (x, y, layer)
 	///  @param[in]	y		The tile's y-location. (x, y, layer)
@@ -559,6 +554,7 @@ private:
 
 	/// Returns pointer to tile in the tile array.
 	dtMeshTile* getTile(int i);
+	dtMeshTile* getTileByRef(dtTileRef ref);
 
 	/// Returns neighbour tile based on side.
 	int getTilesAt(const int x, const int y,
@@ -596,8 +592,7 @@ private:
 	dtPolyRef findNearestPolyInTile(const dtMeshTile* tile, const float* center,
 									const float* extents, float* nearestPt) const;
 	/// Returns closest point on polygon.
-	void closestPointOnPolyInTile(const dtMeshTile* tile, unsigned int ip,
-								  const float* pos, float* closest) const;
+	void closestPointOnPoly(dtPolyRef ref, const float* pos, float* closest, bool* posOverPoly) const;
 	
 	dtNavMeshParams m_params;			///< Current initialization params. TODO: do not store this info twice.
 	float m_orig[3];					///< Origin of the tile (0,0)
