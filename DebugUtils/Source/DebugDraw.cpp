@@ -33,7 +33,7 @@ inline int bit(int a, int b)
 	return (a & (1 << b)) >> b;
 }
 
-unsigned int duIntToCol(int i, int a)
+unsigned int duIntToCol(unsigned int i, int a)
 {
 	int	r = bit(i, 1) + bit(i, 3) * 2 + 1;
 	int	g = bit(i, 2) + bit(i, 4) * 2 + 1;
@@ -41,7 +41,7 @@ unsigned int duIntToCol(int i, int a)
 	return duRGBA(r*63,g*63,b*63,a);
 }
 
-void duIntToCol(int i, float* col)
+void duIntToCol( unsigned int i, float* col )
 {
 	int	r = bit(i, 0) + bit(i, 3) * 2 + 1;
 	int	g = bit(i, 1) + bit(i, 4) * 2 + 1;

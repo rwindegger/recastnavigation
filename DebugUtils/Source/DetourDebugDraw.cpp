@@ -21,7 +21,7 @@
 #include "DetourNavMesh.h"
 #include "DetourCommon.h"
 #include "DetourNode.h"
-
+#include "DetourMath.h"
 
 static float distancePtLine2d(const float* pt, const float* p, const float* q)
 {

@@ -250,7 +250,8 @@ If the target is within range, it will be the last corner and have a polygon ref
 */
 int dtPathCorridor::findCorners(float* cornerVerts, unsigned char* cornerFlags,
 							  dtPolyRef* cornerPolys, const int maxCorners,
-							  dtNavMeshQuery* navquery, const dtQueryFilter* /*filter*/)
+							  dtNavMeshQuery* navquery, const dtQueryFilter* /*filter*/,
+							  int options )
 {
 	dtAssert(m_path);
 	dtAssert(m_npath);

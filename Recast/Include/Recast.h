@@ -882,7 +882,7 @@ void rcFilterWalkableLowHeightSpans(rcContext* ctx, int walkableHeight, rcHeight
 struct rcHeightThreshold
 {
 	int				height;
-	unsigned int	flag;
+	navAreaMask 	flag;
 };
 void rcFilterHeightThresholds( rcContext* ctx, const rcHeightThreshold *heights, int numHeights, rcHeightfield& solid );
 

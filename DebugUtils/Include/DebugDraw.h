@@ -90,8 +90,8 @@ inline unsigned int duRGBAf(float fr, float fg, float fb, float fa)
 	return duRGBA(r,g,b,a);
 }
 
-unsigned int duIntToCol(int i, int a);
-void duIntToCol(int i, float* col);
+unsigned int duIntToCol( unsigned int i, int a );
+void duIntToCol( unsigned int i, float* col );
 
 inline unsigned int duMultCol(const unsigned int col, const unsigned int d)
 {
