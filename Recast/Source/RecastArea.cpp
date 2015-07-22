@@ -352,7 +352,7 @@ void rcMarkBoxArea(rcContext* ctx, const float* bmin, const float* bmax, navArea
 				if ((int)s.y >= miny && (int)s.y <= maxy)
 				{
 					if (chf.areaMasks[i] != RC_NULL_AREA)
-						chf.areaMasks[ i ] = areaId;
+						chf.areaMasks[ i ] |= areaId;
 				}
 			}
 		}

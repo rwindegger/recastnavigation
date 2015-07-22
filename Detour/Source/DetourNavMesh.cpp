@@ -735,7 +735,6 @@ dtPolyRef dtNavMesh::findNearestPolyInTile(const dtMeshTile* tile,
 		
 		if (d < nearestDistanceSqr)
 		{
-			if (nearestPt)
 				dtVcopy(nearestPt, closestPtPoly);
 			nearestDistanceSqr = d;
 			nearest = ref;

@@ -115,6 +115,8 @@ static void drawPolyBoundaries(duDebugDraw* dd, const dtMeshTile* tile,
 	dd->end();
 }
 
+unsigned int dtAreaMaskColor( navAreaMask mask );
+
 static void drawMeshTile(duDebugDraw* dd, const dtNavMesh& mesh, const dtNavMeshQuery* query,
 						 const dtMeshTile* tile, unsigned char flags)
 {
@@ -144,10 +146,7 @@ static void drawMeshTile(duDebugDraw* dd, const dtNavMesh& mesh, const dtNavMesh
 			}
 			else
 			{
-				if (p->areaMask == 0) // Treat zero area type as default.
-					col = duRGBA(0,192,255,64);
-				else
-					col = duIntToCol(p->areaMask, 64);
+				col = dtAreaMaskColor( p->areaMask );
 			}
 		}
 		
@@ -184,7 +183,7 @@ static void drawMeshTile(duDebugDraw* dd, const dtNavMesh& mesh, const dtNavMesh
 			if (query && query->isInClosedList(base | (dtPolyRef)i))
 				col = duRGBA(255,196,0,220);
 			else
-				col = duDarkenCol(duIntToCol(p->areaMask, 220));
+				col = duDarkenCol( dtAreaMaskColor( p->areaMask ) );
 			
 			const dtOffMeshConnection* con = &tile->offMeshCons[i - tile->header->offMeshBase];
 			const float* va = &tile->verts[p->verts[0]*3];
@@ -221,7 +220,7 @@ static void drawMeshTile(duDebugDraw* dd, const dtNavMesh& mesh, const dtNavMesh
 			
 			// Connection arc.
 			duAppendArc(dd, con->pos[0],con->pos[1],con->pos[2], con->pos[3],con->pos[4],con->pos[5], 0.25f,
-						(con->flags & 1) ? 0.6f : 0, 0.6f, col);
+						(con->flags & DT_OFFMESH_CON_BIDIR) ? 0.6f : 0, 0.6f, col);
 		}
 		dd->end();
 	}
@@ -750,7 +749,7 @@ void duDebugDrawTileCachePolyMesh(duDebugDraw* dd, const struct dtTileCachePolyM
 		else if (lmesh.areaMasks[i] == DT_TILECACHE_NULL_AREA)
 			color = duRGBA(0,0,0,64);
 		else
-			color = duIntToCol(lmesh.areaMasks[i], 255);
+			color = dtAreaMaskColor( lmesh.areaMasks[ i ] );
 		
 		unsigned short vi[3];
 		for (int j = 2; j < nvp; ++j)
