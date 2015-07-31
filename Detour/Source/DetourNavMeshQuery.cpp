@@ -317,6 +317,41 @@ dtStatus dtNavMeshQuery::findRandomPoint(const dtQueryFilter* filter, float (*fr
 	return DT_SUCCESS;
 }
 
+dtStatus dtNavMeshQuery::findRandomPointInPoly( const dtPolyRef ref, float( *frand )( ), float* randomPt ) const
+{
+	const dtMeshTile* tile = 0;
+	const dtPoly* poly = 0;
+	if ( dtStatusFailed( m_nav->getTileAndPolyByRef( ref, &tile, &poly ) ) )
+		return DT_FAILURE | DT_INVALID_PARAM;
+
+	// Randomly pick point on polygon.
+	const float* v = &tile->verts[ poly->verts[ 0 ] * 3 ];
+	float verts[ 3 * DT_VERTS_PER_POLYGON ];
+	float areas[ DT_VERTS_PER_POLYGON ];
+	dtVcopy( &verts[ 0 * 3 ], v );
+	for ( int j = 1; j < poly->vertCount; ++j )
+	{
+		v = &tile->verts[ poly->verts[ j ] * 3 ];
+		dtVcopy( &verts[ j * 3 ], v );
+	}
+
+	const float s = frand();
+	const float t = frand();
+
+	float pt[ 3 ];
+	dtRandomPointInConvexPoly( verts, poly->vertCount, areas, s, t, pt );
+
+	float h = 0.0f;
+	dtStatus status = getPolyHeight( ref, pt, &h );
+	if ( dtStatusFailed( status ) )
+		return status;
+	pt[ 1 ] = h;
+
+	dtVcopy( randomPt, pt );
+
+	return DT_SUCCESS;
+}
+
 dtStatus dtNavMeshQuery::findRandomPointAroundCircle(dtPolyRef startRef, const float* centerPos, const float maxRadius,
 													 const dtQueryFilter* filter, float (*frand)(),
 													 dtPolyRef* randomRef, float* randomPt) const

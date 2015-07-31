@@ -440,6 +440,8 @@ public:
 	dtStatus findRandomPoint(const dtQueryFilter* filter, float (*frand)(),
 							 dtPolyRef* randomRef, float* randomPt) const;
 
+	dtStatus findRandomPointInPoly( const dtPolyRef ref, float( *frand )( ), float* randomPt ) const;
+
 	/// Returns random location on navmesh within the reach of specified location.
 	/// Polygons are chosen weighted by area. The search runs in linear related to number of polygon.
 	/// The location is not exactly constrained by the circle, but it limits the visited polygons.
