@@ -49,7 +49,7 @@ static void drawPolyBoundaries(duDebugDraw* dd, const dtMeshTile* tile,
 	{
 		const dtPoly* p = &tile->polys[i];
 		
-		if (p->getType() == DT_POLYTYPE_OFFMESH_CONNECTION) continue;
+		if ( p->getPolyType() == DT_POLYTYPE_OFFMESH_CONNECTION ) continue;
 		
 		const dtPolyDetail* pd = &tile->detailMeshes[i];
 		
@@ -130,7 +130,7 @@ static void drawMeshTile(duDebugDraw* dd, const dtNavMesh& mesh, const dtNavMesh
 	for (int i = 0; i < tile->header->polyCount; ++i)
 	{
 		const dtPoly* p = &tile->polys[i];
-		if (p->getType() == DT_POLYTYPE_OFFMESH_CONNECTION)	// Skip off-mesh links.
+		if ( p->getPolyType() == DT_POLYTYPE_OFFMESH_CONNECTION )	// Skip off-mesh links.
 			continue;
 			
 		const dtPolyDetail* pd = &tile->detailMeshes[i];
@@ -176,7 +176,7 @@ static void drawMeshTile(duDebugDraw* dd, const dtNavMesh& mesh, const dtNavMesh
 		for (int i = 0; i < tile->header->polyCount; ++i)
 		{
 			const dtPoly* p = &tile->polys[i];
-			if (p->getType() != DT_POLYTYPE_OFFMESH_CONNECTION)	// Skip regular polys.
+			if ( p->getPolyType() != DT_POLYTYPE_OFFMESH_CONNECTION )	// Skip regular polys.
 				continue;
 			
 			unsigned int col, col2;
@@ -453,7 +453,7 @@ void duDebugDrawNavMeshPoly(duDebugDraw* dd, const dtNavMesh& mesh, dtPolyRef re
 	const unsigned int c = (col & 0x00ffffff) | (64 << 24);
 	const unsigned int ip = (unsigned int)(poly - tile->polys);
 
-	if (poly->getType() == DT_POLYTYPE_OFFMESH_CONNECTION)
+	if ( poly->getPolyType() == DT_POLYTYPE_OFFMESH_CONNECTION )
 	{
 		dtOffMeshConnection* con = &tile->offMeshCons[ip - tile->header->offMeshBase];
 

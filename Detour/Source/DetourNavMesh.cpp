@@ -519,7 +519,6 @@ void dtNavMesh::connectExtOffMeshLinks(dtMeshTile* tile, dtMeshTile* target, int
 			}
 		}
 	}
-
 }
 
 void dtNavMesh::connectIntLinks(dtMeshTile* tile)
@@ -533,7 +532,7 @@ void dtNavMesh::connectIntLinks(dtMeshTile* tile)
 		dtPoly* poly = &tile->polys[i];
 		poly->firstLink = DT_NULL_LINK;
 
-		if (poly->getType() == DT_POLYTYPE_OFFMESH_CONNECTION)
+		if ( poly->getPolyType() == DT_POLYTYPE_OFFMESH_CONNECTION )
 			continue;
 			
 		// Build edge links backwards so that the links will be
@@ -624,7 +623,7 @@ void dtNavMesh::closestPointOnPoly(dtPolyRef ref, const float* pos, float* close
 	getTileAndPolyByRefUnsafe(ref, &tile, &poly);
 	
 	// Off-mesh connections don't have detail polygons.
-	if (poly->getType() == DT_POLYTYPE_OFFMESH_CONNECTION)
+	if ( poly->getPolyType() == DT_POLYTYPE_OFFMESH_CONNECTION )
 	{
 		const float* v0 = &tile->verts[poly->verts[0]*3];
 		const float* v1 = &tile->verts[poly->verts[1]*3];
@@ -806,7 +805,7 @@ int dtNavMesh::queryPolygonsInTile(const dtMeshTile* tile, const float* qmin, co
 		{
 			dtPoly* p = &tile->polys[i];
 			// Do not return off-mesh connection polygons.
-			if (p->getType() == DT_POLYTYPE_OFFMESH_CONNECTION)
+			if ( p->getPolyType() == DT_POLYTYPE_OFFMESH_CONNECTION )
 				continue;
 			// Calc polygon bounds.
 			const float* v = &tile->verts[p->verts[0]*3];
@@ -1433,7 +1432,7 @@ dtStatus dtNavMesh::getOffMeshConnectionPolyEndPoints(dtPolyRef prevRef, dtPolyR
 	const dtPoly* poly = &tile->polys[ip];
 
 	// Make sure that the current poly is indeed off-mesh link.
-	if (poly->getType() != DT_POLYTYPE_OFFMESH_CONNECTION)
+	if ( poly->getPolyType() != DT_POLYTYPE_OFFMESH_CONNECTION )
 		return DT_FAILURE;
 
 	// Figure out which way to hand out the vertices.
@@ -1476,7 +1475,7 @@ const dtOffMeshConnection* dtNavMesh::getOffMeshConnectionByRef(dtPolyRef ref) c
 	const dtPoly* poly = &tile->polys[ip];
 	
 	// Make sure that the current poly is indeed off-mesh link.
-	if (poly->getType() != DT_POLYTYPE_OFFMESH_CONNECTION)
+	if ( poly->getPolyType() != DT_POLYTYPE_OFFMESH_CONNECTION )
 		return 0;
 
 	const unsigned int idx =  ip - tile->header->offMeshBase;
@@ -1515,6 +1514,57 @@ dtStatus dtNavMesh::getPolyFlags(dtPolyRef ref, navAreaMask* resultFlags) const
 
 	*resultFlags = poly->areaMask;
 	
+	return DT_SUCCESS;
+}
+
+
+dtStatus dtNavMesh::addPolyTeamCost( dtPolyRef ref, dtTeam team, float cost )
+{
+	if ( !ref ) return DT_FAILURE;
+	unsigned int salt, it, ip;
+	decodePolyId( ref, salt, it, ip );
+	if ( it >= (unsigned int)m_maxTiles ) return DT_FAILURE | DT_INVALID_PARAM;
+	if ( m_tiles[ it ].salt != salt || m_tiles[ it ].header == 0 ) return DT_FAILURE | DT_INVALID_PARAM;
+	dtMeshTile* tile = &m_tiles[ it ];
+	if ( ip >= (unsigned int)tile->header->polyCount ) return DT_FAILURE | DT_INVALID_PARAM;
+	dtPoly* poly = &tile->polys[ ip ];
+
+	// Change flags.
+	poly->teamCost[ team ] = dtClamp( poly->teamCost[ team ] + cost, 0.0f, 3.0f );
+
+	return DT_SUCCESS;
+}
+
+dtStatus dtNavMesh::setPolyTeamCost( dtPolyRef ref, dtTeam team, float cost )
+{
+	if ( !ref ) return DT_FAILURE;
+	unsigned int salt, it, ip;
+	decodePolyId( ref, salt, it, ip );
+	if ( it >= (unsigned int)m_maxTiles ) return DT_FAILURE | DT_INVALID_PARAM;
+	if ( m_tiles[ it ].salt != salt || m_tiles[ it ].header == 0 ) return DT_FAILURE | DT_INVALID_PARAM;
+	dtMeshTile* tile = &m_tiles[ it ];
+	if ( ip >= (unsigned int)tile->header->polyCount ) return DT_FAILURE | DT_INVALID_PARAM;
+	dtPoly* poly = &tile->polys[ ip ];
+
+	// Change flags.
+	poly->teamCost[ team ] = cost;
+
+	return DT_SUCCESS;
+}
+
+dtStatus dtNavMesh::getPolyTeamCost( dtPolyRef ref, dtTeam team, float* costResult ) const
+{
+	if ( !ref ) return DT_FAILURE;
+	unsigned int salt, it, ip;
+	decodePolyId( ref, salt, it, ip );
+	if ( it >= (unsigned int)m_maxTiles ) return DT_FAILURE | DT_INVALID_PARAM;
+	if ( m_tiles[ it ].salt != salt || m_tiles[ it ].header == 0 ) return DT_FAILURE | DT_INVALID_PARAM;
+	const dtMeshTile* tile = &m_tiles[ it ];
+	if ( ip >= (unsigned int)tile->header->polyCount ) return DT_FAILURE | DT_INVALID_PARAM;
+	const dtPoly* poly = &tile->polys[ ip ];
+
+	*costResult = poly->teamCost[ team ];
+
 	return DT_SUCCESS;
 }
 

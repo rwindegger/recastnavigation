@@ -175,7 +175,15 @@ struct dtRaycastHit
 	float pathCost;
 };
 
+struct dtMultiPathGoal
+{
+	float		mDest[ 3 ];
+	dtPolyRef	mDestPoly;
+	float		mNavDist;
+	float		mThreat;
 
+	dtMultiPathGoal();
+};
 
 /// Provides the ability to perform pathfinding related queries against
 /// a navigation mesh.
@@ -293,7 +301,9 @@ public:
 								   const dtQueryFilter* filter,
 								   dtPolyRef* resultRef, dtPolyRef* resultParent, float* resultCost,
 								   int* resultCount, const int maxResult) const;
-	
+
+	dtStatus findMultiPath( dtPolyRef startRef, const float* startPos, const dtQueryFilter* filter, dtMultiPathGoal* goals, int numGoals ) const;
+
 	/// Finds the polygons along the naviation graph that touch the specified convex polygon.
 	///  @param[in]		startRef		The reference id of the polygon where the search starts.
 	///  @param[in]		verts			The vertices describing the convex polygon. (CCW) 

@@ -56,6 +56,15 @@ typedef unsigned int dtTileRef;
 /// @ingroup detour
 static const int DT_VERTS_PER_POLYGON = 6;
 
+enum dtTeam
+{
+	DT_TEAM_1,
+	DT_TEAM_2,
+	DT_TEAM_3,
+	DT_TEAM_4,
+	DT_MAX_TEAMS,
+};
+
 /// @{
 /// @name Tile Serialization Constants
 /// These constants are used to detect whether a navigation tile's data
@@ -144,30 +153,39 @@ enum dtPolyTypes
 struct dtPoly
 {
 	/// Index to first link in linked list. (Or #DT_NULL_LINK if there is no link.)
-	unsigned int firstLink;
+	unsigned int		firstLink;
 
 	/// The indices of the polygon's vertices.
 	/// The actual vertices are located in dtMeshTile::verts.
-	unsigned short verts[DT_VERTS_PER_POLYGON];
+	unsigned short		verts[DT_VERTS_PER_POLYGON];
 
 	/// Packed data representing neighbor polygons references and flags for each edge.
-	unsigned short neis[DT_VERTS_PER_POLYGON];
+	unsigned short		neis[DT_VERTS_PER_POLYGON];
 
 	/// The user defined polygon flags.
-	navAreaMask areaMask;
+	navAreaMask			areaMask;
 
 	/// The number of vertices in the polygon.
-	unsigned char vertCount;
+	unsigned char		vertCount;
 
 	/// The bit packed area id and polygon type.
 	/// @note Use the structure's set and get methods to acess this value.
-	unsigned char polyType;
+	unsigned char		polyType;
+
+	// dynamically adjustable penalty
+	float				teamCost[ DT_MAX_TEAMS ];
 
 	/// Sets the polygon type. (See: #dtPolyTypes.)
 	inline void setPolyType(unsigned char t) { polyType = t; }
 
 	/// Gets the polygon type. (See: #dtPolyTypes)
-	inline unsigned char getType() const { return polyType; }
+	inline unsigned char getPolyType() const { return polyType; }
+
+		/// Sets the polygon type. (See: #dtPolyTypes.)
+	inline void setTeamCost( dtTeam team, float cost ) { teamCost[team] = cost; }
+
+	/// Gets the polygon type. (See: #dtPolyTypes)
+	inline float getTeamCost( dtTeam team ) const { return teamCost[team]; }
 };
 
 /// Defines the location of detail sub-mesh data within a dtMeshTile.
@@ -457,6 +475,10 @@ public:
 	///  @param[out]	resultFlags		The polygon flags.
 	/// @return The status flags for the operation.
 	dtStatus getPolyFlags(dtPolyRef ref, navAreaMask* resultFlags) const;
+
+	dtStatus addPolyTeamCost( dtPolyRef ref, dtTeam team, float cost );
+	dtStatus setPolyTeamCost( dtPolyRef ref, dtTeam team, float cost );
+	dtStatus getPolyTeamCost( dtPolyRef ref, dtTeam team, float* costResult ) const;
 
 	/// Gets the size of the buffer required by #storeTileState to store the specified tile's state.
 	///  @param[in]	tile	The tile.
