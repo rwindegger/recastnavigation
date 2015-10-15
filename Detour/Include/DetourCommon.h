@@ -492,6 +492,11 @@ inline void dtSwapEndian(float* v)
 void dtRandomPointInConvexPoly(const float* pts, const int npts, float* areas,
 							   const float s, const float t, float* out);
 
+// Calculates convex hull on xz-plane of points on 'pts',
+// stores the indices of the resulting hull in 'out' and
+// returns number of points on hull.
+int dtConvexhull( const float* pts, int npts, int* out );
+
 /// @}
 
 #endif // DETOURCOMMON_H

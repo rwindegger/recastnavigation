@@ -1018,8 +1018,47 @@ dtStatus dtNavMeshQuery::findPath(dtPolyRef startRef, dtPolyRef endRef,
 		// Reached the goal, stop searching.
 		if (bestNode->id == endRef)
 		{
-			lastBestNode = bestNode;
-			break;
+			if ( bestNode->flags&DT_NODE_GOAL )
+			{
+				lastBestNode = bestNode;
+				break;
+			}
+			else
+			{
+				dtNode* goalNode = m_nodePool->getNode( bestNode->id, DT_NODE_GOAL );
+				if ( !goalNode )
+				{
+					status |= DT_OUT_OF_NODES;
+					continue;
+				}
+
+				const float total = bestNode->total + dtVdist( bestNode->pos, endPos );
+
+				// The node is already in open list and the new result is worse, skip.
+				if ( ( goalNode->flags & DT_NODE_OPEN ) && total >= goalNode->total )
+					continue;
+
+				dtVcopy( goalNode->pos, endPos );
+				goalNode->id = bestNode->id;
+				goalNode->flags = ( goalNode->flags & ~DT_NODE_CLOSED );
+				goalNode->pidx = m_nodePool->getNodeIdx( bestNode );
+				goalNode->total = total;
+
+				if ( goalNode->flags & DT_NODE_OPEN )
+				{
+					m_openList->modify( goalNode );
+				}
+				else
+				{
+					goalNode->flags = DT_NODE_OPEN;
+					m_openList->push( goalNode );
+				}
+
+				goalNode->flags |= DT_NODE_GOAL;
+
+				// we don't need to expand out of the goal area
+				continue;
+			}
 		}
 		
 		// Get current poly and tile.
@@ -2799,7 +2838,7 @@ dtStatus dtNavMeshQuery::findPolysAroundCircle(dtPolyRef startRef, const float* 
 	return status;
 }
 
-dtNavMeshQuery::dtMultiPathGoal::dtMultiPathGoal()
+dtMultiPathGoal::dtMultiPathGoal()
 	: mDestPoly( 0 )
 	, mNavDist( -1.0f )
 	, mThreat( 0.0f )
@@ -2860,11 +2899,11 @@ dtStatus dtNavMeshQuery::findMultiPath( dtPolyRef startRef, const float* startPo
 		searchDone = true;
 		for ( int i = 0; i < numGoals; ++i )
 		{
-			if ( bestRef == goals[ i ] )
+			if ( bestRef == goals[ i ].mDestPoly )
 			{
 				if ( bestNode->flags&DT_NODE_GOAL )
-				{
-					goalsCostOut[ i ] = bestNode->total + dtVdist2D( startPos, &goalpos[ i * 3 ] );
+				{					
+					goals[ i ].mNavDist = bestNode->total + dtVdist2D( startPos, goals[ i ].mDest );
 				}
 				else
 				{
@@ -2880,7 +2919,7 @@ dtStatus dtNavMeshQuery::findMultiPath( dtPolyRef startRef, const float* startPo
 						continue;
 
 					// Cost
-					dtVcopy( goalNode->pos, &goalpos[ i * 3 ] );
+					dtVcopy( goalNode->pos, goals[ i ].mDest );
 
 					const float total = bestNode->total + dtVdist( bestNode->pos, goalNode->pos );
 
@@ -2907,7 +2946,7 @@ dtStatus dtNavMeshQuery::findMultiPath( dtPolyRef startRef, const float* startPo
 				}
 			}
 
-			if ( goalsCostOut[ i ] == -1.0f )
+			if ( goals[ i ].mNavDist == -1.0f )
 				searchDone = false;
 		}
 

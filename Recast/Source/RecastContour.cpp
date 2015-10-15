@@ -34,11 +34,28 @@ static int getCornerHeight(int x, int y, int i, int dir,
 	int ch = (int)s.y;
 	int dirp = (dir+1) & 0x3;
 	
-	uint64_t regs[ 4 ] = { 0, 0, 0, 0 };
+	struct CornerId
+	{
+		uint64_t		areaMask;
+		unsigned short	region;
+
+		bool No0() const
+		{
+			return areaMask != 0 && region != 0;
+		}
+
+		CornerId( unsigned short reg = 0, uint64_t area = 0 )
+			: areaMask( area )
+			, region( reg )
+		{
+		}
+	};
+
+	CornerId regs[ 4 ];
 	
 	// Combine region and area codes in order to prevent
 	// border vertices which are in between two areas to be removed. 
-	regs[ 0 ] = (uint64_t)chf.spans[ i ].reg | ( chf.areaMasks[ i ] << 32 );
+	regs[ 0 ] = CornerId( chf.spans[ i ].reg, chf.areaMasks[ i ] );
 	
 	if (rcGetCon(s, dir) != RC_NOT_CONNECTED)
 	{
@@ -47,7 +64,7 @@ static int getCornerHeight(int x, int y, int i, int dir,
 		const int ai = (int)chf.cells[ax+ay*chf.width].index + rcGetCon(s, dir);
 		const rcCompactSpan& as = chf.spans[ai];
 		ch = rcMax(ch, (int)as.y);
-		regs[1] = (uint64_t)chf.spans[ai].reg | (chf.areaMasks[ai] << 32);
+		regs[ 1 ] = CornerId( chf.spans[ ai ].reg, chf.areaMasks[ ai ] );
 		if (rcGetCon(as, dirp) != RC_NOT_CONNECTED)
 		{
 			const int ax2 = ax + rcGetDirOffsetX(dirp);
@@ -55,7 +72,7 @@ static int getCornerHeight(int x, int y, int i, int dir,
 			const int ai2 = (int)chf.cells[ax2+ay2*chf.width].index + rcGetCon(as, dirp);
 			const rcCompactSpan& as2 = chf.spans[ai2];
 			ch = rcMax(ch, (int)as2.y);
-			regs[2] = (uint64_t)chf.spans[ai2].reg | (chf.areaMasks[ai2] << 32);
+			regs[ 2 ] = CornerId( chf.spans[ ai2 ].reg, chf.areaMasks[ ai2 ] );
 		}
 	}
 	if (rcGetCon(s, dirp) != RC_NOT_CONNECTED)
@@ -65,7 +82,7 @@ static int getCornerHeight(int x, int y, int i, int dir,
 		const int ai = (int)chf.cells[ax+ay*chf.width].index + rcGetCon(s, dirp);
 		const rcCompactSpan& as = chf.spans[ai];
 		ch = rcMax(ch, (int)as.y);
-		regs[3] = (uint64_t)chf.spans[ai].reg | (chf.areaMasks[ai] << 32);
+		regs[ 3 ] = CornerId( chf.spans[ ai ].reg, chf.areaMasks[ ai ] );
 		if (rcGetCon(as, dir) != RC_NOT_CONNECTED)
 		{
 			const int ax2 = ax + rcGetDirOffsetX(dir);
@@ -73,7 +90,7 @@ static int getCornerHeight(int x, int y, int i, int dir,
 			const int ai2 = (int)chf.cells[ax2+ay2*chf.width].index + rcGetCon(as, dir);
 			const rcCompactSpan& as2 = chf.spans[ai2];
 			ch = rcMax(ch, (int)as2.y);
-			regs[2] = (uint64_t)chf.spans[ai2].reg | (chf.areaMasks[ai2] << 32);
+			regs[ 2 ] = CornerId( chf.spans[ ai2 ].reg, chf.areaMasks[ ai2 ] );
 		}
 	}
 
@@ -87,10 +104,10 @@ static int getCornerHeight(int x, int y, int i, int dir,
 		
 		// The vertex is a border vertex there are two same exterior cells in a row,
 		// followed by two interior cells and none of the regions are out of bounds.
-		const bool twoSameExts = (regs[a] & regs[b] & RC_BORDER_REG) != 0 && regs[a] == regs[b];
-		const bool twoInts = ((regs[c] | regs[d]) & RC_BORDER_REG) == 0;
-		const bool intsSameArea = (regs[c]>>32) == (regs[d]>>32);
-		const bool noZeros = regs[a] != 0 && regs[b] != 0 && regs[c] != 0 && regs[d] != 0;
+		const bool twoSameExts = ( regs[ a ].region & regs[ b ].region & RC_BORDER_REG ) != 0 && regs[ a ].region == regs[ b ].region;
+		const bool twoInts = ( ( regs[ c ].region | regs[ d ].region ) & RC_BORDER_REG ) == 0;
+		const bool intsSameArea = ( regs[ c ].areaMask ) == ( regs[ d ].areaMask );
+		const bool noZeros = regs[ a ].No0() && regs[ b ].No0() && regs[ c ].No0() && regs[ d ].No0();
 		if (twoSameExts && twoInts && intsSameArea && noZeros)
 		{
 			isBorderVertex = true;

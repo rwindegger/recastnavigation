@@ -121,6 +121,7 @@ public:
 		{
 			if ( m_costMask[ i ] == 0 )
 			{
+				m_costMask[ i ] = areaMask;
 				m_areaCost[ i ] = cost;
 				return;
 			}
@@ -303,7 +304,7 @@ public:
 								   int* resultCount, const int maxResult) const;
 
 	dtStatus findMultiPath( dtPolyRef startRef, const float* startPos, const dtQueryFilter* filter, dtMultiPathGoal* goals, int numGoals ) const;
-
+	
 	/// Finds the polygons along the naviation graph that touch the specified convex polygon.
 	///  @param[in]		startRef		The reference id of the polygon where the search starts.
 	///  @param[in]		verts			The vertices describing the convex polygon. (CCW) 

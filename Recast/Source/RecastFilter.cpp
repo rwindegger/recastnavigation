@@ -241,7 +241,7 @@ void rcFilterHeightThresholds( rcContext* ctx, const rcHeightThreshold *heights,
 						if ( height >= heights[ i ].height )
 						{
 							// turn off all other height flags, set only 1
-							s->areaMask &= (~allHeightMask & allHeightMask);
+							s->areaMask &= (~allHeightMask);
 							s->areaMask |= heights[ i ].flag;
 							break;
 						}
