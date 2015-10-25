@@ -220,7 +220,7 @@ class dtCrowd
 	float m_ext[3];
 
 	dtQueryFilter m_filters[DT_CROWD_MAX_QUERY_FILTER_TYPE];
-
+	
 	float m_maxAgentRadius;
 
 	int m_velocitySampleCount;
@@ -320,7 +320,7 @@ public:
 	/// Gets the filter used by the crowd.
 	/// @return The filter used by the crowd.
 	inline const dtQueryFilter* getFilter(const int i) const { return (i >= 0 && i < DT_CROWD_MAX_QUERY_FILTER_TYPE) ? &m_filters[i] : 0; }
-	
+
 	/// Gets the filter used by the crowd.
 	/// @return The filter used by the crowd.
 	inline dtQueryFilter* getEditableFilter(const int i) { return (i >= 0 && i < DT_CROWD_MAX_QUERY_FILTER_TYPE) ? &m_filters[i] : 0; }

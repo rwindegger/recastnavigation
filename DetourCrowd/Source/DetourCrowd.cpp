@@ -523,7 +523,7 @@ int dtCrowd::addAgent(const float* pos, const dtCrowdAgentParams* params)
 	if (idx == -1)
 		return -1;
 	
-	dtCrowdAgent* ag = &m_agents[idx];		
+	dtCrowdAgent* ag = &m_agents[idx];
 
 	updateAgentParameters(idx, params);
 	
@@ -541,7 +541,7 @@ int dtCrowd::addAgent(const float* pos, const dtCrowdAgentParams* params)
 	ag->corridor.reset(ref, nearest);
 	ag->boundary.reset();
 	ag->partial = false;
-
+	
 	ag->topologyOptTime = 0;
 	ag->targetReplanTime = 0;
 	ag->nneis = 0;
@@ -822,7 +822,7 @@ void dtCrowd::updateMoveRequest(const float /*dt*/)
 				status = m_pathq.getPathResult(ag->targetPathqRef, res, &nres, m_maxPathResult);
 				if (dtStatusFailed(status) || !nres)
 					valid = false;
-
+				
 				if (dtStatusDetail(status, DT_PARTIAL_RESULT))
 					ag->partial = true;
 				else
@@ -948,7 +948,7 @@ void dtCrowd::checkPathValidity(dtCrowdAgent** agents, const int nagents, const 
 		
 		if (ag->state != DT_CROWDAGENT_STATE_WALKING)
 			continue;
-			
+
 		ag->targetReplanTime += dt;
 
 		bool replan = false;
@@ -1051,7 +1051,7 @@ void dtCrowd::update(const float dt, dtCrowdAgentDebugInfo* debug)
 	
 	dtCrowdAgent** agents = m_activeAgents;
 	int nagents = getActiveAgents(agents, m_maxAgents);
-
+	
 	// Check that all agents still have valid paths.
 	checkPathValidity(agents, nagents, dt);
 	
@@ -1107,7 +1107,7 @@ void dtCrowd::update(const float dt, dtCrowdAgentDebugInfo* debug)
 		
 		// Find corners for steering
 		ag->ncorners = ag->corridor.findCorners(ag->cornerVerts, ag->cornerFlags, ag->cornerPolys,
-												DT_CROWDAGENT_MAX_CORNERS, m_navquery, &m_filters[ag->params.queryFilterType]);
+												DT_CROWDAGENT_MAX_CORNERS, m_navquery, &m_filters[ag->params.queryFilterType],DT_STRAIGHTPATH_NONE);
 		
 		// Check to see if the corner after the next corner is directly visible,
 		// and short cut to there.
@@ -1445,3 +1445,5 @@ void dtCrowd::update(const float dt, dtCrowdAgentDebugInfo* debug)
 	}
 	
 }
+
+

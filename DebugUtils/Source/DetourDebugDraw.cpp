@@ -21,7 +21,7 @@
 #include "DetourNavMesh.h"
 #include "DetourCommon.h"
 #include "DetourNode.h"
-
+#include "DetourMath.h"
 
 static float distancePtLine2d(const float* pt, const float* p, const float* q)
 {
@@ -49,7 +49,7 @@ static void drawPolyBoundaries(duDebugDraw* dd, const dtMeshTile* tile,
 	{
 		const dtPoly* p = &tile->polys[i];
 		
-		if (p->getType() == DT_POLYTYPE_OFFMESH_CONNECTION) continue;
+		if ( p->getPolyType() == DT_POLYTYPE_OFFMESH_CONNECTION ) continue;
 		
 		const dtPolyDetail* pd = &tile->detailMeshes[i];
 		
@@ -115,6 +115,8 @@ static void drawPolyBoundaries(duDebugDraw* dd, const dtMeshTile* tile,
 	dd->end();
 }
 
+unsigned int dtAreaMaskColor( navAreaMask mask );
+
 static void drawMeshTile(duDebugDraw* dd, const dtNavMesh& mesh, const dtNavMeshQuery* query,
 						 const dtMeshTile* tile, unsigned char flags)
 {
@@ -128,7 +130,7 @@ static void drawMeshTile(duDebugDraw* dd, const dtNavMesh& mesh, const dtNavMesh
 	for (int i = 0; i < tile->header->polyCount; ++i)
 	{
 		const dtPoly* p = &tile->polys[i];
-		if (p->getType() == DT_POLYTYPE_OFFMESH_CONNECTION)	// Skip off-mesh links.
+		if ( p->getPolyType() == DT_POLYTYPE_OFFMESH_CONNECTION )	// Skip off-mesh links.
 			continue;
 			
 		const dtPolyDetail* pd = &tile->detailMeshes[i];
@@ -144,10 +146,7 @@ static void drawMeshTile(duDebugDraw* dd, const dtNavMesh& mesh, const dtNavMesh
 			}
 			else
 			{
-				if (p->areaMask == 0) // Treat zero area type as default.
-					col = duRGBA(0,192,255,64);
-				else
-					col = duIntToCol(p->areaMask, 64);
+				col = dtAreaMaskColor( p->areaMask );
 			}
 		}
 		
@@ -177,14 +176,14 @@ static void drawMeshTile(duDebugDraw* dd, const dtNavMesh& mesh, const dtNavMesh
 		for (int i = 0; i < tile->header->polyCount; ++i)
 		{
 			const dtPoly* p = &tile->polys[i];
-			if (p->getType() != DT_POLYTYPE_OFFMESH_CONNECTION)	// Skip regular polys.
+			if ( p->getPolyType() != DT_POLYTYPE_OFFMESH_CONNECTION )	// Skip regular polys.
 				continue;
 			
 			unsigned int col, col2;
 			if (query && query->isInClosedList(base | (dtPolyRef)i))
 				col = duRGBA(255,196,0,220);
 			else
-				col = duDarkenCol(duIntToCol(p->areaMask, 220));
+				col = duDarkenCol( dtAreaMaskColor( p->areaMask ) );
 			
 			const dtOffMeshConnection* con = &tile->offMeshCons[i - tile->header->offMeshBase];
 			const float* va = &tile->verts[p->verts[0]*3];
@@ -221,7 +220,7 @@ static void drawMeshTile(duDebugDraw* dd, const dtNavMesh& mesh, const dtNavMesh
 			
 			// Connection arc.
 			duAppendArc(dd, con->pos[0],con->pos[1],con->pos[2], con->pos[3],con->pos[4],con->pos[5], 0.25f,
-						(con->flags & 1) ? 0.6f : 0, 0.6f, col);
+						(con->flags & DT_OFFMESH_CON_BIDIR) ? 0.6f : 0, 0.6f, col);
 		}
 		dd->end();
 	}
@@ -454,7 +453,7 @@ void duDebugDrawNavMeshPoly(duDebugDraw* dd, const dtNavMesh& mesh, dtPolyRef re
 	const unsigned int c = (col & 0x00ffffff) | (64 << 24);
 	const unsigned int ip = (unsigned int)(poly - tile->polys);
 
-	if (poly->getType() == DT_POLYTYPE_OFFMESH_CONNECTION)
+	if ( poly->getPolyType() == DT_POLYTYPE_OFFMESH_CONNECTION )
 	{
 		dtOffMeshConnection* con = &tile->offMeshCons[ip - tile->header->offMeshBase];
 
@@ -750,7 +749,7 @@ void duDebugDrawTileCachePolyMesh(duDebugDraw* dd, const struct dtTileCachePolyM
 		else if (lmesh.areaMasks[i] == DT_TILECACHE_NULL_AREA)
 			color = duRGBA(0,0,0,64);
 		else
-			color = duIntToCol(lmesh.areaMasks[i], 255);
+			color = dtAreaMaskColor( lmesh.areaMasks[ i ] );
 		
 		unsigned short vi[3];
 		for (int j = 2; j < nvp; ++j)

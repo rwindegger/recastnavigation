@@ -237,7 +237,7 @@ static void calcTriNormal(const float* v0, const float* v1, const float* v2, flo
 
 /// @par
 ///
-/// Only sets the aread id's for the walkable triangles.  Does not alter the
+/// Only sets the area id's for the walkable triangles.  Does not alter the
 /// area id's for unwalkable triangles.
 /// 
 /// See the #rcConfig documentation for more information on the configuration parameters.
@@ -266,7 +266,7 @@ void rcMarkWalkableTriangles(rcContext* ctx, const float walkableSlopeAngle,
 
 /// @par
 ///
-/// Only sets the aread id's for the unwalkable triangles.  Does not alter the
+/// Only sets the area id's for the unwalkable triangles.  Does not alter the
 /// area id's for walkable triangles.
 /// 
 /// See the #rcConfig documentation for more information on the configuration parameters.
@@ -275,7 +275,7 @@ void rcMarkWalkableTriangles(rcContext* ctx, const float walkableSlopeAngle,
 void rcClearUnwalkableTriangles(rcContext* ctx, const float walkableSlopeAngle,
 								const float* verts, int /*nv*/,
 								const int* tris, int nt,
-								unsigned char* areas)
+								navAreaMask* areaMasks)
 {
 	rcIgnoreUnused(ctx);
 	
@@ -289,7 +289,7 @@ void rcClearUnwalkableTriangles(rcContext* ctx, const float walkableSlopeAngle,
 		calcTriNormal(&verts[tri[0]*3], &verts[tri[1]*3], &verts[tri[2]*3], norm);
 		// Check if the face is walkable.
 		if (norm[1] <= walkableThr)
-			areas[i] = RC_NULL_AREA;
+			areaMasks[ i ] = RC_NULL_AREA;
 	}
 }
 
@@ -317,7 +317,7 @@ int rcGetHeightFieldSpanCount(rcContext* ctx, rcHeightfield& hf)
 /// @par
 ///
 /// This is just the beginning of the process of fully building a compact heightfield.
-/// Various filters may be applied applied, then the distance field and regions built.
+/// Various filters may be applied, then the distance field and regions built.
 /// E.g: #rcBuildDistanceField and #rcBuildRegions
 ///
 /// See the #rcConfig documentation for more information on the configuration parameters.

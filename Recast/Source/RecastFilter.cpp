@@ -216,6 +216,12 @@ void rcFilterHeightThresholds( rcContext* ctx, const rcHeightThreshold *heights,
 	const int h = solid.height;
 	const int MAX_HEIGHT = 0xffff;
 
+	navAreaMask allHeightMask = 0;
+	for ( int i = 0; i < numHeights; ++i )
+	{
+		allHeightMask |= heights[ i ].flag;
+	}
+
 	// Remove walkable flag from spans which do not have enough
 	// space above them for the agent to stand there.
 	for ( int y = 0; y < h; ++y )
@@ -228,12 +234,17 @@ void rcFilterHeightThresholds( rcContext* ctx, const rcHeightThreshold *heights,
 				const int top = s->next ? (int)( s->next->smin ) : MAX_HEIGHT;
 				const int height = top - bot;
 				
-				if ( s->area != RC_NULL_AREA )
+				if ( s->areaMask != RC_NULL_AREA )
 				{
 					for ( int i = 0; i < numHeights; ++i )
 					{
-						if ( height <= heights[ i ].height )
-							s->area = heights[ i ].flag;
+						if ( height >= heights[ i ].height )
+						{
+							// turn off all other height flags, set only 1
+							s->areaMask &= (~allHeightMask);
+							s->areaMask |= heights[ i ].flag;
+							break;
+						}
 					}
 				}
 			}

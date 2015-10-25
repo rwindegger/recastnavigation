@@ -246,7 +246,7 @@ struct rcConfig
 };
 
 /// Defines the number of bits allocated to rcSpan::smin and rcSpan::smax.
-static const int RC_SPAN_HEIGHT_BITS = 13;
+static const int RC_SPAN_HEIGHT_BITS = 16;
 /// Defines the maximum value for rcSpan::smin and rcSpan::smax.
 static const int RC_SPAN_MAX_HEIGHT = (1<<RC_SPAN_HEIGHT_BITS)-1;
 
@@ -882,7 +882,7 @@ void rcFilterWalkableLowHeightSpans(rcContext* ctx, int walkableHeight, rcHeight
 struct rcHeightThreshold
 {
 	int				height;
-	unsigned int	flag;
+	navAreaMask 	flag;
 };
 void rcFilterHeightThresholds( rcContext* ctx, const rcHeightThreshold *heights, int numHeights, rcHeightfield& solid );
 
@@ -992,6 +992,18 @@ bool rcBuildDistanceField(rcContext* ctx, rcCompactHeightfield& chf);
 bool rcBuildRegions(rcContext* ctx, rcCompactHeightfield& chf,
 					const int borderSize, const int minRegionArea, const int mergeRegionArea);
 
+/// Builds region data for the heightfield by partitioning the heightfield in non-overlapping layers.
+///  @ingroup recast
+///  @param[in,out]	ctx				The build context to use during the operation.
+///  @param[in,out]	chf				A populated compact heightfield.
+///  @param[in]		borderSize		The size of the non-navigable border around the heightfield.
+///  								[Limit: >=0] [Units: vx]
+///  @param[in]		minRegionArea	The minimum number of cells allowed to form isolated island areas.
+///  								[Limit: >=0] [Units: vx].
+///  @returns True if the operation completed successfully.
+bool rcBuildLayerRegions(rcContext* ctx, rcCompactHeightfield& chf,
+						 const int borderSize, const int minRegionArea);
+
 /// Builds region data for the heightfield using simple monotone partitioning.
 ///  @ingroup recast 
 ///  @param[in,out]	ctx				The build context to use during the operation.
@@ -1081,7 +1093,7 @@ bool rcBuildHeightfieldLayers(rcContext* ctx, rcCompactHeightfield& chf,
 ///  @returns True if the operation completed successfully.
 bool rcBuildContours(rcContext* ctx, rcCompactHeightfield& chf,
 					 const float maxError, const int maxEdgeLen,
-					 rcContourSet& cset, const int flags = RC_CONTOUR_TESS_WALL_EDGES);
+					 rcContourSet& cset, const int buildFlags = RC_CONTOUR_TESS_WALL_EDGES);
 
 /// Builds a polygon mesh from the provided contours.
 ///  @ingroup recast

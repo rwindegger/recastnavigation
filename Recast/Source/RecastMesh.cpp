@@ -160,6 +160,7 @@ static unsigned short addVertex(unsigned short x, unsigned short y, unsigned sho
 	return (unsigned short)i;
 }
 
+// Last time I checked the if version got compiled using cmov, which was a lot faster than module (with idiv).
 inline int prev(int i, int n) { return i-1 >= 0 ? i-1 : n-1; }
 inline int next(int i, int n) { return i+1 < n ? i+1 : 0; }
 
@@ -288,6 +289,53 @@ static bool diagonal(int i, int j, int n, const int* verts, int* indices)
 	return inCone(i, j, n, verts, indices) && diagonalie(i, j, n, verts, indices);
 }
 
+
+static bool diagonalieLoose(int i, int j, int n, const int* verts, int* indices)
+{
+	const int* d0 = &verts[(indices[i] & 0x0fffffff) * 4];
+	const int* d1 = &verts[(indices[j] & 0x0fffffff) * 4];
+	
+	// For each edge (k,k+1) of P
+	for (int k = 0; k < n; k++)
+	{
+		int k1 = next(k, n);
+		// Skip edges incident to i or j
+		if (!((k == i) || (k1 == i) || (k == j) || (k1 == j)))
+		{
+			const int* p0 = &verts[(indices[k] & 0x0fffffff) * 4];
+			const int* p1 = &verts[(indices[k1] & 0x0fffffff) * 4];
+			
+			if (vequal(d0, p0) || vequal(d1, p0) || vequal(d0, p1) || vequal(d1, p1))
+				continue;
+			
+			if (intersectProp(d0, d1, p0, p1))
+				return false;
+		}
+	}
+	return true;
+}
+
+static bool	inConeLoose(int i, int j, int n, const int* verts, int* indices)
+{
+	const int* pi = &verts[(indices[i] & 0x0fffffff) * 4];
+	const int* pj = &verts[(indices[j] & 0x0fffffff) * 4];
+	const int* pi1 = &verts[(indices[next(i, n)] & 0x0fffffff) * 4];
+	const int* pin1 = &verts[(indices[prev(i, n)] & 0x0fffffff) * 4];
+	
+	// If P[i] is a convex vertex [ i+1 left or on (i-1,i) ].
+	if (leftOn(pin1, pi, pi1))
+		return leftOn(pi, pj, pin1) && leftOn(pj, pi, pi1);
+	// Assume (i-1,i,i+1) not collinear.
+	// else P[i] is reflex.
+	return !(leftOn(pi, pj, pi1) && leftOn(pj, pi, pin1));
+}
+
+static bool diagonalLoose(int i, int j, int n, const int* verts, int* indices)
+{
+	return inConeLoose(i, j, n, verts, indices) && diagonalieLoose(i, j, n, verts, indices);
+}
+
+
 static int triangulate(int n, const int* verts, int* indices, int* tris)
 {
 	int ntris = 0;
@@ -328,14 +376,41 @@ static int triangulate(int n, const int* verts, int* indices, int* tris)
 		
 		if (mini == -1)
 		{
-			// Should not happen.
-/*			printf("mini == -1 ntris=%d n=%d\n", ntris, n);
+			// We might get here because the contour has overlapping segments, like this:
+			//
+			//  A o-o=====o---o B
+			//   /  |C   D|    \
+			//  o   o     o     o
+			//  :   :     :     :
+			// We'll try to recover by loosing up the inCone test a bit so that a diagonal
+			// like A-B or C-D can be found and we can continue.
+			minLen = -1;
+			mini = -1;
 			for (int i = 0; i < n; i++)
 			{
-				printf("%d ", indices[i] & 0x0fffffff);
+				int i1 = next(i, n);
+				int i2 = next(i1, n);
+				if (diagonalLoose(i, i2, n, verts, indices))
+				{
+					const int* p0 = &verts[(indices[i] & 0x0fffffff) * 4];
+					const int* p2 = &verts[(indices[next(i2, n)] & 0x0fffffff) * 4];
+					int dx = p2[0] - p0[0];
+					int dy = p2[2] - p0[2];
+					int len = dx*dx + dy*dy;
+					
+					if (minLen < 0 || len < minLen)
+					{
+						minLen = len;
+						mini = i;
+					}
 			}
-			printf("\n");*/
+			}
+			if (mini == -1)
+			{
+				// The contour is messed up. This sometimes happens
+				// if the contour simplification is too aggressive.
 			return -ntris;
+		}
 		}
 		
 		int i = mini;
@@ -763,7 +838,7 @@ static bool removeVertex(rcContext* ctx, rcPolyMesh& mesh, const unsigned short 
 	}
 
 	rcScopedDelete<int> thole = (int*)rcAlloc(sizeof(int)*(int)nhole, RC_ALLOC_TEMP);
-	if (!tverts)
+	if (!thole)
 	{
 		ctx->log(RC_LOG_WARNING, "removeVertex: Out of memory 'thole' (%d).", nhole);
 		return false;
@@ -802,7 +877,7 @@ static bool removeVertex(rcContext* ctx, rcPolyMesh& mesh, const unsigned short 
 		return false;
 	}
 	rcScopedDelete<navAreaMask> pareas = (navAreaMask*)rcAlloc(sizeof(navAreaMask)*ntris, RC_ALLOC_TEMP);
-	if (!pregs)
+	if (!pareas)
 	{
 		ctx->log(RC_LOG_ERROR, "removeVertex: Out of memory 'pareas' (%d).", ntris);
 		return false;
@@ -863,7 +938,9 @@ static bool removeVertex(rcContext* ctx, rcPolyMesh& mesh, const unsigned short 
 				unsigned short* pa = &polys[bestPa*nvp];
 				unsigned short* pb = &polys[bestPb*nvp];
 				mergePolys(pa, pb, bestEa, bestEb, tmpPoly, nvp);
-				memcpy(pb, &polys[(npolys-1)*nvp], sizeof(unsigned short)*nvp);
+				unsigned short* last = &polys[(npolys-1)*nvp];
+				if (pb != last)
+					memcpy(pb, last, sizeof(unsigned short)*nvp);
 				pregs[bestPb] = pregs[npolys-1];
 				pareas[bestPb] = pareas[npolys-1];
 				npolys--;
@@ -1199,15 +1276,6 @@ bool rcBuildPolyMesh(rcContext* ctx, rcContourSet& cset, const int nvp, rcPolyMe
 		}
 	}
 	
-	// Just allocate the mesh flags array. The user is resposible to fill it.
-	/*mesh.flags = (unsigned short*)rcAlloc(sizeof(unsigned short)*mesh.npolys, RC_ALLOC_PERM);
-	if (!mesh.flags)
-	{
-		ctx->log(RC_LOG_ERROR, "rcBuildPolyMesh: Out of memory 'mesh.flags' (%d).", mesh.npolys);
-		return false;
-	}
-	memset(mesh.flags, 0, sizeof(unsigned short) * mesh.npolys);*/
-	
 	if (mesh.nverts > 0xffff)
 	{
 		ctx->log(RC_LOG_ERROR, "rcBuildPolyMesh: The resulting mesh has too many vertices %d (max %d). Data can be corrupted.", mesh.nverts, 0xffff);
@@ -1315,6 +1383,12 @@ bool rcMergePolyMeshes(rcContext* ctx, rcPolyMesh** meshes, const int nmeshes, r
 		const unsigned short ox = (unsigned short)floorf((pmesh->bmin[0]-mesh.bmin[0])/mesh.cs+0.5f);
 		const unsigned short oz = (unsigned short)floorf((pmesh->bmin[2]-mesh.bmin[2])/mesh.cs+0.5f);
 		
+		bool isMinX = (ox == 0);
+		bool isMinZ = (oz == 0);
+		bool isMaxX = ((unsigned short)floorf((mesh.bmax[0] - pmesh->bmax[0]) / mesh.cs + 0.5f)) == 0;
+		bool isMaxZ = ((unsigned short)floorf((mesh.bmax[2] - pmesh->bmax[2]) / mesh.cs + 0.5f)) == 0;
+		bool isOnBorder = (isMinX || isMinZ || isMaxX || isMaxZ);
+
 		for (int j = 0; j < pmesh->nverts; ++j)
 		{
 			unsigned short* v = &pmesh->verts[j*3];
@@ -1333,6 +1407,36 @@ bool rcMergePolyMeshes(rcContext* ctx, rcPolyMesh** meshes, const int nmeshes, r
 			{
 				if (src[k] == RC_MESH_NULL_IDX) break;
 				tgt[k] = vremap[src[k]];
+			}
+
+			if (isOnBorder)
+			{
+				for (int k = mesh.nvp; k < mesh.nvp * 2; ++k)
+				{
+					if (src[k] & 0x8000 && src[k] != 0xffff)
+					{
+						unsigned short dir = src[k] & 0xf;
+						switch (dir)
+						{
+							case 0: // Portal x-
+								if (isMinX)
+									tgt[k] = src[k];
+								break;
+							case 1: // Portal z+
+								if (isMaxZ)
+									tgt[k] = src[k];
+								break;
+							case 2: // Portal x+
+								if (isMaxX)
+									tgt[k] = src[k];
+								break;
+							case 3: // Portal z-
+								if (isMinZ)
+									tgt[k] = src[k];
+								break;
+						}
+					}
+				}
 			}
 		}
 	}
@@ -1409,14 +1513,6 @@ bool rcCopyPolyMesh(rcContext* ctx, const rcPolyMesh& src, rcPolyMesh& dst)
 		return false;
 	}
 	memcpy(dst.areaMasks, src.areaMasks, sizeof(navAreaMask)*src.npolys);
-	
-	/*dst.flags = (unsigned short*)rcAlloc(sizeof(unsigned short)*src.npolys, RC_ALLOC_PERM);
-	if (!dst.flags)
-	{
-	ctx->log(RC_LOG_ERROR, "rcCopyPolyMesh: Out of memory 'dst.flags' (%d).", src.npolys);
-	return false;
-	}
-	memcpy(dst.flags, src.flags, sizeof(unsigned char)*src.npolys);*/
 	
 	return true;
 }
