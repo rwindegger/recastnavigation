@@ -30,6 +30,14 @@ enum duDebugDrawPrimitives
 	DU_DRAW_QUADS,	
 };
 
+inline void duRGBASplit( unsigned int col, int & r, int & g, int & b, int & a )
+{
+	r = ( col & 255 );
+	g = ( ( col >> 8 ) & 255 );
+	b = ( ( col >> 16 ) & 255 );
+	a = ( ( col >> 24 ) & 255 );
+}
+
 /// Abstract debug draw interface.
 struct duDebugDraw
 {

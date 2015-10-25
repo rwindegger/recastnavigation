@@ -131,7 +131,9 @@ public:
 
 	/// The number of polygons in the current corridor path.
 	/// @return The number of polygons in the current corridor path.
-	inline int getPathCount() const { return m_npath; } 	
+	inline int getPathCount() const { return m_npath; }
+
+	inline int getMaxPathCount() const { return m_maxPath; }
 };
 
 int dtMergeCorridorStartMoved(dtPolyRef* path, const int npath, const int maxPath,

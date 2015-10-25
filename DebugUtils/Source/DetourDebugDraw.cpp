@@ -863,5 +863,45 @@ void duDebugDrawTileCachePolyMesh(duDebugDraw* dd, const struct dtTileCachePolyM
 	dd->end();
 }
 
+void duDebugDrawNavMeshInRadius( struct duDebugDraw* dd, const dtNavMesh& mesh, unsigned char flags, const float pos[ 3 ], const float radius )
+{
+	float bmin[ 3 ];
+	float bmax[ 3 ];
+	dtVcopy( bmin, pos );
+	dtVcopy( bmax, pos );
+
+	for ( int i = 0; i < 3; ++i )
+	{
+		bmin[ i ] -= radius;
+		bmax[ i ] += radius;
+	}
+
+	const int tx0 = (int)dtMathFloorf( ( bmin[ 0 ] - mesh.getParams()->orig[ 0 ] ) / mesh.getParams()->tileWidth );
+	const int tx1 = (int)dtMathFloorf( ( bmax[ 0 ] - mesh.getParams()->orig[ 0 ] ) / mesh.getParams()->tileWidth );
+	const int ty0 = (int)dtMathFloorf( ( bmin[ 2 ] - mesh.getParams()->orig[ 2 ] ) / mesh.getParams()->tileHeight );
+	const int ty1 = (int)dtMathFloorf( ( bmax[ 2 ] - mesh.getParams()->orig[ 2 ] ) / mesh.getParams()->tileHeight );
+
+	for ( int ty = ty0; ty <= ty1; ++ty )
+	{
+		for ( int tx = tx0; tx <= tx1; ++tx )
+		{
+			enum
+			{
+				MaxTiles = 32
+			};
+			const dtMeshTile * tmpTiles[ MaxTiles ];
+
+			const int ntiles = mesh.getTilesAt( tx, ty, tmpTiles, MaxTiles );
+			for ( int i = 0; i < ntiles; ++i )
+			{
+				if ( dtOverlapBounds( bmin, bmax, tmpTiles[ i ]->header->bmin, tmpTiles[ i ]->header->bmax ) )
+				{
+					drawMeshTile( dd, mesh, 0, tmpTiles[ i ], flags );
+				}
+			}
+		}
+	}
+}
+
 
 
