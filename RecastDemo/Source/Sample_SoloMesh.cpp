@@ -46,7 +46,7 @@
 Sample_SoloMesh::Sample_SoloMesh() :
 	m_keepInterResults(true),
 	m_totalBuildTimeMs(0),
-	m_triareas(0),
+	m_triareaMasks(0),
 	m_solid(0),
 	m_chf(0),
 	m_cset(0),
@@ -64,8 +64,8 @@ Sample_SoloMesh::~Sample_SoloMesh()
 	
 void Sample_SoloMesh::cleanup()
 {
-	delete [] m_triareas;
-	m_triareas = 0;
+	delete [] m_triareaMasks;
+	m_triareaMasks = 0;
 	rcFreeHeightField(m_solid);
 	m_solid = 0;
 	rcFreeCompactHeightfield(m_chf);
@@ -255,7 +255,7 @@ void Sample_SoloMesh::handleRender()
 			duDebugDrawNavMeshBVTree(&dd, *m_navMesh);
 		if (m_drawMode == DRAWMODE_NAVMESH_NODES)
 			duDebugDrawNavMeshNodes(&dd, *m_navQuery);
-		duDebugDrawNavMeshPolysWithFlags(&dd, *m_navMesh, SAMPLE_POLYFLAGS_DISABLED, duRGBA(0,0,0,128));
+		duDebugDrawNavMeshPolysWithFlags(&dd, *m_navMesh, AREAFLAGS_DISABLED, duRGBA(0,0,0,128));
 	}
 		
 	glDepthMask(GL_TRUE);
@@ -426,28 +426,24 @@ bool Sample_SoloMesh::handleBuild()
 	// Allocate array that can hold triangle area types.
 	// If you have multiple meshes you need to process, allocate
 	// and array which can hold the max number of triangles you need to process.
-	m_triareas = new rcArea[ntris];
-	if (!m_triareas)
+	m_triareaMasks = new navAreaMask[ntris];
+	if (!m_triareaMasks)
 	{
-		m_ctx->log(RC_LOG_ERROR, "buildNavigation: Out of memory 'm_triareas' (%d).", ntris);
+		m_ctx->log(RC_LOG_ERROR, "buildNavigation: Out of memory 'm_triareaMasks' (%d).", ntris);
 		return false;
 	}
 	
 	// Find triangles which are walkable based on their slope and rasterize them.
 	// If your input data is multiple meshes, you can transform them here, calculate
 	// the are type for each of the meshes and rasterize them.
-	memset(m_triareas, 0, ntris*sizeof(rcArea));
-	rcMarkWalkableTriangles(m_ctx, m_cfg.walkableSlopeAngle, verts, nverts, tris, ntris, m_triareas);
-	if (!rcRasterizeTriangles(m_ctx, verts, nverts, tris, m_triareas, ntris, *m_solid, m_cfg.walkableClimb))
-	{
-		m_ctx->log(RC_LOG_ERROR, "buildNavigation: Could not rasterize triangles.");
-		return false;
-	}
+	memset(m_triareaMasks, 0, ntris*sizeof(navAreaMask));
+	rcMarkWalkableTriangles(m_ctx, m_cfg.walkableSlopeAngle, verts, nverts, tris, ntris, m_triareaMasks);
+	rcRasterizeTriangles(m_ctx, verts, nverts, tris, m_triareaMasks, ntris, *m_solid, m_cfg.walkableClimb);
 
 	if (!m_keepInterResults)
 	{
-		delete [] m_triareas;
-		m_triareas = 0;
+		delete [] m_triareaMasks;
+		m_triareaMasks = 0;
 	}
 	
 	//
@@ -497,36 +493,19 @@ bool Sample_SoloMesh::handleBuild()
 	// (Optional) Mark areas.
 	const ConvexVolume* vols = m_geom->getConvexVolumes();
 	for (int i  = 0; i < m_geom->getConvexVolumeCount(); ++i)
-		rcMarkConvexPolyArea(m_ctx, vols[i].verts, vols[i].nverts, vols[i].hmin, vols[i].hmax, (unsigned char)vols[i].area, *m_chf);
-
+		rcMarkConvexPolyArea(m_ctx, vols[i].verts, vols[i].nverts, vols[i].hmin, vols[i].hmax, vols[i].areaMask, *m_chf);
 	
-	// Partition the heightfield so that we can use simple algorithm later to triangulate the walkable areas.
-	// There are 3 martitioning methods, each with some pros and cons:
-	// 1) Watershed partitioning
-	//   - the classic Recast partitioning
-	//   - creates the nicest tessellation
-	//   - usually slowest
-	//   - partitions the heightfield into nice regions without holes or overlaps
-	//   - the are some corner cases where this method creates produces holes and overlaps
-	//      - holes may appear when a small obstacles is close to large open area (triangulation can handle this)
-	//      - overlaps may occur if you have narrow spiral corridors (i.e stairs), this make triangulation to fail
-	//   * generally the best choice if you precompute the nacmesh, use this if you have large open areas
-	// 2) Monotone partioning
-	//   - fastest
-	//   - partitions the heightfield into regions without holes and overlaps (guaranteed)
-	//   - creates long thin polygons, which sometimes causes paths with detours
-	//   * use this if you want fast navmesh generation
-	// 3) Layer partitoining
-	//   - quite fast
-	//   - partitions the heighfield into non-overlapping regions
-	//   - relies on the triangulation code to cope with holes (thus slower than monotone partitioning)
-	//   - produces better triangles than monotone partitioning
-	//   - does not have the corner cases of watershed partitioning
-	//   - can be slow and create a bit ugly tessellation (still better than monotone)
-	//     if you have large open areas with small obstacles (not a problem if you use tiles)
-	//   * good choice to use for tiled navmesh with medium and small sized tiles
-	
-	if (m_partitionType == SAMPLE_PARTITION_WATERSHED)
+	if (m_monotonePartitioning)
+	{
+		// Partition the walkable surface into simple regions without holes.
+		// Monotone partitioning does not need distancefield.
+		if (!rcBuildRegionsMonotone(m_ctx, *m_chf, 0, m_cfg.minRegionArea, m_cfg.mergeRegionArea))
+		{
+			m_ctx->log(RC_LOG_ERROR, "buildNavigation: Could not build regions.");
+			return false;
+		}
+	}
+	else
 	{
 		// Prepare for region partitioning, by calculating distance field along the walkable surface.
 		if (!rcBuildDistanceField(m_ctx, *m_chf))
@@ -534,34 +513,15 @@ bool Sample_SoloMesh::handleBuild()
 			m_ctx->log(RC_LOG_ERROR, "buildNavigation: Could not build distance field.");
 			return false;
 		}
-		
+
 		// Partition the walkable surface into simple regions without holes.
 		if (!rcBuildRegions(m_ctx, *m_chf, 0, m_cfg.minRegionArea, m_cfg.mergeRegionArea))
 		{
-			m_ctx->log(RC_LOG_ERROR, "buildNavigation: Could not build watershed regions.");
+			m_ctx->log(RC_LOG_ERROR, "buildNavigation: Could not build regions.");
 			return false;
 		}
 	}
-	else if (m_partitionType == SAMPLE_PARTITION_MONOTONE)
-	{
-		// Partition the walkable surface into simple regions without holes.
-		// Monotone partitioning does not need distancefield.
-		if (!rcBuildRegionsMonotone(m_ctx, *m_chf, 0, m_cfg.minRegionArea, m_cfg.mergeRegionArea))
-		{
-			m_ctx->log(RC_LOG_ERROR, "buildNavigation: Could not build monotone regions.");
-			return false;
-		}
-	}
-	else // SAMPLE_PARTITION_LAYERS
-	{
-		// Partition the walkable surface into simple regions without holes.
-		if (!rcBuildLayerRegions(m_ctx, *m_chf, 0, m_cfg.minRegionArea))
-		{
-			m_ctx->log(RC_LOG_ERROR, "buildNavigation: Could not build layer regions.");
-			return false;
-		}
-	}
-	
+
 	//
 	// Step 5. Trace and simplify region contours.
 	//
@@ -636,7 +596,7 @@ bool Sample_SoloMesh::handleBuild()
 		int navDataSize = 0;
 
 		// Update poly flags from areas.
-		for (int i = 0; i < m_pmesh->npolys; ++i)
+		/*for (int i = 0; i < m_pmesh->npolys; ++i)
 		{
 			if (m_pmesh->areas[i] == RC_WALKABLE_AREA)
 				m_pmesh->areas[i] = SAMPLE_POLYAREA_GROUND;
@@ -645,17 +605,17 @@ bool Sample_SoloMesh::handleBuild()
 				m_pmesh->areas[i] == SAMPLE_POLYAREA_GRASS ||
 				m_pmesh->areas[i] == SAMPLE_POLYAREA_ROAD)
 			{
-				m_pmesh->flags[i] = SAMPLE_POLYFLAGS_WALK;
+				m_pmesh->flags[i] = AREAFLAGS_WALK;
 			}
 			else if (m_pmesh->areas[i] == SAMPLE_POLYAREA_WATER)
 			{
-				m_pmesh->flags[i] = SAMPLE_POLYFLAGS_SWIM;
+				m_pmesh->flags[i] = AREAFLAGS_SWIM;
 			}
 			else if (m_pmesh->areas[i] == SAMPLE_POLYAREA_DOOR)
 			{
-				m_pmesh->flags[i] = SAMPLE_POLYFLAGS_WALK | SAMPLE_POLYFLAGS_DOOR;
+				m_pmesh->flags[i] = AREAFLAGS_WALK | AREAFLAGS_DOOR;
 			}
-		}
+		}*/
 
 
 		dtNavMeshCreateParams params;
@@ -663,8 +623,7 @@ bool Sample_SoloMesh::handleBuild()
 		params.verts = m_pmesh->verts;
 		params.vertCount = m_pmesh->nverts;
 		params.polys = m_pmesh->polys;
-		params.polyAreas = m_pmesh->areas;
-		params.polyFlags = m_pmesh->flags;
+		params.areaMasks = m_pmesh->areaMasks;
 		params.polyCount = m_pmesh->npolys;
 		params.nvp = m_pmesh->nvp;
 		params.detailMeshes = m_dmesh->meshes;
@@ -675,8 +634,7 @@ bool Sample_SoloMesh::handleBuild()
 		params.offMeshConVerts = m_geom->getOffMeshConnectionVerts();
 		params.offMeshConRad = m_geom->getOffMeshConnectionRads();
 		params.offMeshConDir = m_geom->getOffMeshConnectionDirs();
-		params.offMeshConAreas = m_geom->getOffMeshConnectionAreas();
-		params.offMeshConFlags = m_geom->getOffMeshConnectionFlags();
+		params.offMeshConAreaFlags = m_geom->getOffMeshConnectionAreaMask();
 		params.offMeshConUserID = m_geom->getOffMeshConnectionId();
 		params.offMeshConCount = m_geom->getOffMeshConnectionCount();
 		params.walkableHeight = m_agentHeight;

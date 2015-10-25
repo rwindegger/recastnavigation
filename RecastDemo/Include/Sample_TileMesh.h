@@ -31,7 +31,7 @@ protected:
 	bool m_buildAll;
 	float m_totalBuildTimeMs;
 
-	rcArea* m_triareas;
+	navAreaMask* m_triareaMasks;
 	rcHeightfield* m_solid;
 	rcCompactHeightfield* m_chf;
 	rcContourSet* m_cset;

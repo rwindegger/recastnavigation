@@ -19,9 +19,9 @@
 #ifndef DETOURNAVMESH_H
 #define DETOURNAVMESH_H
 
+#include "SharedConfig.h"
 #include "DetourAlloc.h"
 #include "DetourStatus.h"
-#include "DetourTypes.h"
 
 // Undefine (or define in a build cofnig) the following line to use 64bit polyref.
 // Generally not needed, useful for very large worlds.
@@ -91,6 +91,10 @@ static const unsigned int DT_NULL_LINK = 0xffffffff;
 /// A flag that indicates that an off-mesh connection can be traversed in both directions. (Is bidirectional.)
 static const unsigned int DT_OFFMESH_CON_BIDIR = 1;
 
+/// The maximum number of user defined area ids.
+/// @ingroup detour
+//static const int DT_MAX_AREAS = 64;
+
 /// Tile flags used for various functions and fields.
 /// For an example, see dtNavMesh::addTile().
 enum dtTileFlags
@@ -113,25 +117,6 @@ enum dtStraightPathOptions
 	DT_STRAIGHTPATH_AREA_CROSSINGS = 0x01,	///< Add a vertex at every polygon edge crossing where area changes.
 	DT_STRAIGHTPATH_ALL_CROSSINGS = 0x02,	///< Add a vertex at every polygon edge crossing.
 };
-
-
-/// Options for dtNavMeshQuery::findPath
-enum dtFindPathOptions
-{
-	DT_FINDPATH_LOW_QUALITY_FAR = 0x01,		///< [provisional] trade quality for performance far from the origin. The idea is that by then a new query will be issued
-	DT_FINDPATH_ANY_ANGLE	= 0x02,			///< use raycasts during pathfind to "shortcut" (raycast still consider costs)
-};
-
-/// Options for dtNavMeshQuery::raycast
-enum dtRaycastOptions
-{
-	DT_RAYCAST_USE_COSTS = 0x01,		///< Raycast should calculate movement cost along the ray and fill RaycastHit::cost
-};
-
-
-/// Limit raycasting during any angle pahfinding
-/// The limit is given as a multiple of the character radius
-static const float DT_RAY_CAST_LIMIT_PROPORTIONS = 50.0f;
 
 /// Flags representing the type of a navigation mesh polygon.
 enum dtPolyTypes
@@ -158,26 +143,20 @@ struct dtPoly
 	unsigned short neis[DT_VERTS_PER_POLYGON];
 
 	/// The user defined polygon flags.
-	dtFlags flags;
+	navAreaMask areaMask;
 
 	/// The number of vertices in the polygon.
 	unsigned char vertCount;
 
 	/// The bit packed area id and polygon type.
 	/// @note Use the structure's set and get methods to acess this value.
-	dtArea areaAndtype;
-
-	/// Sets the user defined area id. [Limit: < #DT_MAX_AREAS]
-	inline void setArea(dtArea a) { areaAndtype = (areaAndtype >> (sizeof(dtArea)*8 - 2) << (sizeof(dtArea)*8 - 2)) | ((a << 2) >> 2); }
+	unsigned char polyType;
 
 	/// Sets the polygon type. (See: #dtPolyTypes.)
-	inline void setType(unsigned char t) { areaAndtype = ((areaAndtype << 2) >> 2) | (dtArea(t) << (sizeof(dtArea)*8 - 2)); }
-
-	/// Gets the user defined area id.
-	inline dtArea getArea() const { return (areaAndtype << 2) >> 2; }
+	inline void setPolyType(unsigned char t) { polyType = t; }
 
 	/// Gets the polygon type. (See: #dtPolyTypes)
-	inline unsigned char getType() const { return (unsigned char)(areaAndtype >> (sizeof(dtArea)*8 - 2)); }
+	inline unsigned char getType() const { return polyType; }
 };
 
 /// Defines the location of detail sub-mesh data within a dtMeshTile.
@@ -456,25 +435,13 @@ public:
 	///  @param[in]	ref		The polygon reference.
 	///  @param[in]	flags	The new flags for the polygon.
 	/// @return The status flags for the operation.
-	dtStatus setPolyFlags(dtPolyRef ref, dtFlags flags);
+	dtStatus setPolyFlags(dtPolyRef ref, navAreaMask areaMask);
 
 	/// Gets the user defined flags for the specified polygon.
 	///  @param[in]		ref				The polygon reference.
 	///  @param[out]	resultFlags		The polygon flags.
 	/// @return The status flags for the operation.
-	dtStatus getPolyFlags(dtPolyRef ref, dtFlags* resultFlags) const;
-
-	/// Sets the user defined area for the specified polygon.
-	///  @param[in]	ref		The polygon reference.
-	///  @param[in]	area	The new area id for the polygon. [Limit: < #DT_MAX_AREAS]
-	/// @return The status flags for the operation.
-	dtStatus setPolyArea(dtPolyRef ref, dtArea area);
-
-	/// Gets the user defined area for the specified polygon.
-	///  @param[in]		ref			The polygon reference.
-	///  @param[out]	resultArea	The area id for the polygon.
-	/// @return The status flags for the operation.
-	dtStatus getPolyArea(dtPolyRef ref, dtArea* resultArea) const;
+	dtStatus getPolyFlags(dtPolyRef ref, navAreaMask* resultFlags) const;
 
 	/// Gets the size of the buffer required by #storeTileState to store the specified tile's state.
 	///  @param[in]	tile	The tile.
@@ -629,7 +596,8 @@ private:
 	dtPolyRef findNearestPolyInTile(const dtMeshTile* tile, const float* center,
 									const float* extents, float* nearestPt) const;
 	/// Returns closest point on polygon.
-	void closestPointOnPoly(dtPolyRef ref, const float* pos, float* closest, bool* posOverPoly) const;
+	void closestPointOnPolyInTile(const dtMeshTile* tile, unsigned int ip,
+								  const float* pos, float* closest) const;
 	
 	dtNavMeshParams m_params;			///< Current initialization params. TODO: do not store this info twice.
 	float m_orig[3];					///< Origin of the tile (0,0)

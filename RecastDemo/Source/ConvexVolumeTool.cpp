@@ -100,7 +100,7 @@ static int pointInPoly(int nvert, const float* verts, const float* p)
 
 ConvexVolumeTool::ConvexVolumeTool() :
 	m_sample(0),
-	m_areaType(SAMPLE_POLYAREA_GRASS),
+	m_areaMask( AREAFLAGS_CROUCH ),
 	m_polyOffset(0.0f),
 	m_boxHeight(6.0f),
 	m_boxDescent(1.0f),
@@ -134,20 +134,43 @@ void ConvexVolumeTool::handleMenu()
 
 	imguiLabel("Area Type");
 	imguiIndent();
-	if (imguiCheck("Grass", m_areaType == SAMPLE_POLYAREA_GRASS))
-		m_areaType = SAMPLE_POLYAREA_GRASS;
-	if (imguiCheck("Road", m_areaType == SAMPLE_POLYAREA_ROAD))
-		m_areaType = SAMPLE_POLYAREA_ROAD;
-	if (imguiCheck("Water", m_areaType == SAMPLE_POLYAREA_WATER))
-		m_areaType = SAMPLE_POLYAREA_WATER;
-	if (imguiCheck("Door", m_areaType == SAMPLE_POLYAREA_DOOR))
-		m_areaType = SAMPLE_POLYAREA_DOOR;
+
+	if ( imguiCheck( "Road", ( m_areaMask & AREAFLAGS_CROUCH )!=0 ) )
+	{
+		if ( ( m_areaMask & AREAFLAGS_CROUCH ) )
+			m_areaMask &= ~AREAFLAGS_CROUCH;
+		else
+			m_areaMask |= AREAFLAGS_CROUCH;
+	}
+	if ( imguiCheck( "Water", ( m_areaMask & AREAFLAGS_SWIM ) != 0 ) )
+	{
+		if ( ( m_areaMask & AREAFLAGS_SWIM ) )
+			m_areaMask &= ~AREAFLAGS_SWIM;
+		else
+			m_areaMask |= AREAFLAGS_SWIM;
+	}
+	if ( imguiCheck( "Door", ( m_areaMask & AREAFLAGS_DOOR ) != 0 ) )
+	{
+		if ( ( m_areaMask & AREAFLAGS_DOOR ) )
+			m_areaMask &= ~AREAFLAGS_DOOR;
+		else
+			m_areaMask |= AREAFLAGS_DOOR;
+	}
 	imguiUnindent();
 
 	imguiSeparator();
 
 	if (imguiButton("Clear Shape"))
 	{
+		m_npts = 0;
+		m_nhull = 0;
+	}
+	if ( imguiButton( "Clear All Shapes" ) )
+	{
+		InputGeom* geom = m_sample->getInputGeom();
+		while ( geom->getConvexVolumeCount() > 0 )
+			geom->deleteConvexVolume( 0 );
+
 		m_npts = 0;
 		m_nhull = 0;
 	}
@@ -203,11 +226,11 @@ void ConvexVolumeTool::handleClick(const float* /*s*/, const float* p, bool shif
 					float offset[MAX_PTS*2*3];
 					int noffset = rcOffsetPoly(verts, m_nhull, m_polyOffset, offset, MAX_PTS*2);
 					if (noffset > 0)
-						geom->addConvexVolume(offset, noffset, minh, maxh, (unsigned char)m_areaType);
+						geom->addConvexVolume(offset, noffset, minh, maxh, m_areaMask);
 				}
 				else
 				{
-					geom->addConvexVolume(verts, m_nhull, minh, maxh, (unsigned char)m_areaType);
+					geom->addConvexVolume(verts, m_nhull, minh, maxh, m_areaMask);
 				}
 			}
 			

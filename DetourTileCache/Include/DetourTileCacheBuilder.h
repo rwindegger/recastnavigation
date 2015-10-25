@@ -19,13 +19,15 @@
 #ifndef DETOURTILECACHEBUILDER_H
 #define DETOURTILECACHEBUILDER_H
 
+#include "SharedConfig.h"
 #include "DetourAlloc.h"
 #include "DetourStatus.h"
-#include "DetourTypes.h"
 
 static const int DT_TILECACHE_MAGIC = 'D'<<24 | 'T'<<16 | 'L'<<8 | 'R'; ///< 'DTLR';
 static const int DT_TILECACHE_VERSION = 1;
 
+static const unsigned char DT_TILECACHE_NULL_AREA = 0;
+static const unsigned char DT_TILECACHE_WALKABLE_AREA = 63;
 static const unsigned short DT_TILECACHE_NULL_IDX = 0xffff;
 
 struct dtTileCacheLayerHeader
@@ -44,7 +46,7 @@ struct dtTileCacheLayer
 	dtTileCacheLayerHeader* header;
 	unsigned char regCount;					///< Region count.
 	unsigned char* heights;
-	dtArea* areas;
+	unsigned char* areas;
 	unsigned char* cons;
 	unsigned char* regs;
 };
@@ -54,7 +56,7 @@ struct dtTileCacheContour
 	int nverts;
 	unsigned char* verts;
 	unsigned char reg;
-	dtArea area;
+	unsigned char area;
 };
 
 struct dtTileCacheContourSet
@@ -70,15 +72,12 @@ struct dtTileCachePolyMesh
 	int npolys;				///< Number of polygons.
 	unsigned short* verts;	///< Vertices of the mesh, 3 elements per vertex.
 	unsigned short* polys;	///< Polygons of the mesh, nvp*2 elements per polygon.
-	dtFlags* flags;		///< Per polygon flags.
-	dtArea* areas;	///< Area ID of polygons.
+	navAreaMask* areaMasks;	///< Per polygon flags.
 };
 
 
 struct dtTileCacheAlloc
 {
-	virtual ~dtTileCacheAlloc() { }
-
 	virtual void reset()
 	{
 	}
@@ -96,8 +95,6 @@ struct dtTileCacheAlloc
 
 struct dtTileCacheCompressor
 {
-	virtual ~dtTileCacheCompressor() { }
-
 	virtual int maxCompressedSize(const int bufferSize) = 0;
 	virtual dtStatus compress(const unsigned char* buffer, const int bufferSize,
 							  unsigned char* compressed, const int maxCompressedSize, int* compressedSize) = 0;
@@ -109,7 +106,7 @@ struct dtTileCacheCompressor
 dtStatus dtBuildTileCacheLayer(dtTileCacheCompressor* comp,
 							   dtTileCacheLayerHeader* header,
 							   const unsigned char* heights,
-							   const dtArea* areas,
+							   const navAreaMask* areaMasks,
 							   const unsigned char* cons,
 							   unsigned char** outData, int* outDataSize);
 
@@ -126,7 +123,7 @@ dtTileCachePolyMesh* dtAllocTileCachePolyMesh(dtTileCacheAlloc* alloc);
 void dtFreeTileCachePolyMesh(dtTileCacheAlloc* alloc, dtTileCachePolyMesh* lmesh);
 
 dtStatus dtMarkCylinderArea(dtTileCacheLayer& layer, const float* orig, const float cs, const float ch,
-							const float* pos, const float radius, const float height, const dtArea areaId);
+							const float* pos, const float radius, const float height, const unsigned char areaId);
 
 dtStatus dtBuildTileCacheRegions(dtTileCacheAlloc* alloc,
 								 dtTileCacheLayer& layer,

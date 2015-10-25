@@ -64,8 +64,11 @@ dtQueryFilter::dtQueryFilter() :
 	m_includeFlags(~dtFlags(0)),
 	m_excludeFlags(0)
 {
-	for (int i = 0; i < DT_MAX_AREAS; ++i)
-		m_areaCost[i] = 1.0f;
+	for ( int i = 0; i < MAX_AREA_COSTS; ++i )
+	{
+		m_areaCost[ i ] = 1.0f;
+		m_costMask[ i ] = 0;
+	}
 }
 
 #ifdef DT_VIRTUAL_QUERYFILTER
@@ -88,7 +91,7 @@ inline bool dtQueryFilter::passFilter(const dtPolyRef /*ref*/,
 									  const dtMeshTile* /*tile*/,
 									  const dtPoly* poly) const
 {
-	return (poly->flags & m_includeFlags) != 0 && (poly->flags & m_excludeFlags) == 0;
+	return (poly->areaMask & m_includeFlags) != 0 && (poly->areaMask & m_excludeFlags) == 0;
 }
 
 inline float dtQueryFilter::getCost(const float* pa, const float* pb,
@@ -96,7 +99,7 @@ inline float dtQueryFilter::getCost(const float* pa, const float* pb,
 									const dtPolyRef /*curRef*/, const dtMeshTile* /*curTile*/, const dtPoly* curPoly,
 									const dtPolyRef /*nextRef*/, const dtMeshTile* /*nextTile*/, const dtPoly* /*nextPoly*/) const
 {
-	return dtVdist(pa, pb) * m_areaCost[curPoly->getArea()];
+	return dtVdist(pa, pb) * getAreaCost(curPoly->areaMask);
 }
 #endif	
 	
@@ -1665,7 +1668,7 @@ dtStatus dtNavMeshQuery::appendPortals(const int startIdx, const int endIdx, con
 		if (options & DT_STRAIGHTPATH_AREA_CROSSINGS)
 		{
 			// Skip intersection if only area crossings are requested.
-			if (fromPoly->getArea() == toPoly->getArea())
+			if (fromPoly->areaMask == toPoly->areaMask)
 				continue;
 		}
 		

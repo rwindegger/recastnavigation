@@ -72,12 +72,14 @@ class NavMeshTileTool : public SampleTool
 	Sample_TileMesh* m_sample;
 	float m_hitPos[3];
 	bool m_hitPosSet;
+	float m_agentRadius;
 	
 public:
 
 	NavMeshTileTool() :
 		m_sample(0),
-		m_hitPosSet(false)
+		m_hitPosSet(false),
+		m_agentRadius(0)
 	{
 		m_hitPos[0] = m_hitPos[1] = m_hitPos[2] = 0;
 	}
@@ -174,7 +176,7 @@ Sample_TileMesh::Sample_TileMesh() :
 	m_keepInterResults(false),
 	m_buildAll(true),
 	m_totalBuildTimeMs(0),
-	m_triareas(0),
+	m_triareaMasks(0),
 	m_solid(0),
 	m_chf(0),
 	m_cset(0),
@@ -205,8 +207,8 @@ Sample_TileMesh::~Sample_TileMesh()
 
 void Sample_TileMesh::cleanup()
 {
-	delete [] m_triareas;
-	m_triareas = 0;
+	delete [] m_triareaMasks;
+	m_triareaMasks = 0;
 	rcFreeHeightField(m_solid);
 	m_solid = 0;
 	rcFreeCompactHeightfield(m_chf);
@@ -283,12 +285,7 @@ dtNavMesh* Sample_TileMesh::loadAll(const char* path)
 	
 	// Read header.
 	NavMeshSetHeader header;
-	size_t readLen = fread(&header, sizeof(NavMeshSetHeader), 1, fp);
-	if (readLen != 1)
-	{
-		fclose(fp);
-		return 0;
-	}
+	fread(&header, sizeof(NavMeshSetHeader), 1, fp);
 	if (header.magic != NAVMESHSET_MAGIC)
 	{
 		fclose(fp);
@@ -317,20 +314,15 @@ dtNavMesh* Sample_TileMesh::loadAll(const char* path)
 	for (int i = 0; i < header.numTiles; ++i)
 	{
 		NavMeshTileHeader tileHeader;
-		readLen = fread(&tileHeader, sizeof(tileHeader), 1, fp);
-		if (readLen != 1)
-			return 0;
-
+		fread(&tileHeader, sizeof(tileHeader), 1, fp);
 		if (!tileHeader.tileRef || !tileHeader.dataSize)
 			break;
 
 		unsigned char* data = (unsigned char*)dtAlloc(tileHeader.dataSize, DT_ALLOC_PERM);
 		if (!data) break;
 		memset(data, 0, tileHeader.dataSize);
-		readLen = fread(data, tileHeader.dataSize, 1, fp);
-		if (readLen != 1)
-			return 0;
-
+		fread(data, tileHeader.dataSize, 1, fp);
+		
 		mesh->addTile(data, tileHeader.dataSize, DT_TILE_FREE_DATA, tileHeader.tileRef, 0);
 	}
 	
@@ -588,7 +580,7 @@ void Sample_TileMesh::handleRender()
 			duDebugDrawNavMeshPortals(&dd, *m_navMesh);
 		if (m_drawMode == DRAWMODE_NAVMESH_NODES)
 			duDebugDrawNavMeshNodes(&dd, *m_navQuery);
-		duDebugDrawNavMeshPolysWithFlags(&dd, *m_navMesh, SAMPLE_POLYFLAGS_DISABLED, duRGBA(0,0,0,128));
+		duDebugDrawNavMeshPolysWithFlags(&dd, *m_navMesh, AREAFLAGS_DISABLED, duRGBA(0,0,0,128));
 	}
 	
 	
@@ -933,27 +925,6 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 	m_cfg.detailSampleDist = m_detailSampleDist < 0.9f ? 0 : m_cellSize * m_detailSampleDist;
 	m_cfg.detailSampleMaxError = m_cellHeight * m_detailSampleMaxError;
 	
-	// Expand the heighfield bounding box by border size to find the extents of geometry we need to build this tile.
-	//
-	// This is done in order to make sure that the navmesh tiles connect correctly at the borders,
-	// and the obstacles close to the border work correctly with the dilation process.
-	// No polygons (or contours) will be created on the border area.
-	//
-	// IMPORTANT!
-	//
-	//   :''''''''':
-	//   : +-----+ :
-	//   : |     | :
-	//   : |     |<--- tile to build
-	//   : |     | :  
-	//   : +-----+ :<-- geometry needed
-	//   :.........:
-	//
-	// You should use this bounding box to query your input geometry.
-	//
-	// For example if you build a navmesh for terrain, and want the navmesh tiles to match the terrain tile size
-	// you will need to pass in data from neighbour terrain tiles too! In a simple case, just pass in all the 8 neighbours,
-	// or use the bounding box below to only pass in a sliver of each of the 8 neighbours.
 	rcVcopy(m_cfg.bmin, bmin);
 	rcVcopy(m_cfg.bmax, bmax);
 	m_cfg.bmin[0] -= m_cfg.borderSize*m_cfg.cs;
@@ -987,10 +958,10 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 	// Allocate array that can hold triangle flags.
 	// If you have multiple meshes you need to process, allocate
 	// and array which can hold the max number of triangles you need to process.
-	m_triareas = new rcArea[chunkyMesh->maxTrisPerChunk];
-	if (!m_triareas)
+	m_triareaMasks = new navAreaMask[chunkyMesh->maxTrisPerChunk];
+	if (!m_triareaMasks)
 	{
-		m_ctx->log(RC_LOG_ERROR, "buildNavigation: Out of memory 'm_triareas' (%d).", chunkyMesh->maxTrisPerChunk);
+		m_ctx->log(RC_LOG_ERROR, "buildNavigation: Out of memory 'm_triareaMask' (%d).", chunkyMesh->maxTrisPerChunk);
 		return 0;
 	}
 	
@@ -1014,18 +985,17 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 		
 		m_tileTriCount += nctris;
 		
-		memset(m_triareas, 0, nctris*sizeof(rcArea));
+		memset(m_triareaMasks, 0, nctris*sizeof(navAreaMask));
 		rcMarkWalkableTriangles(m_ctx, m_cfg.walkableSlopeAngle,
-								verts, nverts, ctris, nctris, m_triareas);
+								verts, nverts, ctris, nctris, m_triareaMasks);
 		
-		if (!rcRasterizeTriangles(m_ctx, verts, nverts, ctris, m_triareas, nctris, *m_solid, m_cfg.walkableClimb))
-			return 0;
+		rcRasterizeTriangles(m_ctx, verts, nverts, ctris, m_triareaMasks, nctris, *m_solid, m_cfg.walkableClimb);
 	}
 	
 	if (!m_keepInterResults)
 	{
-		delete [] m_triareas;
-		m_triareas = 0;
+		delete [] m_triareaMasks;
+		m_triareaMasks = 0;
 	}
 	
 	// Once all geometry is rasterized, we do initial pass of filtering to
@@ -1066,71 +1036,34 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 	// (Optional) Mark areas.
 	const ConvexVolume* vols = m_geom->getConvexVolumes();
 	for (int i  = 0; i < m_geom->getConvexVolumeCount(); ++i)
-		rcMarkConvexPolyArea(m_ctx, vols[i].verts, vols[i].nverts, vols[i].hmin, vols[i].hmax, (unsigned char)vols[i].area, *m_chf);
+		rcMarkConvexPolyArea(m_ctx, vols[i].verts, vols[i].nverts, vols[i].hmin, vols[i].hmax, vols[i].areaMask, *m_chf);
 	
-	
-	// Partition the heightfield so that we can use simple algorithm later to triangulate the walkable areas.
-	// There are 3 martitioning methods, each with some pros and cons:
-	// 1) Watershed partitioning
-	//   - the classic Recast partitioning
-	//   - creates the nicest tessellation
-	//   - usually slowest
-	//   - partitions the heightfield into nice regions without holes or overlaps
-	//   - the are some corner cases where this method creates produces holes and overlaps
-	//      - holes may appear when a small obstacles is close to large open area (triangulation can handle this)
-	//      - overlaps may occur if you have narrow spiral corridors (i.e stairs), this make triangulation to fail
-	//   * generally the best choice if you precompute the nacmesh, use this if you have large open areas
-	// 2) Monotone partioning
-	//   - fastest
-	//   - partitions the heightfield into regions without holes and overlaps (guaranteed)
-	//   - creates long thin polygons, which sometimes causes paths with detours
-	//   * use this if you want fast navmesh generation
-	// 3) Layer partitoining
-	//   - quite fast
-	//   - partitions the heighfield into non-overlapping regions
-	//   - relies on the triangulation code to cope with holes (thus slower than monotone partitioning)
-	//   - produces better triangles than monotone partitioning
-	//   - does not have the corner cases of watershed partitioning
-	//   - can be slow and create a bit ugly tessellation (still better than monotone)
-	//     if you have large open areas with small obstacles (not a problem if you use tiles)
-	//   * good choice to use for tiled navmesh with medium and small sized tiles
-	
-	if (m_partitionType == SAMPLE_PARTITION_WATERSHED)
+	if (m_monotonePartitioning)
+	{
+		// Partition the walkable surface into simple regions without holes.
+		if (!rcBuildRegionsMonotone(m_ctx, *m_chf, m_cfg.borderSize, m_cfg.minRegionArea, m_cfg.mergeRegionArea))
+		{
+			m_ctx->log(RC_LOG_ERROR, "buildNavigation: Could not build regions.");
+			return 0;
+		}
+	}
+	else
 	{
 		// Prepare for region partitioning, by calculating distance field along the walkable surface.
 		if (!rcBuildDistanceField(m_ctx, *m_chf))
 		{
 			m_ctx->log(RC_LOG_ERROR, "buildNavigation: Could not build distance field.");
-			return false;
+			return 0;
 		}
 		
 		// Partition the walkable surface into simple regions without holes.
 		if (!rcBuildRegions(m_ctx, *m_chf, m_cfg.borderSize, m_cfg.minRegionArea, m_cfg.mergeRegionArea))
 		{
-			m_ctx->log(RC_LOG_ERROR, "buildNavigation: Could not build watershed regions.");
-			return false;
+			m_ctx->log(RC_LOG_ERROR, "buildNavigation: Could not build regions.");
+			return 0;
 		}
 	}
-	else if (m_partitionType == SAMPLE_PARTITION_MONOTONE)
-	{
-		// Partition the walkable surface into simple regions without holes.
-		// Monotone partitioning does not need distancefield.
-		if (!rcBuildRegionsMonotone(m_ctx, *m_chf, m_cfg.borderSize, m_cfg.minRegionArea, m_cfg.mergeRegionArea))
-		{
-			m_ctx->log(RC_LOG_ERROR, "buildNavigation: Could not build monotone regions.");
-			return false;
-		}
-	}
-	else // SAMPLE_PARTITION_LAYERS
-	{
-		// Partition the walkable surface into simple regions without holes.
-		if (!rcBuildLayerRegions(m_ctx, *m_chf, m_cfg.borderSize, m_cfg.minRegionArea))
-		{
-			m_ctx->log(RC_LOG_ERROR, "buildNavigation: Could not build layer regions.");
-			return false;
-		}
-	}
-	 	
+ 	
 	// Create contours.
 	m_cset = rcAllocContourSet();
 	if (!m_cset)
@@ -1198,7 +1131,7 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 		}
 		
 		// Update poly flags from areas.
-		for (int i = 0; i < m_pmesh->npolys; ++i)
+		/*for (int i = 0; i < m_pmesh->npolys; ++i)
 		{
 			if (m_pmesh->areas[i] == RC_WALKABLE_AREA)
 				m_pmesh->areas[i] = SAMPLE_POLYAREA_GROUND;
@@ -1207,25 +1140,24 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 				m_pmesh->areas[i] == SAMPLE_POLYAREA_GRASS ||
 				m_pmesh->areas[i] == SAMPLE_POLYAREA_ROAD)
 			{
-				m_pmesh->flags[i] = SAMPLE_POLYFLAGS_WALK;
+				m_pmesh->flags[i] = AREAFLAGS_WALK;
 			}
 			else if (m_pmesh->areas[i] == SAMPLE_POLYAREA_WATER)
 			{
-				m_pmesh->flags[i] = SAMPLE_POLYFLAGS_SWIM;
+				m_pmesh->flags[i] = AREAFLAGS_SWIM;
 			}
 			else if (m_pmesh->areas[i] == SAMPLE_POLYAREA_DOOR)
 			{
-				m_pmesh->flags[i] = SAMPLE_POLYFLAGS_WALK | SAMPLE_POLYFLAGS_DOOR;
+				m_pmesh->flags[i] = AREAFLAGS_WALK | AREAFLAGS_DOOR;
 			}
-		}
+		}*/
 		
 		dtNavMeshCreateParams params;
 		memset(&params, 0, sizeof(params));
 		params.verts = m_pmesh->verts;
 		params.vertCount = m_pmesh->nverts;
 		params.polys = m_pmesh->polys;
-		params.polyAreas = m_pmesh->areas;
-		params.polyFlags = m_pmesh->flags;
+		params.areaMasks = m_pmesh->areaMasks;
 		params.polyCount = m_pmesh->npolys;
 		params.nvp = m_pmesh->nvp;
 		params.detailMeshes = m_dmesh->meshes;
@@ -1236,8 +1168,7 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 		params.offMeshConVerts = m_geom->getOffMeshConnectionVerts();
 		params.offMeshConRad = m_geom->getOffMeshConnectionRads();
 		params.offMeshConDir = m_geom->getOffMeshConnectionDirs();
-		params.offMeshConAreas = m_geom->getOffMeshConnectionAreas();
-		params.offMeshConFlags = m_geom->getOffMeshConnectionFlags();
+		params.offMeshConAreaFlags = m_geom->getOffMeshConnectionAreaMask();
 		params.offMeshConUserID = m_geom->getOffMeshConnectionId();
 		params.offMeshConCount = m_geom->getOffMeshConnectionCount();
 		params.walkableHeight = m_agentHeight;

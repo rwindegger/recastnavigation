@@ -48,22 +48,22 @@ void rcFilterLowHangingWalkableObstacles(rcContext* ctx, const int walkableClimb
 		{
 			rcSpan* ps = 0;
 			bool previousWalkable = false;
-			rcArea previousArea = RC_NULL_AREA;
+			navAreaMask previousArea = RC_NULL_AREA;
 			
 			for (rcSpan* s = solid.spans[x + y*w]; s; ps = s, s = s->next)
 			{
-				const bool walkable = s->area != RC_NULL_AREA;
+				const bool walkable = (s->areaMask & RC_WALKABLE_AREA)!=0;
 				// If current span is not walkable, but there is walkable
 				// span just below it, mark the span above it walkable too.
 				if (!walkable && previousWalkable)
 				{
 					if (rcAbs((int)s->smax - (int)ps->smax) <= walkableClimb)
-						s->area = previousArea;
+						s->areaMask = previousArea;
 				}
 				// Copy walkable flag so that it cannot propagate
 				// past multiple non-walkable objects.
 				previousWalkable = walkable;
-				previousArea = s->area;
+				previousArea = s->areaMask;
 			}
 		}
 	}
@@ -100,7 +100,7 @@ void rcFilterLedgeSpans(rcContext* ctx, const int walkableHeight, const int walk
 			for (rcSpan* s = solid.spans[x + y*w]; s; s = s->next)
 			{
 				// Skip non walkable spans.
-				if (s->area == RC_NULL_AREA)
+				if (s->areaMask == RC_NULL_AREA)
 					continue;
 				
 				const int bot = (int)(s->smax);
@@ -156,13 +156,13 @@ void rcFilterLedgeSpans(rcContext* ctx, const int walkableHeight, const int walk
 				// The current span is close to a ledge if the drop to any
 				// neighbour span is less than the walkableClimb.
 				if (minh < -walkableClimb)
-					s->area = RC_NULL_AREA;
+					s->areaMask = RC_NULL_AREA;
 					
 				// If the difference between all neighbours is too large,
 				// we are at steep slope, mark the span as ledge.
 				if ((asmax - asmin) > walkableClimb)
 				{
-					s->area = RC_NULL_AREA;
+					s->areaMask = RC_NULL_AREA;
 				}
 			}
 		}
@@ -198,7 +198,7 @@ void rcFilterWalkableLowHeightSpans(rcContext* ctx, int walkableHeight, rcHeight
 				const int bot = (int)(s->smax);
 				const int top = s->next ? (int)(s->next->smin) : MAX_HEIGHT;
 				if ((top - bot) <= walkableHeight)
-					s->area = RC_NULL_AREA;
+					s->areaMask = RC_NULL_AREA;
 			}
 		}
 	}

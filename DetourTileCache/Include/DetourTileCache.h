@@ -1,8 +1,8 @@
 #ifndef DETOURTILECACHE_H
 #define DETOURTILECACHE_H
 
+#include "SharedConfig.h"
 #include "DetourStatus.h"
-#include "DetourTypes.h"
 
 typedef unsigned int dtObstacleRef;
 
@@ -62,10 +62,7 @@ struct dtTileCacheParams
 
 struct dtTileCacheMeshProcess
 {
-	virtual ~dtTileCacheMeshProcess() { }
-
-	virtual void process(struct dtNavMeshCreateParams* params,
-		dtArea* polyAreas, dtFlags* polyFlags) = 0;
+	virtual void process(struct dtNavMeshCreateParams* params, navAreaMask* areaMasks) = 0;
 };
 
 
