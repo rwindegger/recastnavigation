@@ -31,7 +31,7 @@ static int getCornerHeight(int x, int y, int i, int dir,
 						   bool& isBorderVertex)
 {
 	const rcCompactSpan& s = chf.spans[i];
-	int ch = (int)s.y;
+	int ch = (int)s.minY;
 	int dirp = (dir+1) & 0x3;
 	
 	struct CornerId
@@ -55,7 +55,7 @@ static int getCornerHeight(int x, int y, int i, int dir,
 	
 	// Combine region and area codes in order to prevent
 	// border vertices which are in between two areas to be removed. 
-	regs[ 0 ] = CornerId( chf.spans[ i ].reg, chf.areaMasks[ i ] );
+	regs[ 0 ] = CornerId( chf.spans[ i ].regionID, chf.areaMasks[ i ] );
 	
 	if (rcGetCon(s, dir) != RC_NOT_CONNECTED)
 	{
@@ -63,16 +63,16 @@ static int getCornerHeight(int x, int y, int i, int dir,
 		const int ay = y + rcGetDirOffsetY(dir);
 		const int ai = (int)chf.cells[ax+ay*chf.width].index + rcGetCon(s, dir);
 		const rcCompactSpan& as = chf.spans[ai];
-		ch = rcMax(ch, (int)as.y);
-		regs[ 1 ] = CornerId( chf.spans[ ai ].reg, chf.areaMasks[ ai ] );
+		ch = rcMax(ch, (int)as.minY);
+		regs[ 1 ] = CornerId( chf.spans[ ai ].regionID, chf.areaMasks[ ai ] );
 		if (rcGetCon(as, dirp) != RC_NOT_CONNECTED)
 		{
 			const int ax2 = ax + rcGetDirOffsetX(dirp);
 			const int ay2 = ay + rcGetDirOffsetY(dirp);
 			const int ai2 = (int)chf.cells[ax2+ay2*chf.width].index + rcGetCon(as, dirp);
 			const rcCompactSpan& as2 = chf.spans[ai2];
-			ch = rcMax(ch, (int)as2.y);
-			regs[ 2 ] = CornerId( chf.spans[ ai2 ].reg, chf.areaMasks[ ai2 ] );
+			ch = rcMax(ch, (int)as2.minY);
+			regs[ 2 ] = CornerId( chf.spans[ ai2 ].regionID, chf.areaMasks[ ai2 ] );
 		}
 	}
 	if (rcGetCon(s, dirp) != RC_NOT_CONNECTED)
@@ -81,16 +81,16 @@ static int getCornerHeight(int x, int y, int i, int dir,
 		const int ay = y + rcGetDirOffsetY(dirp);
 		const int ai = (int)chf.cells[ax+ay*chf.width].index + rcGetCon(s, dirp);
 		const rcCompactSpan& as = chf.spans[ai];
-		ch = rcMax(ch, (int)as.y);
-		regs[ 3 ] = CornerId( chf.spans[ ai ].reg, chf.areaMasks[ ai ] );
+		ch = rcMax(ch, (int)as.minY);
+		regs[ 3 ] = CornerId( chf.spans[ ai ].regionID, chf.areaMasks[ ai ] );
 		if (rcGetCon(as, dir) != RC_NOT_CONNECTED)
 		{
 			const int ax2 = ax + rcGetDirOffsetX(dir);
 			const int ay2 = ay + rcGetDirOffsetY(dir);
 			const int ai2 = (int)chf.cells[ax2+ay2*chf.width].index + rcGetCon(as, dir);
 			const rcCompactSpan& as2 = chf.spans[ai2];
-			ch = rcMax(ch, (int)as2.y);
-			regs[ 2 ] = CornerId( chf.spans[ ai2 ].reg, chf.areaMasks[ ai2 ] );
+			ch = rcMax(ch, (int)as2.minY);
+			regs[ 2 ] = CornerId( chf.spans[ ai2 ].regionID, chf.areaMasks[ ai2 ] );
 		}
 	}
 
@@ -156,7 +156,7 @@ static void walkContour(int x, int y, int i,
 				const int ax = x + rcGetDirOffsetX(dir);
 				const int ay = y + rcGetDirOffsetY(dir);
 				const int ai = (int)chf.cells[ax+ay*chf.width].index + rcGetCon(s, dir);
-				r = (int)chf.spans[ai].reg;
+				r = (int)chf.spans[ai].regionID;
 				if (area != chf.areaMasks[ai])
 					isAreaBorder = true;
 			}
@@ -254,13 +254,13 @@ static void simplifyContour(rcIntArray& points, rcIntArray& simplified,
 				simplified.push(points[i*4+2]);
 				simplified.push(i);
 			}
-		}       
+		}
 	}
 	
 	if (simplified.size() == 0)
 	{
 		// If there is no connections at all,
-		// create some initial points for the simplification process. 
+		// create some initial points for the simplification process.
 		// Find lower-left and upper-right vertices of the contour.
 		int llx = points[0];
 		int lly = points[1];
@@ -311,7 +311,7 @@ static void simplifyContour(rcIntArray& points, rcIntArray& simplified,
 		int ax = simplified[i*4+0];
 		int az = simplified[i*4+2];
 		int ai = simplified[i*4+3];
-		
+
 		int bx = simplified[ii*4+0];
 		int bz = simplified[ii*4+2];
 		int bi = simplified[ii*4+3];
@@ -320,7 +320,7 @@ static void simplifyContour(rcIntArray& points, rcIntArray& simplified,
 		float maxd = 0;
 		int maxi = -1;
 		int ci, cinc, endi;
-		
+
 		// Traverse the segment in lexilogical order so that the
 		// max deviation is calculated similarly when traversing
 		// opposite segments.
@@ -484,9 +484,9 @@ static int calcAreaOfPolygon2D(const int* verts, const int nverts)
 // Last time I checked the if version got compiled using cmov, which was a lot faster than module (with idiv).
 inline int prev(int i, int n) { return i-1 >= 0 ? i-1 : n-1; }
 inline int next(int i, int n) { return i+1 < n ? i+1 : 0; }
-			
+
 inline int area2(const int* a, const int* b, const int* c)
-		{
+{
 	return (b[0] - a[0]) * (c[2] - a[2]) - (c[0] - a[0]) * (b[2] - a[2]);
 }
 
@@ -495,21 +495,21 @@ inline int area2(const int* a, const int* b, const int* c)
 //	values.  Then the bitwise Xor operator may apply.
 //	(This idea is due to Michael Baldwin.)
 inline bool xorb(bool x, bool y)
-			{
+{
 	return !x ^ !y;
-			}
+}
 
 // Returns true iff c is strictly to the left of the directed
 // line through a to b.
 inline bool left(const int* a, const int* b, const int* c)
 {
 	return area2(a, b, c) < 0;
-		}
+}
 
 inline bool leftOn(const int* a, const int* b, const int* c)
 {
 	return area2(a, b, c) <= 0;
-	}
+}
 
 inline bool collinear(const int* a, const int* b, const int* c)
 {
@@ -829,13 +829,13 @@ static void mergeRegionHoles(rcContext* ctx, rcContourRegion& region)
 /// The raw contours will match the region outlines exactly. The @p maxError and @p maxEdgeLen
 /// parameters control how closely the simplified contours will match the raw contours.
 ///
-/// Simplified contours are generated such that the vertices for portals between areas match up. 
+/// Simplified contours are generated such that the vertices for portals between areas match up.
 /// (They are considered mandatory vertices.)
 ///
 /// Setting @p maxEdgeLength to zero will disabled the edge length feature.
-/// 
+///
 /// See the #rcConfig documentation for more information on the configuration parameters.
-/// 
+///
 /// @see rcAllocContourSet, rcCompactHeightfield, rcContourSet, rcConfig
 bool rcBuildContours(rcContext* ctx, rcCompactHeightfield& chf,
 					 const float maxError, const int maxEdgeLen,
@@ -860,8 +860,8 @@ bool rcBuildContours(rcContext* ctx, rcCompactHeightfield& chf,
 		cset.bmax[0] -= pad;
 		cset.bmax[2] -= pad;
 	}
-	cset.cs = chf.cs;
-	cset.ch = chf.ch;
+	cset.cellSizeXZ = chf.cs;
+	cset.cellSizeY = chf.ch;
 	cset.width = chf.width - chf.borderSize*2;
 	cset.height = chf.height - chf.borderSize*2;
 	cset.borderSize = chf.borderSize;
@@ -891,7 +891,7 @@ bool rcBuildContours(rcContext* ctx, rcCompactHeightfield& chf,
 			{
 				unsigned char res = 0;
 				const rcCompactSpan& s = chf.spans[i];
-				if (!chf.spans[i].reg || (chf.spans[i].reg & RC_BORDER_REG))
+				if (!chf.spans[i].regionID || (chf.spans[i].regionID & RC_BORDER_REG))
 				{
 					flags[i] = 0;
 					continue;
@@ -904,9 +904,9 @@ bool rcBuildContours(rcContext* ctx, rcCompactHeightfield& chf,
 						const int ax = x + rcGetDirOffsetX(dir);
 						const int ay = y + rcGetDirOffsetY(dir);
 						const int ai = (int)chf.cells[ax+ay*w].index + rcGetCon(s, dir);
-						r = chf.spans[ai].reg;
+						r = chf.spans[ai].regionID;
 					}
-					if (r == chf.spans[i].reg)
+					if (r == chf.spans[i].regionID)
 						res |= (1 << dir);
 				}
 				flags[i] = res ^ 0xf; // Inverse, mark non connected edges.
@@ -931,7 +931,7 @@ bool rcBuildContours(rcContext* ctx, rcCompactHeightfield& chf,
 					flags[i] = 0;
 					continue;
 				}
-				const unsigned short reg = chf.spans[i].reg;
+				const unsigned short reg = chf.spans[i].regionID;
 				if (!reg || (reg & RC_BORDER_REG))
 					continue;
 				const navAreaMask areaMask = chf.areaMasks[ i ];
@@ -972,7 +972,7 @@ bool rcBuildContours(rcContext* ctx, rcCompactHeightfield& chf,
 					
 						ctx->log(RC_LOG_WARNING, "rcBuildContours: Expanding max contours from %d to %d.", oldMax, maxContours);
 					}
-						
+					
 					rcContour* cont = &cset.conts[cset.nconts++];
 					
 					cont->nverts = simplified.size()/4;
@@ -1072,10 +1072,10 @@ bool rcBuildContours(rcContext* ctx, rcCompactHeightfield& chf,
 					regions[cont.reg].outline = &cont;
 				}
 				else
-					{
+				{
 					regions[cont.reg].nholes++;
 				}
-					}
+			}
 			int index = 0;
 			for (int i = 0; i < nregions; i++)
 			{

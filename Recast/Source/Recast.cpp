@@ -18,11 +18,11 @@
 
 #include <float.h>
 #define _USE_MATH_DEFINES
-#include <math.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
+#include <cmath>
+#include <cstring>
+#include <cstdlib>
+#include <cstdio>
+#include <cstdarg>
 #include "Recast.h"
 #include "RecastAlloc.h"
 #include "RecastAssert.h"
@@ -314,152 +314,6 @@ int rcGetHeightFieldSpanCount(rcContext* ctx, rcHeightfield& hf)
 	return spanCount;
 }
 
-/// @par
-///
-/// This is just the beginning of the process of fully building a compact heightfield.
-/// Various filters may be applied, then the distance field and regions built.
-/// E.g: #rcBuildDistanceField and #rcBuildRegions
-///
-/// See the #rcConfig documentation for more information on the configuration parameters.
-///
-/// @see rcAllocCompactHeightfield, rcHeightfield, rcCompactHeightfield, rcConfig
-bool rcBuildCompactHeightfield(rcContext* ctx, const int walkableHeight, const int walkableClimb,
-							   rcHeightfield& hf, rcCompactHeightfield& chf)
-{
-	rcAssert(ctx);
-	
-	ctx->startTimer(RC_TIMER_BUILD_COMPACTHEIGHTFIELD);
-	
-	const int w = hf.width;
-	const int h = hf.height;
-	const int spanCount = rcGetHeightFieldSpanCount(ctx, hf);
-
-	// Fill in header.
-	chf.width = w;
-	chf.height = h;
-	chf.spanCount = spanCount;
-	chf.walkableHeight = walkableHeight;
-	chf.walkableClimb = walkableClimb;
-	chf.maxRegions = 0;
-	rcVcopy(chf.bmin, hf.bmin);
-	rcVcopy(chf.bmax, hf.bmax);
-	chf.bmax[1] += walkableHeight*hf.ch;
-	chf.cs = hf.cs;
-	chf.ch = hf.ch;
-	chf.cells = (rcCompactCell*)rcAlloc(sizeof(rcCompactCell)*w*h, RC_ALLOC_PERM);
-	if (!chf.cells)
-	{
-		ctx->log(RC_LOG_ERROR, "rcBuildCompactHeightfield: Out of memory 'chf.cells' (%d)", w*h);
-		return false;
-	}
-	memset(chf.cells, 0, sizeof(rcCompactCell)*w*h);
-	chf.spans = (rcCompactSpan*)rcAlloc(sizeof(rcCompactSpan)*spanCount, RC_ALLOC_PERM);
-	if (!chf.spans)
-	{
-		ctx->log(RC_LOG_ERROR, "rcBuildCompactHeightfield: Out of memory 'chf.spans' (%d)", spanCount);
-		return false;
-	}
-	memset(chf.spans, 0, sizeof(rcCompactSpan)*spanCount);
-	chf.areaMasks = (navAreaMask*)rcAlloc( sizeof( navAreaMask )*spanCount, RC_ALLOC_PERM );
-	if (!chf.areaMasks)
-	{
-		ctx->log(RC_LOG_ERROR, "rcBuildCompactHeightfield: Out of memory 'chf.areas' (%d)", spanCount);
-		return false;
-	}
-	memset(chf.areaMasks, RC_NULL_AREA, sizeof(navAreaMask)*spanCount);
-	
-	const int MAX_HEIGHT = 0xffff;
-	
-	// Fill in cells and spans.
-	int idx = 0;
-	for (int y = 0; y < h; ++y)
-	{
-		for (int x = 0; x < w; ++x)
-		{
-			const rcSpan* s = hf.spans[x + y*w];
-			// If there are no spans at this cell, just leave the data to index=0, count=0.
-			if (!s) continue;
-			rcCompactCell& c = chf.cells[x+y*w];
-			c.index = idx;
-			c.count = 0;
-			while (s)
-			{
-				if (s->areaMask != RC_NULL_AREA)
-				{
-					const int bot = (int)s->smax;
-					const int top = s->next ? (int)s->next->smin : MAX_HEIGHT;
-					chf.spans[idx].y = (unsigned short)rcClamp(bot, 0, 0xffff);
-					chf.spans[idx].h = (unsigned char)rcClamp(top - bot, 0, 0xff);
-					chf.areaMasks[idx] = s->areaMask;
-					idx++;
-					c.count++;
-				}
-				s = s->next;
-			}
-		}
-	}
-
-	// Find neighbour connections.
-	const int MAX_LAYERS = RC_NOT_CONNECTED-1;
-	int tooHighNeighbour = 0;
-	for (int y = 0; y < h; ++y)
-	{
-		for (int x = 0; x < w; ++x)
-		{
-			const rcCompactCell& c = chf.cells[x+y*w];
-			for (int i = (int)c.index, ni = (int)(c.index+c.count); i < ni; ++i)
-			{
-				rcCompactSpan& s = chf.spans[i];
-				
-				for (int dir = 0; dir < 4; ++dir)
-				{
-					rcSetCon(s, dir, RC_NOT_CONNECTED);
-					const int nx = x + rcGetDirOffsetX(dir);
-					const int ny = y + rcGetDirOffsetY(dir);
-					// First check that the neighbour cell is in bounds.
-					if (nx < 0 || ny < 0 || nx >= w || ny >= h)
-						continue;
-						
-					// Iterate over all neighbour spans and check if any of the is
-					// accessible from current cell.
-					const rcCompactCell& nc = chf.cells[nx+ny*w];
-					for (int k = (int)nc.index, nk = (int)(nc.index+nc.count); k < nk; ++k)
-					{
-						const rcCompactSpan& ns = chf.spans[k];
-						const int bot = rcMax(s.y, ns.y);
-						const int top = rcMin(s.y+s.h, ns.y+ns.h);
-
-						// Check that the gap between the spans is walkable,
-						// and that the climb height between the gaps is not too high.
-						if ((top - bot) >= walkableHeight && rcAbs((int)ns.y - (int)s.y) <= walkableClimb)
-						{
-							// Mark direction as walkable.
-							const int lidx = k - (int)nc.index;
-							if (lidx < 0 || lidx > MAX_LAYERS)
-							{
-								tooHighNeighbour = rcMax(tooHighNeighbour, lidx);
-								continue;
-							}
-							rcSetCon(s, dir, lidx);
-							break;
-						}
-					}
-					
-				}
-			}
-		}
-	}
-	
-	if (tooHighNeighbour > MAX_LAYERS)
-	{
-		ctx->log(RC_LOG_ERROR, "rcBuildCompactHeightfield: Heightfield has too many layers %d (max: %d)",
-				 tooHighNeighbour, MAX_LAYERS);
-	}
-		
-	ctx->stopTimer(RC_TIMER_BUILD_COMPACTHEIGHTFIELD);
-	
-	return true;
-}
 
 /*
 static int getHeightfieldMemoryUsage(const rcHeightfield& hf)
@@ -471,7 +325,7 @@ static int getHeightfieldMemoryUsage(const rcHeightfield& hf)
 	rcSpanPool* pool = hf.pools;
 	while (pool)
 	{
-		size += (sizeof(rcSpanPool) - sizeof(rcSpan)) + sizeof(rcSpan)*RC_SPANS_PER_POOL;
+		size += (sizeof(rcSpanPool) - sizeof(rcSpan)) + sizeof(rcSpan)*rcSpanPool::RC_SPANS_PER_POOL;
 		pool = pool->next;
 	}
 	return size;
@@ -486,47 +340,3 @@ static int getCompactHeightFieldMemoryusage(const rcCompactHeightfield& chf)
 	return size;
 }
 */
-
-// Returns true if 'a' is more lower-left than 'b'.
-inline bool rcCmppt(const float* a, const float* b)
-{
-	if (a[0] < b[0]) return true;
-	if (a[0] > b[0]) return false;
-	if (a[2] < b[2]) return true;
-	if (a[2] > b[2]) return false;
-	return false;
-}
-
-inline bool rcLeft(const float* a, const float* b, const float* c)
-{ 
-	const float u1 = b[0] - a[0];
-	const float v1 = b[2] - a[2];
-	const float u2 = c[0] - a[0];
-	const float v2 = c[2] - a[2];
-	return u1 * v2 - v1 * u2 < 0;
-}
-
-int rcConvexhull(const float* pts, int npts, int* out)
-{
-	// Find lower-leftmost point.
-	int hull = 0;
-	for (int i = 1; i < npts; ++i)
-		if (rcCmppt(&pts[i*3], &pts[hull*3]))
-			hull = i;
-
-	// Gift wrap hull.
-	int endpt = 0;
-	int i = 0;
-	do
-	{
-		out[i++] = hull;
-		endpt = 0;
-		for (int j = 1; j < npts; ++j)
-			if (hull == endpt || rcLeft(&pts[hull*3], &pts[endpt*3], &pts[j*3]))
-				endpt = j;
-		hull = endpt;
-	}
-	while (endpt != out[0]);
-
-	return i;
-}

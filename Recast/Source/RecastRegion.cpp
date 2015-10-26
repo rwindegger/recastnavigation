@@ -384,7 +384,7 @@ static unsigned short* expandRegions(int maxIter, unsigned short level,
 				stack[j+2] = -1;
 		}
 	}
-	
+
 	int iter = 0;
 	while (stack.size() > 0)
 	{
@@ -916,7 +916,7 @@ static bool mergeAndFilterRegions(rcContext* ctx, int minRegionArea, int mergeRe
 			}
 		}
 	}
-		
+	
 	// Merge too small regions to neighbour regions.
 	int mergeCount = 0 ;
 	do
@@ -926,7 +926,7 @@ static bool mergeAndFilterRegions(rcContext* ctx, int minRegionArea, int mergeRe
 		{
 			rcRegion& reg = regions[i];
 			if (reg.id == 0 || (reg.id & RC_BORDER_REG))
-				continue;                       
+				continue;
 			if (reg.overlap)
 				continue;
 			if (reg.spanCount == 0)
@@ -1015,7 +1015,7 @@ static bool mergeAndFilterRegions(rcContext* ctx, int minRegionArea, int mergeRe
 		if ((srcReg[i] & RC_BORDER_REG) == 0)
 			srcReg[i] = regions[srcReg[i]].id;
 	}
-	
+
 	// Return regions that we found to be overlapping.
 	for (int i = 0; i < nreg; ++i)
 		if (regions[i].overlap)
@@ -1077,8 +1077,8 @@ static bool mergeAndFilterLayerRegions(rcContext* ctx, int minRegionArea,
 				
 				reg.spanCount++;
 				
-				reg.ymin = rcMin(reg.ymin, s.y);
-				reg.ymax = rcMax(reg.ymax, s.y);
+				reg.ymin = rcMin(reg.ymin, s.minY);
+				reg.ymax = rcMax(reg.ymax, s.minY);
 				
 				// Collect all region layers.
 				lregs.push(ri);
@@ -1500,7 +1500,7 @@ bool rcBuildRegionsMonotone(rcContext* ctx, rcCompactHeightfield& chf,
 	
 	// Store the result out.
 	for (int i = 0; i < chf.spanCount; ++i)
-		chf.spans[i].reg = srcReg[i];
+		chf.spans[i].regionID = srcReg[i];
 	
 	ctx->stopTimer(RC_TIMER_BUILD_REGIONS);
 
@@ -1544,7 +1544,7 @@ bool rcBuildRegions(rcContext* ctx, rcCompactHeightfield& chf,
 	}
 	
 	ctx->startTimer(RC_TIMER_BUILD_REGIONS_WATERSHED);
-	
+
 	const int LOG_NB_STACKS = 3;
 	const int NB_STACKS = 1 << LOG_NB_STACKS;
 	rcIntArray lvlStacks[NB_STACKS];
@@ -1599,7 +1599,7 @@ bool rcBuildRegions(rcContext* ctx, rcCompactHeightfield& chf,
 			appendStacks(lvlStacks[sId-1], lvlStacks[sId], srcReg); // copy left overs from last level
 
 //		ctx->stopTimer(RC_TIMER_DIVIDE_TO_LEVELS);
-		
+
 		ctx->startTimer(RC_TIMER_BUILD_REGIONS_EXPAND);
 		
 		// Expand current regions until no empty connected cells found.
@@ -1620,11 +1620,11 @@ bool rcBuildRegions(rcContext* ctx, rcCompactHeightfield& chf,
 			int y = lvlStacks[sId][j+1];
 			int i = lvlStacks[sId][j+2];
 			if (i >= 0 && srcReg[i] == 0)
-				{
-					if (floodRegion(x, y, i, level, regionId, chf, srcReg, srcDist, stack))
-						regionId++;
-				}
+			{
+				if (floodRegion(x, y, i, level, regionId, chf, srcReg, srcDist, stack))
+					regionId++;
 			}
+		}
 		
 		ctx->stopTimer(RC_TIMER_BUILD_REGIONS_FLOOD);
 	}
@@ -1645,7 +1645,7 @@ bool rcBuildRegions(rcContext* ctx, rcCompactHeightfield& chf,
 	chf.maxRegions = regionId;
 	if (!mergeAndFilterRegions(ctx, minRegionArea, mergeRegionArea, chf.maxRegions, chf, srcReg, overlaps))
 		return false;
-	
+
 	// If overlapping regions were found during merging, split those regions.
 	if (overlaps.size() > 0)
 	{
@@ -1656,7 +1656,7 @@ bool rcBuildRegions(rcContext* ctx, rcCompactHeightfield& chf,
 		
 	// Write the result out.
 	for (int i = 0; i < chf.spanCount; ++i)
-		chf.spans[i].reg = srcReg[i];
+		chf.spans[i].regionID = srcReg[i];
 	
 	ctx->stopTimer(RC_TIMER_BUILD_REGIONS);
 	
@@ -1812,7 +1812,7 @@ bool rcBuildLayerRegions(rcContext* ctx, rcCompactHeightfield& chf,
 	
 	// Store the result out.
 	for (int i = 0; i < chf.spanCount; ++i)
-		chf.spans[i].reg = srcReg[i];
+		chf.spans[i].regionID = srcReg[i];
 	
 	ctx->stopTimer(RC_TIMER_BUILD_REGIONS);
 	

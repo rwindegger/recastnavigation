@@ -1,22 +1,15 @@
 #include "ValueHistory.h"
+
 #include "imgui.h"
 #include <string.h>
 #include <stdio.h>
 #include <limits>
 
-#ifdef WIN32
-#	define snprintf _snprintf
-#endif
-
-ValueHistory::ValueHistory() :
-	m_hsamples(0)
+ValueHistory::ValueHistory()
+	: m_hsamples(0)
 {
 	for (int i = 0; i < MAX_HISTORY; ++i)
 		m_samples[i] = 0;
-}
-
-ValueHistory::~ValueHistory()
-{
 }
 
 float ValueHistory::getSampleMin() const
@@ -54,12 +47,12 @@ void GraphParams::setRect(int ix, int iy, int iw, int ih, int ipad)
 	pad = ipad;
 }
 
-void GraphParams::setValueRange(float ivmin, float ivmax, int indiv, const char* iunits)
+void GraphParams::setValueRange(float ivmin, float ivmax, int indiv, string iunits)
 {
 	vmin = ivmin;
 	vmax = ivmax;
 	ndiv = indiv;
-	strcpy(units, iunits);
+	units = iunits;
 }
 
 //void drawGraphBackground(const GraphParams* p)

@@ -56,7 +56,7 @@ inline float vdist2(const float* p, const float* q)
 }
 
 inline float vcross2(const float* p1, const float* p2, const float* p3)
-{ 
+{
 	const float u1 = p2[0] - p1[0];
 	const float v1 = p2[2] - p1[2];
 	const float u2 = p3[0] - p1[0];
@@ -260,7 +260,7 @@ static int addEdge(rcContext* ctx, int* edges, int& nedges, const int maxEdges, 
 		return EV_UNDEF;
 	}
 	
-	// Add edge if not already in the triangulation. 
+	// Add edge if not already in the triangulation.
 	int e = findEdge(edges, nedges, s, t);
 	if (e == EV_UNDEF)
 	{
@@ -283,7 +283,7 @@ static void updateLeftFace(int* e, int s, int t, int f)
 		e[2] = f;
 	else if (e[1] == s && e[0] == t && e[3] == EV_UNDEF)
 		e[3] = f;
-}	
+}
 
 static int overlapSegSeg2d(const float* a, const float* b, const float* c, const float* d)
 {
@@ -295,7 +295,7 @@ static int overlapSegSeg2d(const float* a, const float* b, const float* c, const
 		float a4 = a3 + a2 - a1;
 		if (a3 * a4 < 0.0f)
 			return 1;
-	}	
+	}
 	return 0;
 }
 
@@ -334,11 +334,11 @@ static void completeFacet(rcContext* ctx, const float* pts, int npts, int* edges
 	}
 	else
 	{
-	    // Edge already completed. 
+	    // Edge already completed.
 	    return;
 	}
     
-	// Find best point on left of edge. 
+	// Find best point on left of edge.
 	int pt = npts;
 	float c[3] = {0,0,0};
 	float r = -1;
@@ -382,20 +382,20 @@ static void completeFacet(rcContext* ctx, const float* pts, int npts, int* edges
 		}
 	}
 	
-	// Add new triangle or update edge info if s-t is on hull. 
+	// Add new triangle or update edge info if s-t is on hull.
 	if (pt < npts)
 	{
-		// Update face information of edge being completed. 
+		// Update face information of edge being completed.
 		updateLeftFace(&edges[e*4], s, t, nfaces);
 		
-		// Add new edge or update face info of old edge. 
+		// Add new edge or update face info of old edge.
 		e = findEdge(edges, nedges, pt, s);
 		if (e == EV_UNDEF)
 		    addEdge(ctx, edges, nedges, maxEdges, pt, s, nfaces, EV_UNDEF);
 		else
 		    updateLeftFace(&edges[e*4], pt, s, nfaces);
 		
-		// Add new edge or update face info of old edge. 
+		// Add new edge or update face info of old edge.
 		e = findEdge(edges, nedges, t, pt);
 		if (e == EV_UNDEF)
 		    addEdge(ctx, edges, nedges, maxEdges, t, pt, nfaces, EV_UNDEF);
@@ -774,7 +774,7 @@ static bool buildPolyDetail(rcContext* ctx, const float* in, const int nin,
 				samples.push(0); // Not added
 			}
 		}
-				
+		
 		// Add the samples starting from the one that has the most
 		// error. The procedure stops when all samples are added
 		// or when the max error is within treshold.
@@ -821,9 +821,9 @@ static bool buildPolyDetail(rcContext* ctx, const float* in, const int nin,
 			edges.resize(0);
 			tris.resize(0);
 			delaunayHull(ctx, nverts, verts, nhull, hull, tris, edges);
-		}		
+		}
 	}
-
+	
 	const int ntris = tris.size()/4;
 	if (ntris > MAX_TRIS)
 	{
@@ -873,7 +873,7 @@ static void getHeightDataSeedsFromVertices(const rcCompactHeightfield& chf,
 			for (int i = (int)c.index, ni = (int)(c.index+c.count); i < ni; ++i)
 			{
 				const rcCompactSpan& s = chf.spans[i];
-				int d = rcAbs(ay - (int)s.y);
+				int d = rcAbs(ay - (int)s.minY);
 				if (d < dmin)
 				{
 					cx = ax;
@@ -962,15 +962,15 @@ static void getHeightDataSeedsFromVertices(const rcCompactHeightfield& chf,
 		int ci = stack[i+2];
 		int idx = cx-hp.xmin+(cy-hp.ymin)*hp.width;
 		const rcCompactSpan& cs = chf.spans[ci];
-		hp.data[idx] = cs.y;
+		hp.data[idx] = cs.minY;
 		
 		// getHeightData seeds are given in coordinates with borders
 		stack[i+0] += bs;
 		stack[i+1] += bs;
 	}
 	
-	}
-	
+}
+
 
 
 static void getHeightData(const rcCompactHeightfield& chf,
@@ -999,10 +999,10 @@ static void getHeightData(const rcCompactHeightfield& chf,
 			for (int i = (int)c.index, ni = (int)(c.index+c.count); i < ni; ++i)
 			{
 				const rcCompactSpan& s = chf.spans[i];
-				if (s.reg == region)
+				if (s.regionID == region)
 				{
 					// Store height
-					hp.data[hx + hy*hp.width] = s.y;
+					hp.data[hx + hy*hp.width] = s.minY;
 					empty = false;
 					
 					// If any of the neighbours is not in same region,
@@ -1016,7 +1016,7 @@ static void getHeightData(const rcCompactHeightfield& chf,
 							const int ay = y + rcGetDirOffsetY(dir);
 							const int ai = (int)chf.cells[ax+ay*chf.width].index + rcGetCon(s, dir);
 							const rcCompactSpan& as = chf.spans[ai];
-							if (as.reg != region)
+							if (as.regionID != region)
 							{
 								border = true;
 								break;
@@ -1076,8 +1076,8 @@ static void getHeightData(const rcCompactHeightfield& chf,
 			const int ai = (int)chf.cells[ax + ay*chf.width].index + rcGetCon(cs, dir);
 			const rcCompactSpan& as = chf.spans[ai];
 			
-			hp.data[hx + hy*hp.width] = as.y;
-
+			hp.data[hx + hy*hp.width] = as.minY;
+			
 			stack.push(ax);
 			stack.push(ay);
 			stack.push(ai);
@@ -1092,7 +1092,7 @@ static unsigned char getEdgeFlags(const float* va, const float* vb,
 	static const float thrSqr = rcSqr(0.001f);
 	for (int i = 0, j = npoly-1; i < npoly; j=i++)
 	{
-		if (distancePtSeg2d(va, &vpoly[j*3], &vpoly[i*3]) < thrSqr && 
+		if (distancePtSeg2d(va, &vpoly[j*3], &vpoly[i*3]) < thrSqr &&
 			distancePtSeg2d(vb, &vpoly[j*3], &vpoly[i*3]) < thrSqr)
 			return 1;
 	}
@@ -1273,14 +1273,14 @@ bool rcBuildPolyMeshDetail(rcContext* ctx, const rcPolyMesh& mesh, const rcCompa
 		dmesh.meshes[i*4+0] = (unsigned int)dmesh.nverts;
 		dmesh.meshes[i*4+1] = (unsigned int)nverts;
 		dmesh.meshes[i*4+2] = (unsigned int)dmesh.ntris;
-		dmesh.meshes[i*4+3] = (unsigned int)ntris;		
+		dmesh.meshes[i*4+3] = (unsigned int)ntris;
 		
 		// Store vertices, allocate more memory if necessary.
 		if (dmesh.nverts+nverts > vcap)
 		{
 			while (dmesh.nverts+nverts > vcap)
 				vcap += 256;
-				
+			
 			float* newv = (float*)rcAlloc(sizeof(float)*vcap*3, RC_ALLOC_PERM);
 			if (!newv)
 			{
@@ -1326,7 +1326,7 @@ bool rcBuildPolyMeshDetail(rcContext* ctx, const rcPolyMesh& mesh, const rcCompa
 			dmesh.ntris++;
 		}
 	}
-		
+	
 	ctx->stopTimer(RC_TIMER_BUILD_POLYMESHDETAIL);
 
 	return true;
@@ -1390,7 +1390,7 @@ bool rcMergePolyMeshDetails(rcContext* ctx, rcPolyMeshDetail** meshes, const int
 			dst[3] = src[3];
 			mesh.nmeshes++;
 		}
-			
+		
 		for (int k = 0; k < dm->nverts; ++k)
 		{
 			rcVcopy(&mesh.verts[mesh.nverts*3], &dm->verts[k*3]);

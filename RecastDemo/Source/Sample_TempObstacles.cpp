@@ -286,7 +286,7 @@ static int rasterizeTileLayers(BuildContext* ctx, InputGeom* geom,
 	const rcChunkyTriMesh* chunkyMesh = geom->getChunkyMesh();
 	
 	// Tile bounds.
-	const float tcs = cfg.tileSize * cfg.cs;
+	const float tcs = cfg.tileSize * cfg.cellSizeXZ;
 	
 	rcConfig tcfg;
 	memcpy(&tcfg, &cfg, sizeof(tcfg));
@@ -297,10 +297,10 @@ static int rasterizeTileLayers(BuildContext* ctx, InputGeom* geom,
 	tcfg.bmax[0] = cfg.bmin[0] + (tx+1)*tcs;
 	tcfg.bmax[1] = cfg.bmax[1];
 	tcfg.bmax[2] = cfg.bmin[2] + (ty+1)*tcs;
-	tcfg.bmin[0] -= tcfg.borderSize*tcfg.cs;
-	tcfg.bmin[2] -= tcfg.borderSize*tcfg.cs;
-	tcfg.bmax[0] += tcfg.borderSize*tcfg.cs;
-	tcfg.bmax[2] += tcfg.borderSize*tcfg.cs;
+	tcfg.bmin[0] -= tcfg.borderSize*tcfg.cellSizeXZ;
+	tcfg.bmin[2] -= tcfg.borderSize*tcfg.cellSizeXZ;
+	tcfg.bmax[0] += tcfg.borderSize*tcfg.cellSizeXZ;
+	tcfg.bmax[2] += tcfg.borderSize*tcfg.cellSizeXZ;
 	
 	// Allocate voxel heightfield where we rasterize our input data to.
 	rc.solid = rcAllocHeightfield();
@@ -309,7 +309,7 @@ static int rasterizeTileLayers(BuildContext* ctx, InputGeom* geom,
 		ctx->log(RC_LOG_ERROR, "buildNavigation: Out of memory 'solid'.");
 		return 0;
 	}
-	if (!rcCreateHeightfield(ctx, *rc.solid, tcfg.width, tcfg.height, tcfg.bmin, tcfg.bmax, tcfg.cs, tcfg.ch))
+	if (!rcCreateHeightfield(ctx, *rc.solid, tcfg.width, tcfg.height, tcfg.bmin, tcfg.bmax, tcfg.cellSizeXZ, tcfg.cellSizeY))
 	{
 		ctx->log(RC_LOG_ERROR, "buildNavigation: Could not create solid heightfield.");
 		return 0;
@@ -767,7 +767,7 @@ class TempObstacleCreateTool : public SampleTool
 	
 public:
 	
-	TempObstacleCreateTool()
+	TempObstacleCreateTool() : m_sample(0)
 	{
 	}
 	
@@ -907,6 +907,27 @@ void Sample_TempObstacles::handleSettings()
 	ImGui::Text(msg);
 	snprintf(msg, 64, "Build Peak Mem Usage  %.1f kB", m_cacheBuildMemUsage/1024.0f);
 	ImGui::Text(msg);
+
+	ImGui::Separator();
+
+	ImGui::Indent();
+	ImGui::Indent();
+
+	if (ImGui::Button("Save"))
+	{
+		saveAll("all_tiles_tilecache.bin");
+	}
+
+	if (ImGui::Button("Load"))
+	{
+		dtFreeNavMesh(m_navMesh);
+		dtFreeTileCache(m_tileCache);
+		loadAll("all_tiles_tilecache.bin");
+		m_navQuery->init(m_navMesh, 2048);
+	}
+
+	ImGui::Unindent();
+	ImGui::Unindent();
 	
 	ImGui::Separator();
 }
@@ -1191,13 +1212,13 @@ bool Sample_TempObstacles::handleBuild()
 	// Generation params.
 	rcConfig cfg;
 	memset(&cfg, 0, sizeof(cfg));
-	cfg.cs = m_cellSize;
-	cfg.ch = m_cellHeight;
+	cfg.cellSizeXZ = m_cellSize;
+	cfg.cellSizeY = m_cellHeight;
 	cfg.walkableSlopeAngle = m_agentMaxSlope;
-	cfg.walkableHeightCrouch = (int)ceilf(m_agentHeight / cfg.ch);
-	cfg.walkableHeightStand = (int)ceilf(m_agentHeight / cfg.ch);
-	cfg.walkableClimb = (int)floorf(m_agentMaxClimb / cfg.ch);
-	cfg.walkableRadius = (int)ceilf(m_agentRadius / cfg.cs);
+	cfg.walkableHeightCrouch = (int)ceilf(m_agentHeight / cfg.cellSizeY);
+	cfg.walkableHeightStand = (int)ceilf(m_agentHeight / cfg.cellSizeY);
+	cfg.walkableClimb = (int)floorf(m_agentMaxClimb / cfg.cellSizeY);
+	cfg.walkableRadius = (int)ceilf(m_agentRadius / cfg.cellSizeXZ);
 	cfg.maxEdgeLen = (int)(m_edgeMaxLen / m_cellSize);
 	cfg.maxSimplificationError = m_edgeMaxError;
 	cfg.minRegionArea = (int)rcSqr(m_regionMinSize);		// Note: area = size*size
@@ -1358,4 +1379,130 @@ void Sample_TempObstacles::getTilePos(const float* pos, int& tx, int& ty)
 	const float ts = m_tileSize*m_cellSize;
 	tx = (int)((pos[0] - bmin[0]) / ts);
 	ty = (int)((pos[2] - bmin[2]) / ts);
+}
+
+static const int TILECACHESET_MAGIC = 'T'<<24 | 'S'<<16 | 'E'<<8 | 'T'; //'TSET';
+static const int TILECACHESET_VERSION = 1;
+
+struct TileCacheSetHeader
+{
+	int magic;
+	int version;
+	int numTiles;
+	dtNavMeshParams meshParams;
+	dtTileCacheParams cacheParams;
+};
+
+struct TileCacheTileHeader
+{
+	dtCompressedTileRef tileRef;
+	int dataSize;
+};
+
+void Sample_TempObstacles::saveAll(const char* path)
+{
+	if (!m_tileCache) return;
+	
+	FILE* fp = fopen(path, "wb");
+	if (!fp)
+		return;
+	
+	// Store header.
+	TileCacheSetHeader header;
+	header.magic = TILECACHESET_MAGIC;
+	header.version = TILECACHESET_VERSION;
+	header.numTiles = 0;
+	for (int i = 0; i < m_tileCache->getTileCount(); ++i)
+	{
+		const dtCompressedTile* tile = m_tileCache->getTile(i);
+		if (!tile || !tile->header || !tile->dataSize) continue;
+		header.numTiles++;
+	}
+	memcpy(&header.cacheParams, m_tileCache->getParams(), sizeof(dtTileCacheParams));
+	memcpy(&header.meshParams, m_navMesh->getParams(), sizeof(dtNavMeshParams));
+	fwrite(&header, sizeof(TileCacheSetHeader), 1, fp);
+
+	// Store tiles.
+	for (int i = 0; i < m_tileCache->getTileCount(); ++i)
+	{
+		const dtCompressedTile* tile = m_tileCache->getTile(i);
+		if (!tile || !tile->header || !tile->dataSize) continue;
+
+		TileCacheTileHeader tileHeader;
+		tileHeader.tileRef = m_tileCache->getTileRef(tile);
+		tileHeader.dataSize = tile->dataSize;
+		fwrite(&tileHeader, sizeof(tileHeader), 1, fp);
+
+		fwrite(tile->data, tile->dataSize, 1, fp);
+	}
+
+	fclose(fp);
+}
+
+void Sample_TempObstacles::loadAll(const char* path)
+{
+	FILE* fp = fopen(path, "rb");
+	if (!fp) return;
+	
+	// Read header.
+	TileCacheSetHeader header;
+	fread(&header, sizeof(TileCacheSetHeader), 1, fp);
+	if (header.magic != TILECACHESET_MAGIC)
+	{
+		fclose(fp);
+		return;
+	}
+	if (header.version != TILECACHESET_VERSION)
+	{
+		fclose(fp);
+		return;
+	}
+	
+	m_navMesh = dtAllocNavMesh();
+	if (!m_navMesh)
+	{
+		fclose(fp);
+		return;
+	}
+	dtStatus status = m_navMesh->init(&header.meshParams);
+	if (dtStatusFailed(status))
+	{
+		fclose(fp);
+		return;
+	}
+
+	m_tileCache = dtAllocTileCache();
+	if (!m_tileCache)
+	{
+		fclose(fp);
+		return;
+	}
+	status = m_tileCache->init(&header.cacheParams, m_talloc, m_tcomp, m_tmproc);
+	if (dtStatusFailed(status))
+	{
+		fclose(fp);
+		return;
+	}
+		
+	// Read tiles.
+	for (int i = 0; i < header.numTiles; ++i)
+	{
+		TileCacheTileHeader tileHeader;
+		fread(&tileHeader, sizeof(tileHeader), 1, fp);
+		if (!tileHeader.tileRef || !tileHeader.dataSize)
+			break;
+
+		unsigned char* data = (unsigned char*)dtAlloc(tileHeader.dataSize, DT_ALLOC_PERM);
+		if (!data) break;
+		memset(data, 0, tileHeader.dataSize);
+		fread(data, tileHeader.dataSize, 1, fp);
+		
+		dtCompressedTileRef tile = 0;
+		m_tileCache->addTile(data, tileHeader.dataSize, DT_COMPRESSEDTILE_FREE_DATA, &tile);
+
+		if (tile)
+			m_tileCache->buildNavMeshTile(tile, m_navMesh);
+	}
+	
+	fclose(fp);
 }

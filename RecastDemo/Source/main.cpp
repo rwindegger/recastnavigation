@@ -16,27 +16,32 @@
 // 3. This notice may not be removed or altered from any source distribution.
 //
 
-
-#define _USE_MATH_DEFINES
-#include <stdio.h>
-#include <cstdlib>
-#include <math.h>
-#include "SDL.h"
-#include "SDL_opengl.h"
-#include <gl/glu.h>
-#include "imgui.h"
 #include "Recast.h"
 #include "RecastDebugDraw.h"
 #include "InputGeom.h"
 #include "TestCase.h"
 #include "Filelist.h"
 #include "SlideShow.h"
-#include "imgui_impl_sdl.h"
 
 #include "Sample_SoloMesh.h"
 #include "Sample_TileMesh.h"
 #include "Sample_TempObstacles.h"
 #include "Sample_Debug.h"
+
+#include "SDL.h"
+#include "SDL_opengl.h"
+#include <gl/glu.h>
+#include "imgui.h"
+#include "imgui_impl_sdl.h"
+
+#define _USE_MATH_DEFINES
+#include <stdio.h>
+#include <math.h>
+#include <iostream>
+#include <memory>
+#include <sstream>
+#include <iomanip>
+#include <cstdlib>
 
 #ifdef WIN32
 #	define snprintf _snprintf
@@ -62,8 +67,11 @@ static SampleItem g_samples[] =
 	//	{ createDebug, "Debug" },
 };
 static const int g_nsamples = sizeof(g_samples) / sizeof(SampleItem);
-
 int width = 1440, height = 900;
+// Function forward-declares
+int run(int width, int height, bool presentationMode);
+void drawMarker(float markerPosition[3], GLdouble projectionMatrix[16], GLdouble modelviewMatrix[16], GLint viewport[4]);
+void resetCameraAndFog(const std::unique_ptr<InputGeom>& geom, const std::unique_ptr<Sample>& sample, float& camx, float& camy, float& camz, float& camr, float& rx, float& ry);
 
 bool showProperties = true;
 bool showLog = false;
@@ -464,13 +472,13 @@ int main(int argc, char* argv[])
 	// Init SDL
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
 	{
-		printf("Could not initialise SDL\n");
+		std::cerr << "Could not initialise SDL\n";
 		return -1;
 	}
 
 	// Center window
-	char env[] = "SDL_VIDEO_CENTERED=1";
-	putenv(env);
+	char centerWindowEnv[] = "SDL_VIDEO_CENTERED=1";
+	putenv(centerWindowEnv);
 
 	// Init OpenGL
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
@@ -479,7 +487,7 @@ int main(int argc, char* argv[])
 	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
-	//#ifndef WIN32
+//#ifndef WIN32
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
 	//#endif
@@ -499,7 +507,7 @@ int main(int argc, char* argv[])
 
 	if (!window)
 	{
-		printf("Could not create window: %s\n", SDL_GetError());
+		std::cerr << "Could not create window: %s\n", SDL_GetError();
 		SDL_Quit();
 		return 1;
 	}
@@ -507,7 +515,7 @@ int main(int argc, char* argv[])
 
 	if (!glcontext)
 	{
-		printf("Could not create context: %s\n", SDL_GetError());
+		std::cerr << "Could not create context: %s\n", SDL_GetError();
 		SDL_DestroyWindow(window);
 		SDL_Quit();
 		return 2;
@@ -518,7 +526,7 @@ int main(int argc, char* argv[])
 
 	if (!renderer)
 	{
-		printf("Could not create Renderer: %s\n", SDL_GetError());
+		std::cerr << "Could not create Renderer: %s\n", SDL_GetError();
 		SDL_GL_DeleteContext(glcontext);
 		SDL_DestroyWindow(window);
 		SDL_Quit();
@@ -529,7 +537,7 @@ int main(int argc, char* argv[])
 
 	if (!ImGui_ImplSdl_Init(window))
 	{
-		printf("Could not init GUI renderer.\n");
+		std::cerr << "Could not init GUI renderer.\n";
 		SDL_DestroyRenderer(renderer);
 		SDL_GL_DeleteContext(glcontext);
 		SDL_DestroyWindow(window);
@@ -540,8 +548,10 @@ int main(int argc, char* argv[])
 	ImGuiIO& io = ImGui::GetIO();
 	io.Fonts->AddFontDefault();
 	io.Fonts->AddFontFromFileTTF("DroidSans.ttf", 15.0);
+}
 
-	float t = 0.0f;
+int run( int width, int height, bool presentationMode) {
+	float totalTime = 0.0f;
 	float timeAcc = 0.0f;
 	Uint32 lastTime = SDL_GetTicks();
 	int mx = 0, my = 0;
@@ -560,30 +570,28 @@ int main(int argc, char* argv[])
 	int propScroll = 0;
 	int toolsScroll = 0;
 
-	float mpos[3] = { 0,0,0 };
-	bool mposSet = false;
+	float markerPosition[3] = { 0,0,0 };
+	bool markerPositionSet = false;
 
-	SlideShow slideShow;
-	slideShow.init("slides/");
+	SlideShow slideShow("slides/");
 
 
 	glEnable(GL_CULL_FACE);
 
-	float fogCol[4] = { 0.32f, 0.31f, 0.30f, 1.0f };
+	float fogColor[4] = { 0.32f, 0.31f, 0.30f, 1.0f };
 	glEnable(GL_FOG);
 	glFogi(GL_FOG_MODE, GL_LINEAR);
-	glFogf(GL_FOG_START, camr*0.1f);
-	glFogf(GL_FOG_END, camr*1.25f);
-	glFogfv(GL_FOG_COLOR, fogCol);
+	glFogf(GL_FOG_START, camr * 0.1f);
+	glFogf(GL_FOG_END, camr * 1.25f);
+	glFogfv(GL_FOG_COLOR, fogColor);
 
 	glDepthFunc(GL_LEQUAL);
 
 	bool done = false;
-	bool propertiesOpen = true, toolsOpen = true;
 	while (!done)
 	{
 		// Handle input events.
-		int mscroll = 0;
+		int mouseScroll = 0;
 		bool processHitTest = false;
 		bool processHitTestShift = false;
 		SDL_Event event;
@@ -593,157 +601,151 @@ int main(int argc, char* argv[])
 			ImGui_ImplSdl_ProcessEvent(&event);
 			switch (event.type)
 			{
-			case SDL_KEYDOWN:
-				// Handle any key presses here.
-				if (event.key.keysym.sym == SDLK_ESCAPE)
-				{
-					done = true;
-				}
-				else if (event.key.keysym.sym == SDLK_t)
-				{
-					showLevels = false;
-					showSample = false;
-					showTestCases = true;
-					scanDirectory("Tests", ".txt", files);
-				}
-				else if (event.key.keysym.sym == SDLK_TAB)
-				{
-					showMenu = !showMenu;
-				}
-				else if (event.key.keysym.sym == SDLK_SPACE)
-				{
-					if (sample)
-						sample->handleToggle();
-				}
-				else if (event.key.keysym.sym == SDLK_1)
-				{
-					if (sample)
-						sample->handleStep();
-				}
-				else if (event.key.keysym.sym == SDLK_9)
-				{
-					if (geom)
-						geom->save("geomset.txt");
-				}
-				else if (event.key.keysym.sym == SDLK_0)
-				{
-					delete geom;
-					geom = new InputGeom;
-					if (!geom || !geom->load(&ctx, "geomset.txt"))
+				case SDL_KEYDOWN:
+					// Handle any key presses here.
+					if (event.key.keysym.sym == SDLK_ESCAPE)
 					{
-						delete geom;
-						geom = 0;
-
-						showLog = true;
-						ctx.dumpLog("Geom load log %s:", meshName);
+						done = true;
 					}
-					if (sample && geom)
+					else if (event.key.keysym.sym == SDLK_t)
 					{
-						sample->handleMeshChanged(geom);
+						showLevels = false;
+						showSample = false;
+						showTestCases = true;
+						scanDirectory("Tests", ".txt", files);
 					}
-
-					if (geom || sample)
+					else if (event.key.keysym.sym == SDLK_TAB)
 					{
-						const float* bmin = 0;
-						const float* bmax = 0;
+						showMenu = !showMenu;
+					}
+					else if (event.key.keysym.sym == SDLK_SPACE)
+					{
 						if (sample)
-						{
-							bmin = sample->getBoundsMin();
-							bmax = sample->getBoundsMax();
-						}
-						else if (geom)
-						{
-							bmin = geom->getMeshBoundsMin();
-							bmax = geom->getMeshBoundsMax();
-						}
-						// Reset camera and fog to match the mesh bounds.
-						if (bmin && bmax)
-						{
-							camr = sqrtf(rcSqr(bmax[0] - bmin[0]) +
-								rcSqr(bmax[1] - bmin[1]) +
-								rcSqr(bmax[2] - bmin[2])) / 2;
-							camx = (bmax[0] + bmin[0]) / 2 + camr;
-							camy = (bmax[1] + bmin[1]) / 2 + camr;
-							camz = (bmax[2] + bmin[2]) / 2 + camr;
-							camr *= 3;
-						}
-						rx = 45;
-						ry = -45;
-						glFogf(GL_FOG_START, camr*0.2f);
-						glFogf(GL_FOG_END, camr*1.25f);
+							sample->handleToggle();
 					}
-				}
-				else if (event.key.keysym.sym == SDLK_RIGHT)
-				{
-					slideShow.nextSlide();
-				}
-				else if (event.key.keysym.sym == SDLK_LEFT)
-				{
-					slideShow.prevSlide();
-				}
-				break;
-
-			case SDL_MOUSEBUTTONDOWN:
-				if (event.button.button == SDL_BUTTON_RIGHT)
-				{
-					if (!mouseOverMenu)
+					else if (event.key.keysym.sym == SDLK_1)
 					{
-						// Rotate view
-						rotate = true;
-						movedDuringRotate = false;
-						origx = mx;
-						origy = my;
-						origrx = rx;
-						origry = ry;
+						if (sample)
+							sample->handleStep();
 					}
-				}
-				break;
-
-			case SDL_MOUSEBUTTONUP:
-				// Handle mouse clicks here.
-				if (event.button.button == SDL_BUTTON_RIGHT)
-				{
-					rotate = false;
-					if (!mouseOverMenu)
+					else if (event.key.keysym.sym == SDLK_9)
 					{
-						if (!movedDuringRotate)
+						if (geom)
+							geom->save("geomset.txt");
+					}
+					else if (event.key.keysym.sym == SDLK_0)
+					{
+					geom = std::unique_ptr<InputGeom>(new InputGeom);
+					if (!geom->load(&ctx, "geomset.txt"))
+					{
+						geom = nullptr;
+							
+							showLog = true;
+							ctx.dumpLog("Geom load log %s:", meshName.c_str());
+						}
+						if (sample && geom)
+						{
+							sample->handleMeshChanged(geom.get());
+						}
+						if (geom || sample)
+						{
+							const float* bmin = 0;
+							const float* bmax = 0;
+							if (sample)
+							{
+								bmin = sample->getBoundsMin();
+								bmax = sample->getBoundsMax();
+							}
+							else if (geom)
+							{
+								bmin = geom->getMeshBoundsMin();
+								bmax = geom->getMeshBoundsMax();
+							}
+							// Reset camera and fog to match the mesh bounds.
+							if (bmin && bmax)
+							{
+								camr = sqrtf(rcSqr(bmax[0] - bmin[0]) +
+											 rcSqr(bmax[1] - bmin[1]) +
+											 rcSqr(bmax[2] - bmin[2])) / 2;
+								camx = (bmax[0] + bmin[0]) / 2 + camr;
+								camy = (bmax[1] + bmin[1]) / 2 + camr;
+								camz = (bmax[2] + bmin[2]) / 2 + camr;
+								camr *= 3;
+							}
+							rx = 45;
+							ry = -45;
+							glFogf(GL_FOG_START, camr*0.2f);
+							glFogf(GL_FOG_END, camr*1.25f);
+						}
+					}
+					else if (event.key.keysym.sym == SDLK_RIGHT)
+					{
+						slideShow.nextSlide();
+					}
+					else if (event.key.keysym.sym == SDLK_LEFT)
+					{
+						slideShow.prevSlide();
+					}
+					break;
+					
+				case SDL_MOUSEBUTTONDOWN:
+					if (event.button.button == SDL_BUTTON_RIGHT)
+					{
+						if (!mouseOverMenu)
+						{
+							// Rotate view
+							rotate = true;
+							movedDuringRotate = false;
+							origx = mx;
+							origy = my;
+							origrx = rx;
+							origry = ry;
+						}
+					}
+					break;
+					
+				case SDL_MOUSEBUTTONUP:
+					// Handle mouse clicks here.
+					if (event.button.button == SDL_BUTTON_RIGHT)
+					{
+						rotate = false;
+						if (!mouseOverMenu && !movedDuringRotate)
+						{
+								processHitTest = true;
+								processHitTestShift = true;
+						}
+					}
+					else if (event.button.button == SDL_BUTTON_LEFT)
+					{
+						if (!mouseOverMenu)
 						{
 							processHitTest = true;
-							processHitTestShift = true;
+							processHitTestShift = (SDL_GetModState() & KMOD_SHIFT) ? true : false;
 						}
 					}
-				}
-				else if (event.button.button == SDL_BUTTON_LEFT)
-				{
-					if (!mouseOverMenu)
+					
+					break;
+					
+				case SDL_MOUSEMOTION:
+					mx = event.motion.x;
+					my = height - 1 - event.motion.y;
+					if (rotate)
 					{
-						processHitTest = true;
-						processHitTestShift = (SDL_GetModState() & KMOD_SHIFT) ? true : false;
+						int dx = mx - origx;
+						int dy = my - origy;
+						rx = origrx - dy * 0.25f;
+						ry = origry + dx * 0.25f;
+						if (dx * dx + dy * dy > 3 * 3)
+							movedDuringRotate = true;
 					}
-				}
-
-				break;
-
-			case SDL_MOUSEMOTION:
-				mx = event.motion.x;
-				my = height - 1 - event.motion.y;
-				if (rotate)
-				{
-					int dx = mx - origx;
-					int dy = my - origy;
-					rx = origrx - dy*0.25f;
-					ry = origry + dx*0.25f;
-					if (dx*dx + dy*dy > 3 * 3)
-						movedDuringRotate = true;
-				}
-				break;
-
-			case SDL_QUIT:
-				done = true;
-				break;
-
-			default:
-				break;
+					break;
+					
+				case SDL_QUIT:
+					done = true;
+					break;
+					
+				default:
+					break;
 			}
 		}
 
@@ -751,40 +753,36 @@ int main(int argc, char* argv[])
 		float	dt = (time - lastTime) / 1000.0f;
 		lastTime = time;
 
-		t += dt;
+		totalTime += dt;
 
 		// Hit test mesh.
 		if (processHitTest && geom && sample)
 		{
-			float hitt;
-			bool hit = geom->raycastMesh(rays, raye, hitt);
-
-			if (hit)
+			float hitTime;
+			if (geom->raycastMesh(rays, raye, hitTime))
 			{
 				if (SDL_GetModState() & KMOD_CTRL)
 				{
 					// Marker
-					mposSet = true;
-					mpos[0] = rays[0] + (raye[0] - rays[0])*hitt;
-					mpos[1] = rays[1] + (raye[1] - rays[1])*hitt;
-					mpos[2] = rays[2] + (raye[2] - rays[2])*hitt;
+					markerPositionSet = true;
+					markerPosition[0] = rays[0] + (raye[0] - rays[0]) * hitTime;
+					markerPosition[1] = rays[1] + (raye[1] - rays[1]) * hitTime;
+					markerPosition[2] = rays[2] + (raye[2] - rays[2]) * hitTime;
 				}
 				else
 				{
-					float pos[3];
-					pos[0] = rays[0] + (raye[0] - rays[0])*hitt;
-					pos[1] = rays[1] + (raye[1] - rays[1])*hitt;
-					pos[2] = rays[2] + (raye[2] - rays[2])*hitt;
+					float pos[3] = {
+						rays[0] + (raye[0] - rays[0]) * hitTime,
+						rays[1] + (raye[1] - rays[1]) * hitTime,
+						rays[2] + (raye[2] - rays[2]) * hitTime
+					};
 					sample->handleClick(rays, pos, processHitTestShift);
 				}
 			}
-			else
+			else if (SDL_GetModState() & KMOD_CTRL)
 			{
-				if (SDL_GetModState() & KMOD_CTRL)
-				{
-					// Marker
-					mposSet = false;
-				}
+				// Marker
+				markerPositionSet = false;
 			}
 		}
 
@@ -796,11 +794,8 @@ int main(int argc, char* argv[])
 		while (timeAcc > DELTA_TIME)
 		{
 			timeAcc -= DELTA_TIME;
-			if (simIter < 5)
-			{
-				if (sample)
-					sample->handleUpdate(DELTA_TIME);
-			}
+			if (simIter < 5 && sample)
+				sample->handleUpdate(DELTA_TIME);
 			simIter++;
 		}
 
@@ -808,12 +803,10 @@ int main(int argc, char* argv[])
 		const float MIN_FRAME_TIME = 1.0f / 40.0f;
 		if (dt < MIN_FRAME_TIME)
 		{
-			int ms = (int)((MIN_FRAME_TIME - dt)*1000.0f);
+			int ms = (int)((MIN_FRAME_TIME - dt) * 1000.0f);
 			if (ms > 10) ms = 10;
-			if (ms >= 0)
-				SDL_Delay(ms);
+			if (ms >= 0) SDL_Delay(ms);
 		}
-
 
 		// Update and render
 		glViewport(0, 0, width, height);
@@ -835,16 +828,16 @@ int main(int argc, char* argv[])
 		glTranslatef(-camx, -camy, -camz);
 
 		// Get hit ray position and direction.
-		GLdouble proj[16];
-		GLdouble model[16];
-		GLint view[4];
-		glGetDoublev(GL_PROJECTION_MATRIX, proj);
-		glGetDoublev(GL_MODELVIEW_MATRIX, model);
-		glGetIntegerv(GL_VIEWPORT, view);
+		GLdouble projectionMatrix[16];
+		GLdouble modelviewMatrix[16];
+		GLint viewport[4];
+		glGetDoublev(GL_PROJECTION_MATRIX, projectionMatrix);
+		glGetDoublev(GL_MODELVIEW_MATRIX, modelviewMatrix);
+		glGetIntegerv(GL_VIEWPORT, viewport);
 		GLdouble x, y, z;
-		gluUnProject(mx, my, 0.0f, model, proj, view, &x, &y, &z);
+		gluUnProject(mx, my, 0.0f, modelviewMatrix, projectionMatrix, viewport, &x, &y, &z);
 		rays[0] = (float)x; rays[1] = (float)y; rays[2] = (float)z;
-		gluUnProject(mx, my, 1.0f, model, proj, view, &x, &y, &z);
+		gluUnProject(mx, my, 1.0f, modelviewMatrix, projectionMatrix, viewport, &x, &y, &z);
 		raye[0] = (float)x; raye[1] = (float)y; raye[2] = (float)z;
 
 		// Handle keyboard movement.
@@ -859,18 +852,16 @@ int main(int argc, char* argv[])
 			keybSpeed *= 4.0f;
 
 		float movex = (moveD - moveA) * keybSpeed * dt;
-		float movey = (moveS - moveW) * keybSpeed * dt;
-
-		movey += scrollZoom * 2.0f;
+		float movey = (moveS - moveW) * keybSpeed * dt + scrollZoom * 2.0f;
 		scrollZoom = 0;
 
-		camx += movex * (float)model[0];
-		camy += movex * (float)model[4];
-		camz += movex * (float)model[8];
+		camx += movex * (float)modelviewMatrix[0];
+		camy += movex * (float)modelviewMatrix[4];
+		camz += movex * (float)modelviewMatrix[8];
 
-		camx += movey * (float)model[2];
-		camy += movey * (float)model[6];
-		camz += movey * (float)model[10];
+		camx += movey * (float)modelviewMatrix[2];
+		camy += movey * (float)modelviewMatrix[6];
+		camz += movey * (float)modelviewMatrix[10];
 
 		glEnable(GL_FOG);
 
@@ -896,14 +887,13 @@ int main(int argc, char* argv[])
 
 		if (sample)
 		{
-			sample->handleRenderOverlay((double*)proj, (double*)model, (int*)view);
+			sample->handleRenderOverlay((double*)projectionMatrix, (double*)modelviewMatrix, (int*)viewport);
 		}
-		if (test)
+		if (test && test->handleRenderOverlay((double*)projectionMatrix, (double*)modelviewMatrix, (int*)viewport))
 		{
-			if (test->handleRenderOverlay((double*)proj, (double*)model, (int*)view))
 				mouseOverMenu = true;
 		}
-		
+
 		// Help text.
 		if (showMenu)
 		{
@@ -960,4 +950,61 @@ int main(int argc, char* argv[])
 	delete geom;
 
 	return 0;
+}
+
+void resetCameraAndFog(const std::unique_ptr<InputGeom>& geom, const std::unique_ptr<Sample>& sample,
+					   float& camx, float& camy, float& camz, float& camr, float& rx, float& ry) {
+	if (geom || sample)
+	{
+		const float* bmin = 0;
+		const float* bmax = 0;
+		if (sample)
+		{
+			bmin = sample->getBoundsMin();
+			bmax = sample->getBoundsMax();
+		}
+		else if (geom)
+		{
+			bmin = geom->getMeshBoundsMin();
+			bmax = geom->getMeshBoundsMax();
+		}
+		// Reset camera and fog to match the mesh bounds.
+		if (bmin && bmax)
+		{
+			camr = sqrtf(rcSqr(bmax[0] - bmin[0]) +
+						 rcSqr(bmax[1] - bmin[1]) +
+						 rcSqr(bmax[2] - bmin[2])) / 2;
+			camx = (bmax[0] + bmin[0]) / 2 + camr;
+			camy = (bmax[1] + bmin[1]) / 2 + camr;
+			camz = (bmax[2] + bmin[2]) / 2 + camr;
+			camr *= 3;
+		}
+		rx = 45;
+		ry = -45;
+		glFogf(GL_FOG_START, camr*0.1f);
+		glFogf(GL_FOG_END, camr*1.25f);
+	}
+}
+
+void drawMarker(float markerPosition[3], GLdouble projectionMatrix[16], GLdouble modelviewMatrix[16], GLint viewport[4])
+{
+	GLdouble windowCoords[3];
+	if (gluProject((GLdouble)markerPosition[0], (GLdouble)markerPosition[1], (GLdouble)markerPosition[2],
+		modelviewMatrix, projectionMatrix, viewport, &windowCoords[0], &windowCoords[1], &windowCoords[2]))
+	{
+		// Draw marker circle
+		glLineWidth(5.0f);
+		glColor4ub(240, 220, 0, 196);
+		glBegin(GL_LINE_LOOP);
+		const float radius = 25.0f;
+		for (int i = 0; i < 20; ++i)
+		{
+			const float angle = (float)i / 20.0f * RC_PI * 2;
+			const float fx = (float)windowCoords[0] + cosf(angle) * radius;
+			const float fy = (float)windowCoords[1] + sinf(angle) * radius;
+			glVertex2f(fx, fy);
+		}
+		glEnd();
+		glLineWidth(1.0f);
+	}
 }

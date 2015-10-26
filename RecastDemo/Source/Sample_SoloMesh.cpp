@@ -371,13 +371,13 @@ bool Sample_SoloMesh::handleBuild()
 	
 	// Init build configuration from GUI
 	memset(&m_cfg, 0, sizeof(m_cfg));
-	m_cfg.cs = m_cellSize;
-	m_cfg.ch = m_cellHeight;
+	m_cfg.cellSizeXZ = m_cellSize;
+	m_cfg.cellSizeY = m_cellHeight;
 	m_cfg.walkableSlopeAngle = m_agentMaxSlope;
-	m_cfg.walkableHeightCrouch = (int)ceilf(m_agentHeight / m_cfg.ch);
-	m_cfg.walkableHeightStand = (int)ceilf(m_agentHeight / m_cfg.ch);
-	m_cfg.walkableClimb = (int)floorf(m_agentMaxClimb / m_cfg.ch);
-	m_cfg.walkableRadius = (int)ceilf(m_agentRadius / m_cfg.cs);
+	m_cfg.walkableHeightCrouch = (int)ceilf(m_agentHeight / m_cfg.cellSizeY);
+	m_cfg.walkableHeightStand = (int)ceilf(m_agentHeight / m_cfg.cellSizeY);
+	m_cfg.walkableClimb = (int)floorf(m_agentMaxClimb / m_cfg.cellSizeY);
+	m_cfg.walkableRadius = (int)ceilf(m_agentRadius / m_cfg.cellSizeXZ);
 	m_cfg.maxEdgeLen = (int)(m_edgeMaxLen / m_cellSize);
 	m_cfg.maxSimplificationError = m_edgeMaxError;
 	m_cfg.minRegionArea = (int)rcSqr(m_regionMinSize);		// Note: area = size*size
@@ -391,7 +391,7 @@ bool Sample_SoloMesh::handleBuild()
 	// area could be specified by an user defined box, etc.
 	rcVcopy(m_cfg.bmin, bmin);
 	rcVcopy(m_cfg.bmax, bmax);
-	rcCalcGridSize(m_cfg.bmin, m_cfg.bmax, m_cfg.cs, &m_cfg.width, &m_cfg.height);
+	rcCalcGridSize(m_cfg.bmin, m_cfg.bmax, m_cfg.cellSizeXZ, &m_cfg.width, &m_cfg.height);
 
 	// Reset build times gathering.
 	m_ctx->resetTimers();
@@ -414,7 +414,7 @@ bool Sample_SoloMesh::handleBuild()
 		m_ctx->log(RC_LOG_ERROR, "buildNavigation: Out of memory 'solid'.");
 		return false;
 	}
-	if (!rcCreateHeightfield(m_ctx, *m_solid, m_cfg.width, m_cfg.height, m_cfg.bmin, m_cfg.bmax, m_cfg.cs, m_cfg.ch))
+	if (!rcCreateHeightfield(m_ctx, *m_solid, m_cfg.width, m_cfg.height, m_cfg.bmin, m_cfg.bmax, m_cfg.cellSizeXZ, m_cfg.cellSizeY))
 	{
 		m_ctx->log(RC_LOG_ERROR, "buildNavigation: Could not create solid heightfield.");
 		return false;
@@ -490,19 +490,36 @@ bool Sample_SoloMesh::handleBuild()
 	// (Optional) Mark areas.
 	const ConvexVolume* vols = m_geom->getConvexVolumes();
 	for (int i  = 0; i < m_geom->getConvexVolumeCount(); ++i)
-		rcMarkConvexPolyArea(m_ctx, vols[i].verts, vols[i].nverts, vols[i].hmin, vols[i].hmax, vols[i].areaMask, *m_chf);
+		rcMarkConvexPolyArea(m_ctx, vols[i].verts, vols[i].nverts, vols[i].hmin, vols[i].hmax, (unsigned char)vols[i].area, *m_chf);
+
 	
-	if (m_monotonePartitioning)
-	{
-		// Partition the walkable surface into simple regions without holes.
-		// Monotone partitioning does not need distancefield.
-		if (!rcBuildRegionsMonotone(m_ctx, *m_chf, 0, m_cfg.minRegionArea, m_cfg.mergeRegionArea))
-		{
-			m_ctx->log(RC_LOG_ERROR, "buildNavigation: Could not build regions.");
-			return false;
-		}
-	}
-	else
+	// Partition the heightfield so that we can use simple algorithm later to triangulate the walkable areas.
+	// There are 3 martitioning methods, each with some pros and cons:
+	// 1) Watershed partitioning
+	//   - the classic Recast partitioning
+	//   - creates the nicest tessellation
+	//   - usually slowest
+	//   - partitions the heightfield into nice regions without holes or overlaps
+	//   - the are some corner cases where this method creates produces holes and overlaps
+	//      - holes may appear when a small obstacles is close to large open area (triangulation can handle this)
+	//      - overlaps may occur if you have narrow spiral corridors (i.e stairs), this make triangulation to fail
+	//   * generally the best choice if you precompute the nacmesh, use this if you have large open areas
+	// 2) Monotone partioning
+	//   - fastest
+	//   - partitions the heightfield into regions without holes and overlaps (guaranteed)
+	//   - creates long thin polygons, which sometimes causes paths with detours
+	//   * use this if you want fast navmesh generation
+	// 3) Layer partitoining
+	//   - quite fast
+	//   - partitions the heighfield into non-overlapping regions
+	//   - relies on the triangulation code to cope with holes (thus slower than monotone partitioning)
+	//   - produces better triangles than monotone partitioning
+	//   - does not have the corner cases of watershed partitioning
+	//   - can be slow and create a bit ugly tessellation (still better than monotone)
+	//     if you have large open areas with small obstacles (not a problem if you use tiles)
+	//   * good choice to use for tiled navmesh with medium and small sized tiles
+	
+	if (m_partitionType == SAMPLE_PARTITION_WATERSHED)
 	{
 		// Prepare for region partitioning, by calculating distance field along the walkable surface.
 		if (!rcBuildDistanceField(m_ctx, *m_chf))
@@ -510,15 +527,35 @@ bool Sample_SoloMesh::handleBuild()
 			m_ctx->log(RC_LOG_ERROR, "buildNavigation: Could not build distance field.");
 			return false;
 		}
-
+		
 		// Partition the walkable surface into simple regions without holes.
-		if (!rcBuildRegions(m_ctx, *m_chf, 0, m_cfg.minRegionArea, m_cfg.mergeRegionArea))
+		// Monotone partitioning does not need distancefield.
+		if (!rcBuildRegionsMonotone(m_ctx, *m_chf, 0, m_cfg.minRegionArea, m_cfg.mergeRegionArea))
 		{
-			m_ctx->log(RC_LOG_ERROR, "buildNavigation: Could not build regions.");
+			m_ctx->log(RC_LOG_ERROR, "buildNavigation: Could not build watershed regions.");
 			return false;
 		}
 	}
-
+	else if (m_partitionType == SAMPLE_PARTITION_MONOTONE)
+	{
+		// Partition the walkable surface into simple regions without holes.
+		// Monotone partitioning does not need distancefield.
+		if (!rcBuildRegionsMonotone(m_ctx, *m_chf, 0, m_cfg.minRegionArea, m_cfg.mergeRegionArea))
+		{
+			m_ctx->log(RC_LOG_ERROR, "buildNavigation: Could not build monotone regions.");
+			return false;
+		}
+	}
+	else // SAMPLE_PARTITION_LAYERS
+	{
+		// Partition the walkable surface into simple regions without holes.
+		if (!rcBuildLayerRegions(m_ctx, *m_chf, 0, m_cfg.minRegionArea))
+		{
+			m_ctx->log(RC_LOG_ERROR, "buildNavigation: Could not build layer regions.");
+			return false;
+		}
+	}
+	
 	//
 	// Step 5. Trace and simplify region contours.
 	//
@@ -639,8 +676,8 @@ bool Sample_SoloMesh::handleBuild()
 		params.walkableClimb = m_agentMaxClimb;
 		rcVcopy(params.bmin, m_pmesh->bmin);
 		rcVcopy(params.bmax, m_pmesh->bmax);
-		params.cs = m_cfg.cs;
-		params.ch = m_cfg.ch;
+		params.cs = m_cfg.cellSizeXZ;
+		params.ch = m_cfg.cellSizeY;
 		params.buildBvTree = true;
 		
 		if (!dtCreateNavMeshData(&params, &navData, &navDataSize))
