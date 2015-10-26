@@ -2,11 +2,6 @@
 Recast & Detour
 ===============
 
-[![GitHub forks](https://img.shields.io/github/forks/badges/shields.svg?style=social&label=Fork)]()
-[![GitHub stars](https://img.shields.io/github/stars/badges/shields.svg?style=social&label=Star)]()
-[![GitHub watchers](https://img.shields.io/github/watchers/badges/shields.svg?style=social&label=Watch)]()
-[![GitHub followers](https://img.shields.io/github/followers/espadrine.svg?style=social&label=Follow)]()
-
 ![screenshot of a navmesh baked with the sample program](/RecastDemo/screenshot.png?raw=true)
 
 ## Recast
