@@ -2,7 +2,10 @@
 Recast & Detour
 ===============
 
-[![Coverity Scan Build Status](https://img.shields.io/coverity/scan/6782.svg)](https://scan.coverity.com/projects/rwindegger-recastnavigation)
+[![GitHub forks](https://img.shields.io/github/forks/badges/shields.svg?style=social&label=Fork)]()
+[![GitHub stars](https://img.shields.io/github/stars/badges/shields.svg?style=social&label=Star)]()
+[![GitHub watchers](https://img.shields.io/github/watchers/badges/shields.svg?style=social&label=Watch)]()
+[![GitHub followers](https://img.shields.io/github/followers/espadrine.svg?style=social&label=Follow)]()
 
 ![screenshot of a navmesh baked with the sample program](/RecastDemo/screenshot.png?raw=true)
 
