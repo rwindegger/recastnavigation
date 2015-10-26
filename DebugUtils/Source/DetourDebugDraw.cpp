@@ -115,8 +115,6 @@ static void drawPolyBoundaries(duDebugDraw* dd, const dtMeshTile* tile,
 	dd->end();
 }
 
-unsigned int dtAreaMaskColor( navAreaMask mask );
-
 static void drawMeshTile(duDebugDraw* dd, const dtNavMesh& mesh, const dtNavMeshQuery* query,
 						 const dtMeshTile* tile, unsigned char flags)
 {
@@ -146,7 +144,10 @@ static void drawMeshTile(duDebugDraw* dd, const dtNavMesh& mesh, const dtNavMesh
 			}
 			else
 			{
-				col = dtAreaMaskColor( p->areaMask );
+				if (p->areaMask == 0) // Treat zero area type as default.
+					col = duRGBA(0,192,255,64);
+				else
+					col = duIntToCol(p->areaMask, 64);
 			}
 		}
 		
@@ -176,14 +177,14 @@ static void drawMeshTile(duDebugDraw* dd, const dtNavMesh& mesh, const dtNavMesh
 		for (int i = 0; i < tile->header->polyCount; ++i)
 		{
 			const dtPoly* p = &tile->polys[i];
-			if ( p->getPolyType() != DT_POLYTYPE_OFFMESH_CONNECTION )	// Skip regular polys.
+			if (p->getPolyType() != DT_POLYTYPE_OFFMESH_CONNECTION)	// Skip regular polys.
 				continue;
 			
 			unsigned int col, col2;
 			if (query && query->isInClosedList(base | (dtPolyRef)i))
 				col = duRGBA(255,196,0,220);
 			else
-				col = duDarkenCol( dtAreaMaskColor( p->areaMask ) );
+				col = duDarkenCol(duIntToCol(p->areaMask, 220));
 			
 			const dtOffMeshConnection* con = &tile->offMeshCons[i - tile->header->offMeshBase];
 			const float* va = &tile->verts[p->verts[0]*3];
@@ -749,7 +750,7 @@ void duDebugDrawTileCachePolyMesh(duDebugDraw* dd, const struct dtTileCachePolyM
 		else if (lmesh.areaMasks[i] == DT_TILECACHE_NULL_AREA)
 			color = duRGBA(0,0,0,64);
 		else
-			color = dtAreaMaskColor( lmesh.areaMasks[ i ] );
+			color = duIntToCol(lmesh.areaMasks[i], 255);
 		
 		unsigned short vi[3];
 		for (int j = 2; j < nvp; ++j)
