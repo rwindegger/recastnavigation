@@ -290,6 +290,7 @@ bool TestCase::handleRenderOverlay(double* proj, double* model, int* view)
 {
 	GLdouble x, y, z;
 	
+	std::ostringstream text;
 	string subtext;
 	int n = 0;
 
@@ -322,7 +323,6 @@ bool TestCase::handleRenderOverlay(double* proj, double* model, int* view)
 		{
 			std::stringstream text;
 			text << "Path " << n << "\n";
-			unsigned int col = test.expand ? imguiRGBA(255,192,0,220) : imguiRGBA(0,0,0,128);
 			ImGui::Text(text.str().c_str());
 		}
 		n++;
@@ -368,5 +368,5 @@ bool TestCase::handleRenderOverlay(double* proj, double* model, int* view)
 
 	ImGui::EndChild();
 	
-	return mouseOverMenu;
+	return false;
 }

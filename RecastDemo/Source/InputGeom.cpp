@@ -270,7 +270,7 @@ bool InputGeom::save(string filepath)
 	// Convex volumes
 	for (ConvexVolume& vol : m_volumes)
 	{
-		fprintf(fp, "v %d %d %f %f\n", vol.nverts, vol.area, vol.hmin, vol.hmax);
+		fprintf(fp, "v %d %d %f %f\n", vol.nverts, vol.areaMask, vol.hmin, vol.hmax);
 		for (int j = 0; j < vol.nverts; ++j)
 			fprintf(fp, "%f %f %f\n", vol.verts[j*3+0], vol.verts[j*3+1], vol.verts[j*3+2]);
 	}
@@ -447,7 +447,7 @@ void InputGeom::drawConvexVolumes(struct duDebugDraw* dd, bool /*hilight*/)
 	
 	for (ConvexVolume& vol : m_volumes)
 	{
-		unsigned int col = duIntToCol(vol.area, 32);
+		unsigned int col = duIntToCol(vol.areaMask, 32);
 		for (int j = 0, k = vol.nverts-1; j < vol.nverts; k = j++)
 		{
 			const float* va = &vol.verts[k*3];
@@ -472,7 +472,7 @@ void InputGeom::drawConvexVolumes(struct duDebugDraw* dd, bool /*hilight*/)
 	dd->begin(DU_DRAW_LINES, 2.0f);
 	for (ConvexVolume& vol : m_volumes)
 	{
-		unsigned int col = duIntToCol(vol.area, 220);
+		unsigned int col = duIntToCol(vol.areaMask, 220);
 		for (int j = 0, k = vol.nverts-1; j < vol.nverts; k = j++)
 		{
 			const float* va = &vol.verts[k*3];
@@ -490,7 +490,7 @@ void InputGeom::drawConvexVolumes(struct duDebugDraw* dd, bool /*hilight*/)
 	dd->begin(DU_DRAW_POINTS, 3.0f);
 	for (ConvexVolume& vol : m_volumes)
 	{
-		unsigned int col = duDarkenCol(duIntToCol(vol.area, 255));
+		unsigned int col = duDarkenCol(duIntToCol(vol.areaMask, 255));
 		for (int j = 0; j < vol.nverts; ++j)
 		{
 			dd->vertex(vol.verts[j * 3 + 0], vol.verts[j * 3 + 1] + 0.1f, vol.verts[j * 3 + 2], col);

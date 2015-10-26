@@ -73,6 +73,7 @@ int run(int width, int height, bool presentationMode);
 void drawMarker(float markerPosition[3], GLdouble projectionMatrix[16], GLdouble modelviewMatrix[16], GLint viewport[4]);
 void resetCameraAndFog(const std::unique_ptr<InputGeom>& geom, const std::unique_ptr<Sample>& sample, float& camx, float& camy, float& camz, float& camr, float& rx, float& ry);
 
+
 bool showProperties = true;
 bool showLog = false;
 bool showTools = true;
@@ -85,13 +86,13 @@ bool mouseOverMenu = false;
 char sampleName[64] = "Choose Sample...";
 char meshName[128] = "Choose Mesh...";
 
-InputGeom* geom = 0;
+std::unique_ptr<InputGeom> geom = 0;
 Sample* sample = 0;
 TestCase* test = 0;
 
 BuildContext ctx;
 
-FileList files;
+vector<string> files;
 
 int selectedSample = 0;
 
@@ -222,14 +223,20 @@ void TestCaseWindow()
 
 		int testToLoad = -1;
 
-		const char** items = const_cast<const char**>(files.files);
-		ImGui::ListBox("Choose Test to Run", &testToLoad, items, files.size, 3);
+
+		std::vector<const char*> cstrings;
+		for (size_t i = 0; i < files.size(); ++i)
+			cstrings.push_back(files[i].c_str());
+
+		const char** items = &cstrings[0];
+
+		ImGui::ListBox("Choose Test to Run", &testToLoad, items, files.size(), 3);
 
 		if (testToLoad != -1)
 		{
 			char path[256];
 			strcpy(path, "Tests/");
-			strcat(path, files.files[testToLoad]);
+			strcat(path, cstrings[testToLoad]);
 			test = new TestCase;
 			if (test)
 			{
@@ -244,7 +251,7 @@ void TestCaseWindow()
 				Sample* newSample = 0;
 				for (int i = 0; i < g_nsamples; ++i)
 				{
-					if (strcmp(g_samples[i].name, test->getSampleName()) == 0)
+					if (strcmp(g_samples[i].name, test->getSampleName().c_str()) == 0)
 					{
 						newSample = g_samples[i].create();
 						if (newSample) strcpy(sampleName, g_samples[i].name);
@@ -259,26 +266,26 @@ void TestCaseWindow()
 				}
 
 				// Load geom.
-				strcpy(meshName, test->getGeomFileName());
+				strcpy(meshName, test->getGeomFileName().c_str());
 				meshName[sizeof(meshName) - 1] = '\0';
 
-				delete geom;
+				geom.release();
 				geom = 0;
 
 				strcpy(path, "Meshes/");
 				strcat(path, meshName);
 
-				geom = new InputGeom;
+				geom = std::unique_ptr<InputGeom>(new InputGeom);
 				if (!geom || !geom->loadMesh(&ctx, path))
 				{
-					delete geom;
+					geom.release();
 					geom = 0;
 					showLog = true;
 					ctx.dumpLog("Geom load log %s:", meshName);
 				}
 				if (sample && geom)
 				{
-					sample->handleMeshChanged(geom);
+					sample->handleMeshChanged(geom.get());
 				}
 
 				// This will ensure that tile & poly bits are updated in tiled sample.
@@ -355,7 +362,7 @@ void SampleSelection()
 			sample->setContext(&ctx);
 			if (geom && sample)
 			{
-				sample->handleMeshChanged(geom);
+				sample->handleMeshChanged(geom.get());
 			}
 			showSample = false;
 		}
@@ -402,26 +409,30 @@ void LevelSelection()
 		ImGui::Begin("Choose Level", &showLevels, ImVec2(200, 250), 0.7, ImGuiWindowFlags_::ImGuiWindowFlags_NoMove | ImGuiWindowFlags_::ImGuiWindowFlags_NoResize | ImGuiWindowFlags_::ImGuiWindowFlags_NoSavedSettings);
 
 		int levelToLoad = -1;
-		const char** fileNames = const_cast<const char**>(files.files);
-		ImGui::ListBox("Choose Level", &levelToLoad, fileNames, files.size, 3);
+		std::vector<const char*> cstrings;
+		for (size_t i = 0; i < files.size(); ++i)
+			cstrings.push_back(files[i].c_str());
+
+		const char** fileNames = &cstrings[0];
+		ImGui::ListBox("Choose Level", &levelToLoad, fileNames, files.size(), 3);
 
 		if (levelToLoad != -1)
 		{
-			strncpy(meshName, files.files[levelToLoad], sizeof(meshName));
+			strncpy(meshName, cstrings[levelToLoad], sizeof(meshName));
 			meshName[sizeof(meshName) - 1] = '\0';
 			showLevels = false;
 
-			delete geom;
+			geom.release();
 			geom = 0;
 
 			char path[256];
 			strcpy(path, "Meshes/");
 			strcat(path, meshName);
 
-			geom = new InputGeom;
+			geom = std::unique_ptr<InputGeom>(new InputGeom);
 			if (!geom || !geom->loadMesh(&ctx, path))
 			{
-				delete geom;
+				geom.release();
 				geom = 0;
 
 				showLog = true;
@@ -429,7 +440,7 @@ void LevelSelection()
 			}
 			if (sample && geom)
 			{
-				sample->handleMeshChanged(geom);
+				sample->handleMeshChanged(geom.get());
 			}
 
 			if (geom || sample)
@@ -487,7 +498,7 @@ int main(int argc, char* argv[])
 	SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE, 8);
 	SDL_GL_SetAttribute(SDL_GL_ALPHA_SIZE, 8);
-//#ifndef WIN32
+	//#ifndef WIN32
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
 	SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
 	//#endif
@@ -496,6 +507,10 @@ int main(int argc, char* argv[])
 
 	bool presentationMode = false;
 
+	return run(width, height, presentationMode);
+}
+
+int run(int width, int height, bool presentationMode) {
 	SDL_DisplayMode current;
 	SDL_GetCurrentDisplayMode(0, &current);
 
@@ -548,9 +563,7 @@ int main(int argc, char* argv[])
 	ImGuiIO& io = ImGui::GetIO();
 	io.Fonts->AddFontDefault();
 	io.Fonts->AddFontFromFileTTF("DroidSans.ttf", 15.0);
-}
 
-int run( int width, int height, bool presentationMode) {
 	float totalTime = 0.0f;
 	float timeAcc = 0.0f;
 	Uint32 lastTime = SDL_GetTicks();
@@ -601,151 +614,151 @@ int run( int width, int height, bool presentationMode) {
 			ImGui_ImplSdl_ProcessEvent(&event);
 			switch (event.type)
 			{
-				case SDL_KEYDOWN:
-					// Handle any key presses here.
-					if (event.key.keysym.sym == SDLK_ESCAPE)
-					{
-						done = true;
-					}
-					else if (event.key.keysym.sym == SDLK_t)
-					{
-						showLevels = false;
-						showSample = false;
-						showTestCases = true;
-						scanDirectory("Tests", ".txt", files);
-					}
-					else if (event.key.keysym.sym == SDLK_TAB)
-					{
-						showMenu = !showMenu;
-					}
-					else if (event.key.keysym.sym == SDLK_SPACE)
-					{
-						if (sample)
-							sample->handleToggle();
-					}
-					else if (event.key.keysym.sym == SDLK_1)
-					{
-						if (sample)
-							sample->handleStep();
-					}
-					else if (event.key.keysym.sym == SDLK_9)
-					{
-						if (geom)
-							geom->save("geomset.txt");
-					}
-					else if (event.key.keysym.sym == SDLK_0)
-					{
+			case SDL_KEYDOWN:
+				// Handle any key presses here.
+				if (event.key.keysym.sym == SDLK_ESCAPE)
+				{
+					done = true;
+				}
+				else if (event.key.keysym.sym == SDLK_t)
+				{
+					showLevels = false;
+					showSample = false;
+					showTestCases = true;
+					scanDirectory("Tests", ".txt", files);
+				}
+				else if (event.key.keysym.sym == SDLK_TAB)
+				{
+					showMenu = !showMenu;
+				}
+				else if (event.key.keysym.sym == SDLK_SPACE)
+				{
+					if (sample)
+						sample->handleToggle();
+				}
+				else if (event.key.keysym.sym == SDLK_1)
+				{
+					if (sample)
+						sample->handleStep();
+				}
+				else if (event.key.keysym.sym == SDLK_9)
+				{
+					if (geom)
+						geom->save("geomset.txt");
+				}
+				else if (event.key.keysym.sym == SDLK_0)
+				{
 					geom = std::unique_ptr<InputGeom>(new InputGeom);
 					if (!geom->load(&ctx, "geomset.txt"))
 					{
 						geom = nullptr;
-							
-							showLog = true;
-							ctx.dumpLog("Geom load log %s:", meshName.c_str());
-						}
-						if (sample && geom)
+
+						showLog = true;
+						ctx.dumpLog("Geom load log %s:", meshName);
+					}
+					if (sample && geom)
+					{
+						sample->handleMeshChanged(geom.get());
+					}
+					if (geom || sample)
+					{
+						const float* bmin = 0;
+						const float* bmax = 0;
+						if (sample)
 						{
-							sample->handleMeshChanged(geom.get());
+							bmin = sample->getBoundsMin();
+							bmax = sample->getBoundsMax();
 						}
-						if (geom || sample)
+						else if (geom)
 						{
-							const float* bmin = 0;
-							const float* bmax = 0;
-							if (sample)
-							{
-								bmin = sample->getBoundsMin();
-								bmax = sample->getBoundsMax();
-							}
-							else if (geom)
-							{
-								bmin = geom->getMeshBoundsMin();
-								bmax = geom->getMeshBoundsMax();
-							}
-							// Reset camera and fog to match the mesh bounds.
-							if (bmin && bmax)
-							{
-								camr = sqrtf(rcSqr(bmax[0] - bmin[0]) +
-											 rcSqr(bmax[1] - bmin[1]) +
-											 rcSqr(bmax[2] - bmin[2])) / 2;
-								camx = (bmax[0] + bmin[0]) / 2 + camr;
-								camy = (bmax[1] + bmin[1]) / 2 + camr;
-								camz = (bmax[2] + bmin[2]) / 2 + camr;
-								camr *= 3;
-							}
-							rx = 45;
-							ry = -45;
-							glFogf(GL_FOG_START, camr*0.2f);
-							glFogf(GL_FOG_END, camr*1.25f);
+							bmin = geom->getMeshBoundsMin();
+							bmax = geom->getMeshBoundsMax();
 						}
-					}
-					else if (event.key.keysym.sym == SDLK_RIGHT)
-					{
-						slideShow.nextSlide();
-					}
-					else if (event.key.keysym.sym == SDLK_LEFT)
-					{
-						slideShow.prevSlide();
-					}
-					break;
-					
-				case SDL_MOUSEBUTTONDOWN:
-					if (event.button.button == SDL_BUTTON_RIGHT)
-					{
-						if (!mouseOverMenu)
+						// Reset camera and fog to match the mesh bounds.
+						if (bmin && bmax)
 						{
-							// Rotate view
-							rotate = true;
-							movedDuringRotate = false;
-							origx = mx;
-							origy = my;
-							origrx = rx;
-							origry = ry;
+							camr = sqrtf(rcSqr(bmax[0] - bmin[0]) +
+								rcSqr(bmax[1] - bmin[1]) +
+								rcSqr(bmax[2] - bmin[2])) / 2;
+							camx = (bmax[0] + bmin[0]) / 2 + camr;
+							camy = (bmax[1] + bmin[1]) / 2 + camr;
+							camz = (bmax[2] + bmin[2]) / 2 + camr;
+							camr *= 3;
 						}
+						rx = 45;
+						ry = -45;
+						glFogf(GL_FOG_START, camr*0.2f);
+						glFogf(GL_FOG_END, camr*1.25f);
 					}
-					break;
-					
-				case SDL_MOUSEBUTTONUP:
-					// Handle mouse clicks here.
-					if (event.button.button == SDL_BUTTON_RIGHT)
+				}
+				else if (event.key.keysym.sym == SDLK_RIGHT)
+				{
+					slideShow.nextSlide();
+				}
+				else if (event.key.keysym.sym == SDLK_LEFT)
+				{
+					slideShow.prevSlide();
+				}
+				break;
+
+			case SDL_MOUSEBUTTONDOWN:
+				if (event.button.button == SDL_BUTTON_RIGHT)
+				{
+					if (!mouseOverMenu)
 					{
-						rotate = false;
-						if (!mouseOverMenu && !movedDuringRotate)
-						{
-								processHitTest = true;
-								processHitTestShift = true;
-						}
+						// Rotate view
+						rotate = true;
+						movedDuringRotate = false;
+						origx = mx;
+						origy = my;
+						origrx = rx;
+						origry = ry;
 					}
-					else if (event.button.button == SDL_BUTTON_LEFT)
+				}
+				break;
+
+			case SDL_MOUSEBUTTONUP:
+				// Handle mouse clicks here.
+				if (event.button.button == SDL_BUTTON_RIGHT)
+				{
+					rotate = false;
+					if (!mouseOverMenu && !movedDuringRotate)
 					{
-						if (!mouseOverMenu)
-						{
-							processHitTest = true;
-							processHitTestShift = (SDL_GetModState() & KMOD_SHIFT) ? true : false;
-						}
+						processHitTest = true;
+						processHitTestShift = true;
 					}
-					
-					break;
-					
-				case SDL_MOUSEMOTION:
-					mx = event.motion.x;
-					my = height - 1 - event.motion.y;
-					if (rotate)
+				}
+				else if (event.button.button == SDL_BUTTON_LEFT)
+				{
+					if (!mouseOverMenu)
 					{
-						int dx = mx - origx;
-						int dy = my - origy;
-						rx = origrx - dy * 0.25f;
-						ry = origry + dx * 0.25f;
-						if (dx * dx + dy * dy > 3 * 3)
-							movedDuringRotate = true;
+						processHitTest = true;
+						processHitTestShift = (SDL_GetModState() & KMOD_SHIFT) ? true : false;
 					}
-					break;
-					
-				case SDL_QUIT:
-					done = true;
-					break;
-					
-				default:
-					break;
+				}
+									
+				break;
+
+			case SDL_MOUSEMOTION:
+				mx = event.motion.x;
+				my = height - 1 - event.motion.y;
+				if (rotate)
+				{
+					int dx = mx - origx;
+					int dy = my - origy;
+					rx = origrx - dy * 0.25f;
+					ry = origry + dx * 0.25f;
+					if (dx * dx + dy * dy > 3 * 3)
+						movedDuringRotate = true;
+				}
+				break;
+
+			case SDL_QUIT:
+				done = true;
+				break;
+
+			default:
+				break;
 			}
 		}
 
@@ -891,7 +904,7 @@ int run( int width, int height, bool presentationMode) {
 		}
 		if (test && test->handleRenderOverlay((double*)projectionMatrix, (double*)modelviewMatrix, (int*)viewport))
 		{
-				mouseOverMenu = true;
+			mouseOverMenu = true;
 		}
 
 		// Help text.
@@ -908,14 +921,14 @@ int run( int width, int height, bool presentationMode) {
 		SampleSelection();
 		LevelSelection();
 
-		
 		LogWindow();
-
+		
 		slideShow.updateAndDraw(dt, (float)width, (float)height);
 
 		// Marker
-		if (mposSet && gluProject((GLdouble)mpos[0], (GLdouble)mpos[1], (GLdouble)mpos[2],
-			model, proj, view, &x, &y, &z))
+		
+		if (markerPositionSet && gluProject((GLdouble)markerPosition[0], (GLdouble)markerPosition[1], (GLdouble)markerPosition[2],
+			modelviewMatrix, projectionMatrix, viewport, &x, &y, &z))
 		{
 			// Draw marker circle
 			glLineWidth(5.0f);
@@ -947,13 +960,13 @@ int run( int width, int height, bool presentationMode) {
 	SDL_Quit();
 
 	delete sample;
-	delete geom;
+	geom.release();
 
 	return 0;
 }
 
 void resetCameraAndFog(const std::unique_ptr<InputGeom>& geom, const std::unique_ptr<Sample>& sample,
-					   float& camx, float& camy, float& camz, float& camr, float& rx, float& ry) {
+	float& camx, float& camy, float& camz, float& camr, float& rx, float& ry) {
 	if (geom || sample)
 	{
 		const float* bmin = 0;
@@ -972,8 +985,8 @@ void resetCameraAndFog(const std::unique_ptr<InputGeom>& geom, const std::unique
 		if (bmin && bmax)
 		{
 			camr = sqrtf(rcSqr(bmax[0] - bmin[0]) +
-						 rcSqr(bmax[1] - bmin[1]) +
-						 rcSqr(bmax[2] - bmin[2])) / 2;
+				rcSqr(bmax[1] - bmin[1]) +
+				rcSqr(bmax[2] - bmin[2])) / 2;
 			camx = (bmax[0] + bmin[0]) / 2 + camr;
 			camy = (bmax[1] + bmin[1]) / 2 + camr;
 			camz = (bmax[2] + bmin[2]) / 2 + camr;

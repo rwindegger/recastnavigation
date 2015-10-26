@@ -351,7 +351,7 @@ void rcMarkBoxArea(rcContext* ctx, const float* bmin, const float* bmax, navArea
 			for (int i = (int)c.index, ni = (int)(c.index+c.count); i < ni; ++i)
 			{
 				rcCompactSpan& s = chf.spans[i];
-				if ((int)s.y >= miny && (int)s.y <= maxy)
+				if ((int)s.minY >= miny && (int)s.minY <= maxy)
 				{
 					if (chf.areaMasks[i] != RC_NULL_AREA)
 						chf.areaMasks[ i ] |= areaId;
@@ -364,20 +364,20 @@ void rcMarkBoxArea(rcContext* ctx, const float* bmin, const float* bmax, navArea
 
 }
 
-
-static int pointInPoly(int nvert, const float* verts, const float* p)
+int pointInPoly(int nvert, const float* verts, const float* p)
 {
 	int i, j, c = 0;
-	for (i = 0, j = nvert-1; i < nvert; j = i++)
+	for (i = 0, j = nvert - 1; i < nvert; j = i++)
 	{
-		const float* vi = &verts[i*3];
-		const float* vj = &verts[j*3];
+		const float* vi = &verts[i * 3];
+		const float* vj = &verts[j * 3];
 		if (((vi[2] > p[2]) != (vj[2] > p[2])) &&
-			(p[0] < (vj[0]-vi[0]) * (p[2]-vi[2]) / (vj[2]-vi[2]) + vi[0]) )
+			(p[0] < (vj[0] - vi[0]) * (p[2] - vi[2]) / (vj[2] - vi[2]) + vi[0]))
 			c = !c;
 	}
 	return c;
 }
+
 
 /// @par
 ///
@@ -435,7 +435,7 @@ void rcMarkConvexPolyArea(rcContext* ctx, const float* verts, const int nverts,
 				rcCompactSpan& s = chf.spans[i];
 				if (chf.areaMasks[i] == RC_NULL_AREA)
 					continue;
-				if ((int)s.y >= miny && (int)s.y <= maxy)
+				if ((int)s.minY >= miny && (int)s.minY <= maxy)
 				{
 					float p[3];
 					p[0] = chf.bmin[0] + (x+0.5f)*chf.cs; 
@@ -584,7 +584,7 @@ void rcMarkCylinderArea(rcContext* ctx, const float* pos,
 				if (chf.areaMasks[i] == RC_NULL_AREA)
 					continue;
 				
-				if ((int)s.y >= miny && (int)s.y <= maxy)
+				if ((int)s.minY >= miny && (int)s.minY <= maxy)
 				{
 					const float sx = chf.bmin[0] + (x+0.5f)*chf.cs; 
 					const float sz = chf.bmin[2] + (z+0.5f)*chf.cs; 

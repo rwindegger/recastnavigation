@@ -1241,69 +1241,6 @@ static bool mergeAndFilterLayerRegions(rcContext* ctx, int minRegionArea,
 	return true;
 }
 
-/// @par
-/// 
-/// This is usually the second to the last step in creating a fully built
-/// compact heightfield.  This step is required before regions are built
-/// using #rcBuildRegions or #rcBuildRegionsMonotone.
-/// 
-/// After this step, the distance data is available via the rcCompactHeightfield::maxDistance
-/// and rcCompactHeightfield::dist fields.
-///
-/// @see rcCompactHeightfield, rcBuildRegions, rcBuildRegionsMonotone
-bool rcBuildDistanceField(rcContext* ctx, rcCompactHeightfield& chf)
-{
-	rcAssert(ctx);
-	
-	ctx->startTimer(RC_TIMER_BUILD_DISTANCEFIELD);
-	
-	if (chf.dist)
-	{
-		rcFree(chf.dist);
-		chf.dist = 0;
-	}
-	
-	unsigned short* src = (unsigned short*)rcAlloc(sizeof(unsigned short)*chf.spanCount, RC_ALLOC_TEMP);
-	if (!src)
-	{
-		ctx->log(RC_LOG_ERROR, "rcBuildDistanceField: Out of memory 'src' (%d).", chf.spanCount);
-		return false;
-	}
-	unsigned short* dst = (unsigned short*)rcAlloc(sizeof(unsigned short)*chf.spanCount, RC_ALLOC_TEMP);
-	if (!dst)
-	{
-		ctx->log(RC_LOG_ERROR, "rcBuildDistanceField: Out of memory 'dst' (%d).", chf.spanCount);
-		rcFree(src);
-		return false;
-	}
-	
-	unsigned short maxDist = 0;
-
-	ctx->startTimer(RC_TIMER_BUILD_DISTANCEFIELD_DIST);
-	
-	calculateDistanceField(chf, src, maxDist);
-	chf.maxDistance = maxDist;
-	
-	ctx->stopTimer(RC_TIMER_BUILD_DISTANCEFIELD_DIST);
-	
-	ctx->startTimer(RC_TIMER_BUILD_DISTANCEFIELD_BLUR);
-	
-	// Blur
-	if (boxBlur(chf, 1, src, dst) != src)
-		rcSwap(src, dst);
-	
-	// Store distance.
-	chf.dist = src;
-	
-	ctx->stopTimer(RC_TIMER_BUILD_DISTANCEFIELD_BLUR);
-
-	ctx->stopTimer(RC_TIMER_BUILD_DISTANCEFIELD);
-	
-	rcFree(dst);
-	
-	return true;
-}
-
 static void paintRectRegion(int minx, int maxx, int miny, int maxy, unsigned short regId,
 							rcCompactHeightfield& chf, unsigned short* srcReg)
 {
