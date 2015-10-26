@@ -24,6 +24,7 @@
 #include <new>
 #include "SDL.h"
 #include "SDL_opengl.h"
+#include <gl/glu.h>
 #include "imgui.h"
 #include "InputGeom.h"
 #include "Sample.h"
@@ -353,8 +354,8 @@ static int rasterizeTileLayers(BuildContext* ctx, InputGeom* geom,
 	// remove unwanted overhangs caused by the conservative rasterization
 	// as well as filter spans where the character cannot possibly stand.
 	rcFilterLowHangingWalkableObstacles(ctx, tcfg.walkableClimb, *rc.solid);
-	rcFilterLedgeSpans(ctx, tcfg.walkableHeight, tcfg.walkableClimb, *rc.solid);
-	rcFilterWalkableLowHeightSpans(ctx, tcfg.walkableHeight, *rc.solid);
+	rcFilterLedgeSpans(ctx, tcfg.walkableHeightStand, tcfg.walkableClimb, *rc.solid);
+	rcFilterWalkableLowHeightSpans(ctx, tcfg.walkableHeightStand, *rc.solid);
 	
 	
 	rc.chf = rcAllocCompactHeightfield();
@@ -363,7 +364,7 @@ static int rasterizeTileLayers(BuildContext* ctx, InputGeom* geom,
 		ctx->log(RC_LOG_ERROR, "buildNavigation: Out of memory 'chf'.");
 		return 0;
 	}
-	if (!rcBuildCompactHeightfield(ctx, tcfg.walkableHeight, tcfg.walkableClimb, *rc.solid, *rc.chf))
+	if (!rcBuildCompactHeightfield(ctx, tcfg.walkableHeightStand, tcfg.walkableClimb, *rc.solid, *rc.chf))
 	{
 		ctx->log(RC_LOG_ERROR, "buildNavigation: Could not build compact data.");
 		return 0;
@@ -391,7 +392,7 @@ static int rasterizeTileLayers(BuildContext* ctx, InputGeom* geom,
 		ctx->log(RC_LOG_ERROR, "buildNavigation: Out of memory 'lset'.");
 		return 0;
 	}
-	if (!rcBuildHeightfieldLayers(ctx, *rc.chf, tcfg.borderSize, tcfg.walkableHeight, *rc.lset))
+	if (!rcBuildHeightfieldLayers(ctx, *rc.chf, tcfg.borderSize, tcfg.walkableHeightStand, *rc.lset))
 	{
 		ctx->log(RC_LOG_ERROR, "buildNavigation: Could not build heighfield layers.");
 		return 0;
@@ -599,11 +600,11 @@ void drawDetailOverlay(const dtTileCache* tc, const int tx, const int ty, double
 					   model, proj, view, &x, &y, &z))
 		{
 			snprintf(text,128,"(%d,%d)/%d", tile->header->tx,tile->header->ty,tile->header->tlayer);
-			imguiDrawText((int)x, (int)y-25, IMGUI_ALIGN_CENTER, text, imguiRGBA(0,0,0,220));
+			ImGui::Text(text);
 			snprintf(text,128,"Compressed: %.1f kB", tile->dataSize/1024.0f);
-			imguiDrawText((int)x, (int)y-45, IMGUI_ALIGN_CENTER, text, imguiRGBA(0,0,0,128));
+			ImGui::Text(text);
 			snprintf(text,128,"Raw:%.1fkB", rawSize/1024.0f);
-			imguiDrawText((int)x, (int)y-65, IMGUI_ALIGN_CENTER, text, imguiRGBA(0,0,0,128));
+			ImGui::Text(text);
 		}
 	}
 }
@@ -693,16 +694,16 @@ public:
 
 	virtual void handleMenu()
 	{
-		imguiLabel("Highlight Tile Cache");
-		imguiValue("Click LMB to highlight a tile.");
-		imguiSeparator();
-		if (imguiCheck("Draw Areas", m_drawType == DRAWDETAIL_AREAS))
+		ImGui::Text("Highlight Tile Cache");
+		ImGui::Text("Click LMB to highlight a tile.");
+		ImGui::Separator();
+		if (ImGui::RadioButton("Draw Areas", m_drawType == DRAWDETAIL_AREAS))
 			m_drawType = DRAWDETAIL_AREAS;
-		if (imguiCheck("Draw Regions", m_drawType == DRAWDETAIL_REGIONS))
+		if (ImGui::RadioButton("Draw Regions", m_drawType == DRAWDETAIL_REGIONS))
 			m_drawType = DRAWDETAIL_REGIONS;
-		if (imguiCheck("Draw Contours", m_drawType == DRAWDETAIL_CONTOURS))
+		if (ImGui::RadioButton("Draw Contours", m_drawType == DRAWDETAIL_CONTOURS))
 			m_drawType = DRAWDETAIL_CONTOURS;
-		if (imguiCheck("Draw Mesh", m_drawType == DRAWDETAIL_MESH))
+		if (ImGui::RadioButton("Draw Mesh", m_drawType == DRAWDETAIL_MESH))
 			m_drawType = DRAWDETAIL_MESH;
 	}
 
@@ -785,15 +786,15 @@ public:
 	
 	virtual void handleMenu()
 	{
-		imguiLabel("Create Temp Obstacles");
+		ImGui::Text("Create Temp Obstacles");
 		
-		if (imguiButton("Remove All"))
+		if (ImGui::Button("Remove All"))
 			m_sample->clearAllTempObstacles();
 		
-		imguiSeparator();
+		ImGui::Separator();
 
-		imguiValue("Click LMB to create an obstacle.");
-		imguiValue("Shift+LMB to remove an obstacle.");
+		ImGui::Text("Click LMB to create an obstacle.");
+		ImGui::Text("Shift+LMB to remove an obstacle.");
 	}
 	
 	virtual void handleClick(const float* s, const float* p, bool shift)
@@ -851,11 +852,9 @@ void Sample_TempObstacles::handleSettings()
 {
 	Sample::handleCommonSettings();
 
-	if (imguiCheck("Keep Itermediate Results", m_keepInterResults))
-		m_keepInterResults = !m_keepInterResults;
-
-	imguiLabel("Tiling");
-	imguiSlider("TileSize", &m_tileSize, 16.0f, 128.0f, 8.0f);
+	ImGui::Checkbox("Keep Itermediate Results", &m_keepInterResults);
+	ImGui::Text("Tiling");
+	ImGui::SliderFloat("TileSize", &m_tileSize, 16.0f, 128.0f, "%.3f", 8.0f);
 	
 	int gridSize = 1;
 	if (m_geom)
@@ -869,7 +868,7 @@ void Sample_TempObstacles::handleSettings()
 		const int tw = (gw + ts-1) / ts;
 		const int th = (gh + ts-1) / ts;
 		snprintf(text, 64, "Tiles  %d x %d", tw, th);
-		imguiValue(text);
+		ImGui::Text(text);
 
 		// Max tiles and max polys affect how the tile IDs are caculated.
 		// There are 22 bits available for identifying a tile and a polygon.
@@ -879,9 +878,9 @@ void Sample_TempObstacles::handleSettings()
 		m_maxTiles = 1 << tileBits;
 		m_maxPolysPerTile = 1 << polyBits;
 		snprintf(text, 64, "Max Tiles  %d", m_maxTiles);
-		imguiValue(text);
+		ImGui::Text(text);
 		snprintf(text, 64, "Max Polys  %d", m_maxPolysPerTile);
-		imguiValue(text);
+		ImGui::Text(text);
 		gridSize = tw*th;
 	}
 	else
@@ -890,65 +889,65 @@ void Sample_TempObstacles::handleSettings()
 		m_maxPolysPerTile = 0;
 	}
 	
-	imguiSeparator();
+	ImGui::Separator();
 	
-	imguiLabel("Tile Cache");
+	ImGui::Text("Tile Cache");
 	char msg[64];
 
 	const float compressionRatio = (float)m_cacheCompressedSize / (float)(m_cacheRawSize+1);
 	
 	snprintf(msg, 64, "Layers  %d", m_cacheLayerCount);
-	imguiValue(msg);
+	ImGui::Text(msg);
 	snprintf(msg, 64, "Layers (per tile)  %.1f", (float)m_cacheLayerCount/(float)gridSize);
-	imguiValue(msg);
+	ImGui::Text(msg);
 	
 	snprintf(msg, 64, "Memory  %.1f kB / %.1f kB (%.1f%%)", m_cacheCompressedSize/1024.0f, m_cacheRawSize/1024.0f, compressionRatio*100.0f);
-	imguiValue(msg);
+	ImGui::Text(msg);
 	snprintf(msg, 64, "Navmesh Build Time  %.1f ms", m_cacheBuildTimeMs);
-	imguiValue(msg);
+	ImGui::Text(msg);
 	snprintf(msg, 64, "Build Peak Mem Usage  %.1f kB", m_cacheBuildMemUsage/1024.0f);
-	imguiValue(msg);
+	ImGui::Text(msg);
 	
-	imguiSeparator();
+	ImGui::Separator();
 }
 
 void Sample_TempObstacles::handleTools()
 {
 	int type = !m_tool ? TOOL_NONE : m_tool->type();
 
-	if (imguiCheck("Test Navmesh", type == TOOL_NAVMESH_TESTER))
+	if (ImGui::RadioButton("Test Navmesh", type == TOOL_NAVMESH_TESTER))
 	{
 		setTool(new NavMeshTesterTool);
 	}
-	if (imguiCheck("Highlight Tile Cache", type == TOOL_TILE_HIGHLIGHT))
+	if (ImGui::RadioButton("Highlight Tile Cache", type == TOOL_TILE_HIGHLIGHT))
 	{
 		setTool(new TempObstacleHilightTool);
 	}
-	if (imguiCheck("Create Temp Obstacles", type == TOOL_TEMP_OBSTACLE))
+	if (ImGui::RadioButton("Create Temp Obstacles", type == TOOL_TEMP_OBSTACLE))
 	{
 		setTool(new TempObstacleCreateTool);
 	}
-	if (imguiCheck("Create Off-Mesh Links", type == TOOL_OFFMESH_CONNECTION))
+	if (ImGui::RadioButton("Create Off-Mesh Links", type == TOOL_OFFMESH_CONNECTION))
 	{
 		setTool(new OffMeshConnectionTool);
 	}
-	if (imguiCheck("Create Convex Volumes", type == TOOL_CONVEX_VOLUME))
+	if (ImGui::RadioButton("Create Convex Volumes", type == TOOL_CONVEX_VOLUME))
 	{
 		setTool(new ConvexVolumeTool);
 	}
-	if (imguiCheck("Create Crowds", type == TOOL_CROWD))
+	if (ImGui::RadioButton("Create Crowds", type == TOOL_CROWD))
 	{
 		setTool(new CrowdTool);
 	}
 	
-	imguiSeparatorLine();
+	ImGui::Separator();
 
-	imguiIndent();
+	ImGui::Indent();
 
 	if (m_tool)
 		m_tool->handleMenu();
 
-	imguiUnindent();
+	ImGui::Unindent();
 }
 
 void Sample_TempObstacles::handleDebugMode()
@@ -977,29 +976,29 @@ void Sample_TempObstacles::handleDebugMode()
 	if (unavail == MAX_DRAWMODE)
 		return;
 	
-	imguiLabel("Draw");
-	if (imguiCheck("Input Mesh", m_drawMode == DRAWMODE_MESH, valid[DRAWMODE_MESH]))
+	ImGui::Text("Draw");
+	if (ImGui::RadioButton("Input Mesh", m_drawMode == DRAWMODE_MESH))
 		m_drawMode = DRAWMODE_MESH;
-	if (imguiCheck("Navmesh", m_drawMode == DRAWMODE_NAVMESH, valid[DRAWMODE_NAVMESH]))
+	if (ImGui::RadioButton("Navmesh", m_drawMode == DRAWMODE_NAVMESH))
 		m_drawMode = DRAWMODE_NAVMESH;
-	if (imguiCheck("Navmesh Invis", m_drawMode == DRAWMODE_NAVMESH_INVIS, valid[DRAWMODE_NAVMESH_INVIS]))
+	if (ImGui::RadioButton("Navmesh Invis", m_drawMode == DRAWMODE_NAVMESH_INVIS))
 		m_drawMode = DRAWMODE_NAVMESH_INVIS;
-	if (imguiCheck("Navmesh Trans", m_drawMode == DRAWMODE_NAVMESH_TRANS, valid[DRAWMODE_NAVMESH_TRANS]))
+	if (ImGui::RadioButton("Navmesh Trans", m_drawMode == DRAWMODE_NAVMESH_TRANS))
 		m_drawMode = DRAWMODE_NAVMESH_TRANS;
-	if (imguiCheck("Navmesh BVTree", m_drawMode == DRAWMODE_NAVMESH_BVTREE, valid[DRAWMODE_NAVMESH_BVTREE]))
+	if (ImGui::RadioButton("Navmesh BVTree", m_drawMode == DRAWMODE_NAVMESH_BVTREE))
 		m_drawMode = DRAWMODE_NAVMESH_BVTREE;
-	if (imguiCheck("Navmesh Nodes", m_drawMode == DRAWMODE_NAVMESH_NODES, valid[DRAWMODE_NAVMESH_NODES]))
+	if (ImGui::RadioButton("Navmesh Nodes", m_drawMode == DRAWMODE_NAVMESH_NODES))
 		m_drawMode = DRAWMODE_NAVMESH_NODES;
-	if (imguiCheck("Navmesh Portals", m_drawMode == DRAWMODE_NAVMESH_PORTALS, valid[DRAWMODE_NAVMESH_PORTALS]))
+	if (ImGui::RadioButton("Navmesh Portals", m_drawMode == DRAWMODE_NAVMESH_PORTALS))
 		m_drawMode = DRAWMODE_NAVMESH_PORTALS;
-	if (imguiCheck("Cache Bounds", m_drawMode == DRAWMODE_CACHE_BOUNDS, valid[DRAWMODE_CACHE_BOUNDS]))
+	if (ImGui::RadioButton("Cache Bounds", m_drawMode == DRAWMODE_CACHE_BOUNDS))
 		m_drawMode = DRAWMODE_CACHE_BOUNDS;
 	
 	if (unavail)
 	{
-		imguiValue("Tick 'Keep Itermediate Results'");
-		imguiValue("rebuild some tiles to see");
-		imguiValue("more debug mode options.");
+		ImGui::Text("Tick 'Keep Itermediate Results'");
+		ImGui::Text("rebuild some tiles to see");
+		ImGui::Text("more debug mode options.");
 	}
 }
 
@@ -1195,7 +1194,8 @@ bool Sample_TempObstacles::handleBuild()
 	cfg.cs = m_cellSize;
 	cfg.ch = m_cellHeight;
 	cfg.walkableSlopeAngle = m_agentMaxSlope;
-	cfg.walkableHeight = (int)ceilf(m_agentHeight / cfg.ch);
+	cfg.walkableHeightCrouch = (int)ceilf(m_agentHeight / cfg.ch);
+	cfg.walkableHeightStand = (int)ceilf(m_agentHeight / cfg.ch);
 	cfg.walkableClimb = (int)floorf(m_agentMaxClimb / cfg.ch);
 	cfg.walkableRadius = (int)ceilf(m_agentRadius / cfg.cs);
 	cfg.maxEdgeLen = (int)(m_edgeMaxLen / m_cellSize);

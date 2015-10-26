@@ -126,46 +126,31 @@ void ConvexVolumeTool::reset()
 
 void ConvexVolumeTool::handleMenu()
 {
-	imguiSlider("Shape Height", &m_boxHeight, 0.1f, 20.0f, 0.1f);
-	imguiSlider("Shape Descent", &m_boxDescent, 0.1f, 20.0f, 0.1f);
-	imguiSlider("Poly Offset", &m_polyOffset, 0.0f, 10.0f, 0.1f);
+	ImGui::SliderFloat("Shape Height", &m_boxHeight, 0.1f, 20.0f, "%.3f", 0.1f);
+	ImGui::SliderFloat("Shape Descent", &m_boxDescent, 0.1f, 20.0f, "%.3f", 0.1f);
+	ImGui::SliderFloat("Poly Offset", &m_polyOffset, 0.0f, 10.0f, "%.3f", 0.1f);
+	ImGui::Separator();
 
-	imguiSeparator();
+	ImGui::LabelText("Area Type","%s");
+	ImGui::Indent();
 
-	imguiLabel("Area Type");
-	imguiIndent();
+	ImGui::CheckboxFlags("Walk", &m_areaMask, AREAFLAGS_WALK);
+	ImGui::CheckboxFlags("Swim", &m_areaMask, AREAFLAGS_SWIM);
+	ImGui::CheckboxFlags("Door", &m_areaMask, AREAFLAGS_DOOR);
+	ImGui::CheckboxFlags("Crouch", &m_areaMask, AREAFLAGS_CROUCH);
+	ImGui::CheckboxFlags("Jump", &m_areaMask, AREAFLAGS_JUMP);
+	ImGui::CheckboxFlags("Disabled", &m_areaMask, AREAFLAGS_DISABLED);
 
-	if ( imguiCheck( "Road", ( m_areaMask & AREAFLAGS_CROUCH )!=0 ) )
-	{
-		if ( ( m_areaMask & AREAFLAGS_CROUCH ) )
-			m_areaMask &= ~AREAFLAGS_CROUCH;
-		else
-			m_areaMask |= AREAFLAGS_CROUCH;
-	}
-	if ( imguiCheck( "Water", ( m_areaMask & AREAFLAGS_SWIM ) != 0 ) )
-	{
-		if ( ( m_areaMask & AREAFLAGS_SWIM ) )
-			m_areaMask &= ~AREAFLAGS_SWIM;
-		else
-			m_areaMask |= AREAFLAGS_SWIM;
-	}
-	if ( imguiCheck( "Door", ( m_areaMask & AREAFLAGS_DOOR ) != 0 ) )
-	{
-		if ( ( m_areaMask & AREAFLAGS_DOOR ) )
-			m_areaMask &= ~AREAFLAGS_DOOR;
-		else
-			m_areaMask |= AREAFLAGS_DOOR;
-	}
-	imguiUnindent();
+	ImGui::Unindent();
 
-	imguiSeparator();
+	ImGui::Separator();
 
-	if (imguiButton("Clear Shape"))
+	if (ImGui::Button("Clear Shape"))
 	{
 		m_npts = 0;
 		m_nhull = 0;
 	}
-	if ( imguiButton( "Clear All Shapes" ) )
+	if (ImGui::Button("Clear All Shapes") )
 	{
 		InputGeom* geom = m_sample->getInputGeom();
 		while ( geom->getConvexVolumeCount() > 0 )
@@ -309,12 +294,12 @@ void ConvexVolumeTool::handleRenderOverlay(double* /*proj*/, double* /*model*/, 
 	const int h = view[3];
 	if (!m_npts)
 	{
-		imguiDrawText(280, h-40, IMGUI_ALIGN_LEFT, "LMB: Create new shape.  SHIFT+LMB: Delete existing shape (click inside a shape).", imguiRGBA(255,255,255,192));	
+		ImGui::Text("LMB: Create new shape.  SHIFT+LMB: Delete existing shape (click inside a shape).");
 	}
 	else
 	{
-		imguiDrawText(280, h-40, IMGUI_ALIGN_LEFT, "Click LMB to add new points. Click on the red point to finish the shape.", imguiRGBA(255,255,255,192));	
-		imguiDrawText(280, h-60, IMGUI_ALIGN_LEFT, "The shape will be convex hull of all added points.", imguiRGBA(255,255,255,192));	
+		ImGui::Text("Click LMB to add new points. Click on the red point to finish the shape.");
+		ImGui::Text("The shape will be convex hull of all added points.");
 	}
 	
 }

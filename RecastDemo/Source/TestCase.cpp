@@ -26,6 +26,7 @@
 #include "DetourCommon.h"
 #include "SDL.h"
 #include "SDL_opengl.h"
+#include <gl/glu.h>
 #include "imgui.h"
 #include "PerfTimer.h"
 
@@ -401,16 +402,14 @@ bool TestCase::handleRenderOverlay(double* proj, double* model, int* view)
 					   model, proj, view, &x, &y, &z))
 		{
 			snprintf(text, 64, "Path %d\n", n);
-			unsigned int col = imguiRGBA(0,0,0,128);
-			if (iter->expand)
-				col = imguiRGBA(255,192,0,220);
-			imguiDrawText((int)x, (int)(y-25), IMGUI_ALIGN_CENTER, text, col);
+			ImGui::Text(text);
 		}
 		n++;
 	}
 	
 	static int resScroll = 0;
-	bool mouseOverMenu = imguiBeginScrollArea("Test Results", 10, view[3] - 10 - 350, 200, 350, &resScroll);
+	
+	bool mouseOverMenu = ImGui::BeginChild("Test Results", ImVec2(200, 350));
 //		mouseOverMenu = true;
 		
 	n = 0;
@@ -420,26 +419,26 @@ bool TestCase::handleRenderOverlay(double* proj, double* model, int* view)
 		snprintf(subtext, 64, "%.4f ms", (float)total/1000.0f);
 		snprintf(text, 64, "Path %d", n);
 		
-		if (imguiCollapse(text, subtext, iter->expand))
+		if (ImGui::CollapsingHeader(text, subtext, iter->expand))
 			iter->expand = !iter->expand;
 		if (iter->expand)
 		{
 			snprintf(text, 64, "Poly: %.4f ms", (float)iter->findNearestPolyTime/1000.0f);
-			imguiValue(text);
+			ImGui::Text(text);
 
 			snprintf(text, 64, "Path: %.4f ms", (float)iter->findPathTime/1000.0f);
-			imguiValue(text);
+			ImGui::Text(text);
 
 			snprintf(text, 64, "Straight: %.4f ms", (float)iter->findStraightPathTime/1000.0f);
-			imguiValue(text);
+			ImGui::Text(text);
 			
-			imguiSeparator();
+			ImGui::Separator();
 		}
 		
 		n++;
 	}
 
-	imguiEndScrollArea();
+	ImGui::EndChild();
 	
 	return mouseOverMenu;
 }

@@ -18,6 +18,8 @@
 
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <stdio.h>
+#include <errno.h>
 #include "imgui.h"
 #include "SDL.h"
 #include "SDL_opengl.h"
@@ -245,7 +247,11 @@ bool imguiRenderGLInit(const char* fontpath)
 
 	// Load font.
 	FILE* fp = fopen(fontpath, "rb");
-	if (!fp) return false;
+	if (!fp)
+	{
+		char* error = strerror(errno);
+		return false;
+	}
 	fseek(fp, 0, SEEK_END);
 	size_t size = ftell(fp);
 	fseek(fp, 0, SEEK_SET);
@@ -279,9 +285,9 @@ bool imguiRenderGLInit(const char* fontpath)
 	// can free ttf_buffer at this point
 	glGenTextures(1, &g_ftex);
 	glBindTexture(GL_TEXTURE_2D, g_ftex);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, 512,512, 0, GL_ALPHA, GL_UNSIGNED_BYTE, bmap);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_ALPHA, 512,512, 0, GL_ALPHA, GL_UNSIGNED_BYTE, bmap);
 
 	free(ttfBuffer);
 	free(bmap);
@@ -355,10 +361,6 @@ static void drawText(float x, float y, const char *text, int align, unsigned int
 	if (!g_ftex) return;
 	if (!text) return;
 	
-	if (align == IMGUI_ALIGN_CENTER)
-		x -= getTextLength(g_cdata, text)/2;
-	else if (align == IMGUI_ALIGN_RIGHT)
-		x -= getTextLength(g_cdata, text);
 	
 	glColor4ub(col&0xff, (col>>8)&0xff, (col>>16)&0xff, (col>>24)&0xff);
 	

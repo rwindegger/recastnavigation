@@ -4,9 +4,10 @@
 class ValueHistory
 {
 	static const int MAX_HISTORY = 256;
+public:
 	float m_samples[MAX_HISTORY];
 	int m_hsamples;
-public:
+
 	ValueHistory();
 	~ValueHistory();
 
@@ -41,11 +42,11 @@ struct GraphParams
 	int ndiv;
 	char units[16];
 };
-
-void drawGraphBackground(const GraphParams* p);
-
-void drawGraph(const GraphParams* p, const ValueHistory* graph,
-			   int idx, const char* label, const unsigned int col);
+//
+//void drawGraphBackground(const GraphParams* p);
+//
+//void drawGraph(const GraphParams* p, const ValueHistory* graph,
+//			   int idx, const char* label, const unsigned int col);
 
 
 #endif // VALUEHISTORY_H
