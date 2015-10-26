@@ -64,7 +64,7 @@ static SampleItem g_samples[] =
 	{ createSolo, "Solo Mesh" },
 	{ createTile, "Tile Mesh" },
 	{ createTempObstacle, "Temp Obstacles" },
-	//	{ createDebug, "Debug" },
+	{ createDebug, "Debug" },
 };
 static const int g_nsamples = sizeof(g_samples) / sizeof(SampleItem);
 int width = 1440, height = 900;
@@ -152,35 +152,35 @@ void PropertiesWindow()
 			ImGui::Text(text);
 		}
 
-		ImGui::Separator();
-
 		if (geom && sample)
 		{
-			ImGui::Separator();
-
-			sample->handleSettings();
-
-			if (ImGui::Button("Build"))
+			if (ImGui::CollapsingHeader("Settings", nullptr, true))
 			{
-				ctx.resetLog();
-				if (!sample->handleBuild())
-				{
-					showLog = true;
-				}
-				ctx.dumpLog("Build log %s:", meshName);
+				sample->handleSettings();
 
-				// Clear test.
-				delete test;
-				test = 0;
+				if (ImGui::Button("Build"))
+				{
+					ctx.resetLog();
+					if (!sample->handleBuild())
+					{
+						showLog = true;
+					}
+					ctx.dumpLog("Build log %s:", meshName);
+
+					delete test;
+					test = 0;
+				}
 			}
-			ImGui::Separator();
 		}
 
 		if (sample)
 		{
-			ImGui::Separator();
-			sample->handleDebugMode();
+			if (ImGui::CollapsingHeader("Debug Mode", nullptr, true))
+			{
+				sample->handleDebugMode();
+			}
 		}
+
 		ImGui::End();
 	}
 }
@@ -205,7 +205,7 @@ void ToolsWindow()
 	{
 		ImGui::SetNextWindowPos(ImVec2(10, 10));
 		ImGui::Begin("Tools", &showTools, ImVec2(250, height - 20), 0.7, ImGuiWindowFlags_::ImGuiWindowFlags_NoMove | ImGuiWindowFlags_::ImGuiWindowFlags_NoResize | ImGuiWindowFlags_::ImGuiWindowFlags_NoSavedSettings);
-
+		ImGui::PushItemWidth(140);
 		if (sample)
 			sample->handleTools();
 
@@ -344,11 +344,17 @@ void SampleSelection()
 {
 	if (showSample)
 	{
-		ImGui::SetNextWindowPos(ImVec2(width - 10 - 250 - 10 - 200, height - 10 - 250));
-		ImGui::Begin("Choose Sample", &showSample, ImVec2(200, 250), 0.7, ImGuiWindowFlags_::ImGuiWindowFlags_NoMove | ImGuiWindowFlags_::ImGuiWindowFlags_NoResize | ImGuiWindowFlags_::ImGuiWindowFlags_NoSavedSettings);
+		ImGui::SetNextWindowPos(ImVec2(270, height - 10 - 250));
+		ImGui::Begin("Choose Sample", &showSample, ImVec2(width - 300 - 250, 250), 0.7, ImGuiWindowFlags_::ImGuiWindowFlags_NoMove | ImGuiWindowFlags_::ImGuiWindowFlags_NoResize | ImGuiWindowFlags_::ImGuiWindowFlags_NoSavedSettings);
+		ImGui::PushItemWidth(140);
+		std::vector<const char*> cstrings;
+		for (size_t i = 0; i < g_nsamples; ++i)
+			cstrings.push_back(g_samples[i].name);
+
+		const char** samples = &cstrings[0];
 
 		Sample* newSample = 0;
-		if (ImGui::ListBox("Choose Sample", &selectedSample, &g_samples[0].name, g_nsamples, 3))
+		if (ImGui::ListBox("Choose Sample", &selectedSample, samples, g_nsamples))
 		{
 			newSample = g_samples[selectedSample].create();
 			if (newSample)
@@ -405,8 +411,9 @@ void LevelSelection()
 {
 	if (showLevels)
 	{
-		ImGui::SetNextWindowPos(ImVec2(width - 10 - 250 - 10 - 200, height - 10 - 250));
-		ImGui::Begin("Choose Level", &showLevels, ImVec2(200, 250), 0.7, ImGuiWindowFlags_::ImGuiWindowFlags_NoMove | ImGuiWindowFlags_::ImGuiWindowFlags_NoResize | ImGuiWindowFlags_::ImGuiWindowFlags_NoSavedSettings);
+		ImGui::SetNextWindowPos(ImVec2(270, height - 10 - 250));
+		ImGui::Begin("Choose Level", &showLevels, ImVec2(width - 300 - 250, 250), 0.7, ImGuiWindowFlags_::ImGuiWindowFlags_NoMove | ImGuiWindowFlags_::ImGuiWindowFlags_NoResize | ImGuiWindowFlags_::ImGuiWindowFlags_NoSavedSettings);
+		ImGui::PushItemWidth(140);
 
 		int levelToLoad = -1;
 		std::vector<const char*> cstrings;
@@ -736,7 +743,7 @@ int run(int width, int height, bool presentationMode) {
 						processHitTestShift = (SDL_GetModState() & KMOD_SHIFT) ? true : false;
 					}
 				}
-									
+
 				break;
 
 			case SDL_MOUSEMOTION:
@@ -922,11 +929,11 @@ int run(int width, int height, bool presentationMode) {
 		LevelSelection();
 
 		LogWindow();
-		
+
 		slideShow.updateAndDraw(dt, (float)width, (float)height);
 
 		// Marker
-		
+
 		if (markerPositionSet && gluProject((GLdouble)markerPosition[0], (GLdouble)markerPosition[1], (GLdouble)markerPosition[2],
 			modelviewMatrix, projectionMatrix, viewport, &x, &y, &z))
 		{

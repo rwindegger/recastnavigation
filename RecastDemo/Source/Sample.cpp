@@ -40,7 +40,7 @@ Sample::Sample() :
 	m_navMesh(0),
 	m_navQuery(0),
 	m_crowd(0),
-	m_navMeshDrawFlags(DU_DRAWNAVMESH_OFFMESHCONS|DU_DRAWNAVMESH_CLOSEDLIST),
+	m_navMeshDrawFlags(DU_DRAWNAVMESH_OFFMESHCONS | DU_DRAWNAVMESH_CLOSEDLIST),
 	m_tool(0),
 	m_ctx(0)
 {
@@ -86,16 +86,16 @@ void Sample::handleRender()
 {
 	if (!m_geom)
 		return;
-	
+
 	DebugDrawGL dd;
-		
+
 	// Draw mesh
 	duDebugDrawTriMesh(&dd, m_geom->getMesh()->getVerts(), m_geom->getMesh()->getVertCount(),
-					   m_geom->getMesh()->getTris(), m_geom->getMesh()->getNormals(), m_geom->getMesh()->getTriCount(), 0, 1.0f);
+		m_geom->getMesh()->getTris(), m_geom->getMesh()->getNormals(), m_geom->getMesh()->getTriCount(), 0, 1.0f);
 	// Draw bounds
 	const float* bmin = m_geom->getMeshBoundsMin();
 	const float* bmax = m_geom->getMeshBoundsMax();
-	duDebugDrawBoxWire(&dd, bmin[0],bmin[1],bmin[2], bmax[0],bmax[1],bmax[2], duRGBA(255,255,255,128), 1.0f);
+	duDebugDrawBoxWire(&dd, bmin[0], bmin[1], bmin[2], bmax[0], bmax[1], bmax[2], duRGBA(255, 255, 255, 128), 1.0f);
 }
 
 void Sample::handleRenderOverlay(double* /*proj*/, double* /*model*/, int* /*view*/)
@@ -139,54 +139,58 @@ void Sample::resetCommonSettings()
 
 void Sample::handleCommonSettings()
 {
-	ImGui::Text("Rasterization");
-	ImGui::SliderFloat("Cell Size", &m_cellSize, 0.1f, 1.0f, "%.3f", 0.01f);
-	ImGui::SliderFloat("Cell Height", &m_cellHeight, 0.1f, 1.0f, "%.3f", 0.01f);
-	
-	if (m_geom)
+	if (ImGui::CollapsingHeader("Rasterization", nullptr))
 	{
-		const float* bmin = m_geom->getMeshBoundsMin();
-		const float* bmax = m_geom->getMeshBoundsMax();
-		int gw = 0, gh = 0;
-		rcCalcGridSize(bmin, bmax, m_cellSize, &gw, &gh);
-		char text[64];
-		snprintf(text, 64, "Voxels  %d x %d", gw, gh);
-		ImGui::Text(text);
+		ImGui::SliderFloat("Cell Size", &m_cellSize, 0.1f, 1.0f, "%.3f");
+		ImGui::SliderFloat("Cell Height", &m_cellHeight, 0.1f, 1.0f, "%.3f");
+		if (m_geom)
+		{
+			const float* bmin = m_geom->getMeshBoundsMin();
+			const float* bmax = m_geom->getMeshBoundsMax();
+			int gw = 0, gh = 0;
+			rcCalcGridSize(bmin, bmax, m_cellSize, &gw, &gh);
+			char text[64];
+			snprintf(text, 64, "Voxels  %d x %d", gw, gh);
+			ImGui::Text(text);
+		}
 	}
-	
-	ImGui::Separator();
-	ImGui::Text("Agent");
-	ImGui::SliderFloat("Height", &m_agentHeight, 0.1f, 5.0f, "%.3f", 0.1f);
-	ImGui::SliderFloat("Radius", &m_agentRadius, 0.0f, 5.0f, "%.3f", 0.1f);
-	ImGui::SliderFloat("Max Climb", &m_agentMaxClimb, 0.1f, 5.0f, "%.3f", 0.1f);
-	ImGui::SliderFloat("Max Slope", &m_agentMaxSlope, 0.0f, 90.0f, "%.3f", 1.0f);
-	
-	ImGui::Separator();
-	ImGui::Text("Region");
-	ImGui::SliderFloat("Min Region Size", &m_regionMinSize, 0.0f, 150.0f, "%.3f", 1.0f);
-	ImGui::SliderFloat("Merged Region Size", &m_regionMergeSize, 0.0f, 150.0f, "%.3f", 1.0f);
 
-	ImGui::Separator();
-	ImGui::Text("Partitioning");
-	if (ImGui::RadioButton("Watershed", m_partitionType == SAMPLE_PARTITION_WATERSHED))
-		m_partitionType = SAMPLE_PARTITION_WATERSHED;
-	if (ImGui::RadioButton("Monotone", m_partitionType == SAMPLE_PARTITION_MONOTONE))
-		m_partitionType = SAMPLE_PARTITION_MONOTONE;
-	if (ImGui::RadioButton("Layers", m_partitionType == SAMPLE_PARTITION_LAYERS))
-		m_partitionType = SAMPLE_PARTITION_LAYERS;
-	
-	ImGui::Separator();
-	ImGui::Text("Polygonization");
-	ImGui::SliderFloat("Max Edge Length", &m_edgeMaxLen, 0.0f, 50.0f, "%.3f", 1.0f);
-	ImGui::SliderFloat("Max Edge Error", &m_edgeMaxError, 0.1f, 3.0f, "%.3f", 0.1f);
-	ImGui::SliderFloat("Verts Per Poly", &m_vertsPerPoly, 3.0f, 12.0f, "%.3f", 1.0f);
+	if (ImGui::CollapsingHeader("Agent", nullptr))
+	{
+		ImGui::SliderFloat("Height", &m_agentHeight, 0.1f, 5.0f, "%.3f");
+		ImGui::SliderFloat("Radius", &m_agentRadius, 0.0f, 5.0f, "%.3f");
+		ImGui::SliderFloat("Max Climb", &m_agentMaxClimb, 0.1f, 5.0f, "%.3f");
+		ImGui::SliderFloat("Max Slope", &m_agentMaxSlope, 0.0f, 90.0f, "%.2f");
+	}
 
-	ImGui::Separator();
-	ImGui::Text("Detail Mesh");
-	ImGui::SliderFloat("Sample Distance", &m_detailSampleDist, 0.0f, 16.0f, "%.3f", 1.0f);
-	ImGui::SliderFloat("Max Sample Error", &m_detailSampleMaxError, 0.0f, 16.0f, "%.3f", 1.0f);
-	
-	ImGui::Separator();
+	if (ImGui::CollapsingHeader("Region", nullptr))
+	{
+		ImGui::SliderFloat("Min Region Size", &m_regionMinSize, 0.0f, 150.0f, "%.2f");
+		ImGui::SliderFloat("Merged Region Size", &m_regionMergeSize, 0.0f, 150.0f, "%.2f");
+	}
+
+	if (ImGui::CollapsingHeader("Partitioning", nullptr))
+	{
+		if (ImGui::RadioButton("Watershed", m_partitionType == SAMPLE_PARTITION_WATERSHED))
+			m_partitionType = SAMPLE_PARTITION_WATERSHED;
+		if (ImGui::RadioButton("Monotone", m_partitionType == SAMPLE_PARTITION_MONOTONE))
+			m_partitionType = SAMPLE_PARTITION_MONOTONE;
+		if (ImGui::RadioButton("Layers", m_partitionType == SAMPLE_PARTITION_LAYERS))
+			m_partitionType = SAMPLE_PARTITION_LAYERS;
+	}
+
+	if (ImGui::CollapsingHeader("Polygonization", nullptr))
+	{
+		ImGui::SliderFloat("Max Edge Length", &m_edgeMaxLen, 0.0f, 50.0f, "%.2f");
+		ImGui::SliderFloat("Max Edge Error", &m_edgeMaxError, 0.1f, 3.0f, "%.3f");
+		ImGui::SliderFloat("Verts Per Poly", &m_vertsPerPoly, 3.0f, 12.0f, "%.3f");
+	}
+
+	if (ImGui::CollapsingHeader("Detail Mesh", nullptr))
+	{
+		ImGui::SliderFloat("Sample Distance", &m_detailSampleDist, 0.0f, 16.0f, "%.3f");
+		ImGui::SliderFloat("Max Sample Error", &m_detailSampleMaxError, 0.0f, 16.0f, "%.3f");
+	}
 }
 
 void Sample::handleClick(const float* s, const float* p, bool shift)
@@ -218,7 +222,6 @@ void Sample::handleUpdate(const float dt)
 		m_tool->handleUpdate(dt);
 	updateToolStates(dt);
 }
-
 
 void Sample::updateToolStates(const float dt)
 {
@@ -264,4 +267,3 @@ void Sample::renderOverlayToolStates(double* proj, double* model, int* view)
 			m_toolStates[i]->handleRenderOverlay(proj, model, view);
 	}
 }
-

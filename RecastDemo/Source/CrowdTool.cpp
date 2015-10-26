@@ -16,8 +16,6 @@
 // 3. This notice may not be removed or altered from any source distribution.
 //
 
-
-
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <stdio.h>
@@ -40,7 +38,6 @@
 #ifdef WIN32
 #	define snprintf _snprintf
 #endif
-
 
 static bool isectSegAABB(const float* sp, const float* sq,
 	const float* amin, const float* amax,
@@ -519,7 +516,6 @@ void CrowdToolState::handleRender()
 	dd.depthMask(true);
 }
 
-
 void CrowdToolState::handleRenderOverlay(double* proj, double* model, int* view)
 {
 	GLdouble x, y, z;
@@ -872,9 +868,6 @@ void CrowdToolState::updateTick(const float dt)
 	m_crowdTotalTime.addSample(getPerfDeltaTimeUsec(startTime, endTime) / 1000.0f);
 }
 
-
-
-
 CrowdTool::CrowdTool() :
 	m_sample(0),
 	m_state(0),
@@ -915,8 +908,6 @@ void CrowdTool::handleMenu()
 		return;
 	CrowdToolParams* params = m_state->getToolParams();
 
-
-
 	if (ImGui::RadioButton("Create Agents", m_mode == TOOLMODE_CREATE))
 		m_mode = TOOLMODE_CREATE;
 	if (ImGui::RadioButton("Move Target", m_mode == TOOLMODE_MOVE_TARGET))
@@ -925,15 +916,9 @@ void CrowdTool::handleMenu()
 		m_mode = TOOLMODE_SELECT;
 	if (ImGui::RadioButton("Toggle Polys", m_mode == TOOLMODE_TOGGLE_POLYS))
 		m_mode = TOOLMODE_TOGGLE_POLYS;
-
-	ImGui::Separator();
-
-	if (ImGui::CollapsingHeader("Options", 0, false, params->m_expandOptions))
-		params->m_expandOptions = !params->m_expandOptions;
-
-	if (params->m_expandOptions)
+	
+	if (ImGui::CollapsingHeader("Options"))
 	{
-		ImGui::Indent();
 		if (ImGui::Checkbox("Optimize Visibility", &params->m_optimizeVis))
 		{
 			m_state->updateAgentParams();
@@ -962,37 +947,25 @@ void CrowdTool::handleMenu()
 		{
 			m_state->updateAgentParams();
 		}
-
-		ImGui::Unindent();
 	}
 
-	if (ImGui::CollapsingHeader("Selected Debug Draw", 0, false, params->m_expandSelectedDebugDraw))
-		params->m_expandSelectedDebugDraw = !params->m_expandSelectedDebugDraw;
-
-	if (params->m_expandSelectedDebugDraw)
+	if (ImGui::CollapsingHeader("Selected Debug Draw"))
 	{
-		ImGui::Indent();
 		ImGui::Checkbox("Show Corners", &params->m_showCorners);
 		ImGui::Checkbox("Show Collision Segs", &params->m_showCollisionSegments);
 		ImGui::Checkbox("Show Path", &params->m_showPath);
 		ImGui::Checkbox("Show VO", &params->m_showVO);
 		ImGui::Checkbox("Show Path Optimization", &params->m_showOpt);
 		ImGui::Checkbox("Show Neighbours", &params->m_showNeis);
-		ImGui::Unindent();
 	}
 
-	if (ImGui::CollapsingHeader("Debug Draw", 0, true, params->m_expandDebugDraw))
-		params->m_expandDebugDraw = !params->m_expandDebugDraw;
-
-	if (params->m_expandDebugDraw)
+	if (ImGui::CollapsingHeader("Debug Draw"))
 	{
-		ImGui::Indent();
 		ImGui::Checkbox("Show Labels", &params->m_showLabels);
 		ImGui::Checkbox("Show Prox Grid", &params->m_showGrid);
 		ImGui::Checkbox("Show Nodes", &params->m_showNodes);
 		ImGui::Checkbox("Show Perf Graph", &params->m_showPerfGraph);
 		ImGui::Checkbox("Show Detail All", &params->m_showDetailAll);
-		ImGui::Unindent();
 	}
 }
 
