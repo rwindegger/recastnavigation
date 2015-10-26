@@ -2,7 +2,7 @@
 Recast & Detour
 ===============
 
-[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/memononen/recastnavigation/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+[![Coverity Scan Build Status](https://img.shields.io/coverity/scan/6782.svg)](https://scan.coverity.com/projects/rwindegger-recastnavigation)
 
 ![screenshot of a navmesh baked with the sample program](/RecastDemo/screenshot.png?raw=true)
 
