@@ -700,8 +700,9 @@ void duDebugDrawRegionConnections(duDebugDraw* dd, const rcContourSet& cset, con
 		for (int j = 0; j < cont->nverts; ++j)
 		{
 			const int* v = &cont->verts[j*4];
-			if (v[3] == 0 || (unsigned short)v[3] < cont->reg) continue;
-			const rcContour* cont2 = findContourFromSet(cset, (unsigned short)v[3]);
+			unsigned short v3 = v[3] & UINT16_MAX;
+			if (v[3] == 0 || v3 < cont->reg) continue;
+			const rcContour* cont2 = findContourFromSet(cset, v3);
 			if (cont2)
 			{
 				getContourCenter(cont2, orig, cs, ch, pos2);
