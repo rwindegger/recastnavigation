@@ -1,3 +1,8 @@
-[submodule "imgui"]
-	path = imgui
+[submodule "RecastDemo/Contrib/imgui"]
+	path = RecastDemo/Contrib/imgui
 	url = https://github.com/ocornut/imgui
+	branch = master
+[submodule "RecastDemo/Contrib/FastLZ"]
+	path = RecastDemo/Contrib/FastLZ
+	url = https://github.com/ariya/FastLZ
+	branch = master
