@@ -908,16 +908,16 @@ void CrowdTool::handleMenu()
 		return;
 	CrowdToolParams* params = m_state->getToolParams();
 
-	if (ImGui::RadioButton("Create Agents", m_mode == TOOLMODE_CREATE))
+	if(ImGui::Selectable("Create Agents", m_mode == TOOLMODE_CREATE))
 		m_mode = TOOLMODE_CREATE;
-	if (ImGui::RadioButton("Move Target", m_mode == TOOLMODE_MOVE_TARGET))
+	if (ImGui::Selectable("Move Target", m_mode == TOOLMODE_MOVE_TARGET))
 		m_mode = TOOLMODE_MOVE_TARGET;
-	if (ImGui::RadioButton("Select Agent", m_mode == TOOLMODE_SELECT))
+	if (ImGui::Selectable("Select Agent", m_mode == TOOLMODE_SELECT))
 		m_mode = TOOLMODE_SELECT;
-	if (ImGui::RadioButton("Toggle Polys", m_mode == TOOLMODE_TOGGLE_POLYS))
+	if (ImGui::Selectable("Toggle Polys", m_mode == TOOLMODE_TOGGLE_POLYS))
 		m_mode = TOOLMODE_TOGGLE_POLYS;
 	
-	if (ImGui::CollapsingHeader("Options"))
+	if (ImGui::TreeNode("Options"))
 	{
 		if (ImGui::Checkbox("Optimize Visibility", &params->m_optimizeVis))
 		{
@@ -943,13 +943,14 @@ void CrowdTool::handleMenu()
 		{
 			m_state->updateAgentParams();
 		}
-		if (ImGui::SliderFloat("Separation Weight", &params->m_separationWeight, 0.0f, 20.0f, "%.3f", 0.01f))
+		if (ImGui::SliderFloat("Separation Weight", &params->m_separationWeight, 0.0f, 20.0f))
 		{
 			m_state->updateAgentParams();
 		}
+		ImGui::TreePop();
 	}
 
-	if (ImGui::CollapsingHeader("Selected Debug Draw"))
+	if (ImGui::TreeNode("Selected Debug Draw"))
 	{
 		ImGui::Checkbox("Show Corners", &params->m_showCorners);
 		ImGui::Checkbox("Show Collision Segs", &params->m_showCollisionSegments);
@@ -957,15 +958,17 @@ void CrowdTool::handleMenu()
 		ImGui::Checkbox("Show VO", &params->m_showVO);
 		ImGui::Checkbox("Show Path Optimization", &params->m_showOpt);
 		ImGui::Checkbox("Show Neighbours", &params->m_showNeis);
+		ImGui::TreePop();
 	}
 
-	if (ImGui::CollapsingHeader("Debug Draw"))
+	if (ImGui::TreeNode("Debug Draw"))
 	{
 		ImGui::Checkbox("Show Labels", &params->m_showLabels);
 		ImGui::Checkbox("Show Prox Grid", &params->m_showGrid);
 		ImGui::Checkbox("Show Nodes", &params->m_showNodes);
 		ImGui::Checkbox("Show Perf Graph", &params->m_showPerfGraph);
 		ImGui::Checkbox("Show Detail All", &params->m_showDetailAll);
+		ImGui::TreePop();
 	}
 }
 

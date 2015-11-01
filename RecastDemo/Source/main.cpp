@@ -50,14 +50,14 @@
 
 struct SampleItem
 {
-	Sample* (*create)();
+	std::shared_ptr<Sample>(*create)();
 	const char* name;
 };
 
-Sample* createSolo() { return new Sample_SoloMesh(); }
-Sample* createTile() { return new Sample_TileMesh(); }
-Sample* createTempObstacle() { return new Sample_TempObstacles(); }
-Sample* createDebug() { return new Sample_Debug(); }
+std::shared_ptr<Sample> createSolo() { return std::shared_ptr<Sample>(new Sample_SoloMesh); }
+std::shared_ptr<Sample> createTile() { return std::shared_ptr<Sample>(new Sample_TileMesh); }
+std::shared_ptr<Sample> createTempObstacle() { return std::shared_ptr<Sample>(new Sample_TempObstacles); }
+std::shared_ptr<Sample> createDebug() { return std::shared_ptr<Sample>(new Sample_Debug); }
 
 static SampleItem g_samples[] =
 {
@@ -66,13 +66,14 @@ static SampleItem g_samples[] =
 	{ createTempObstacle, "Temp Obstacles" },
 	{ createDebug, "Debug" },
 };
-static const int g_nsamples = sizeof(g_samples) / sizeof(SampleItem);
-int width = 1440, height = 900;
+
 // Function forward-declares
 int run(int width, int height, bool presentationMode);
 void drawMarker(float markerPosition[3], GLdouble projectionMatrix[16], GLdouble modelviewMatrix[16], GLint viewport[4]);
-void resetCameraAndFog(const std::unique_ptr<InputGeom>& geom, const std::unique_ptr<Sample>& sample, float& camx, float& camy, float& camz, float& camr, float& rx, float& ry);
+void resetCameraAndFog(const std::unique_ptr<InputGeom>& geom, const std::shared_ptr<Sample>& sample, float& camx, float& camy, float& camz, float& camr, float& rx, float& ry);
 
+static const int g_nsamples = sizeof(g_samples) / sizeof(SampleItem);
+int width = 1440, height = 900;
 
 bool showProperties = true;
 bool showLog = false;
@@ -86,8 +87,8 @@ bool mouseOverMenu = false;
 char sampleName[64] = "Choose Sample...";
 char meshName[128] = "Choose Mesh...";
 
-std::unique_ptr<InputGeom> geom = 0;
-Sample* sample = 0;
+std::unique_ptr<InputGeom> geom = nullptr;
+std::shared_ptr<Sample> sample = nullptr;
 TestCase* test = 0;
 
 BuildContext ctx;
@@ -100,48 +101,129 @@ float camx = 0, camy = 0, camz = 0, camr = 1000;
 float rx = 45;
 float ry = -45;
 
+void SampleSelection()
+{
+	std::shared_ptr<Sample> newSample = nullptr;
+
+	if (ImGui::BeginPopup("sampleSelection"))
+	{
+		ImGui::Text("Select Sample");
+		ImGui::Separator();
+
+		for (size_t i = 0; i < g_nsamples; ++i)
+		{
+			if (ImGui::Selectable(g_samples[i].name))
+			{
+				newSample = std::shared_ptr<Sample>(g_samples[i].create());
+				if (newSample)
+				{
+					strcpy(sampleName, g_samples[i].name);
+				}
+			}
+		}
+
+		ImGui::EndPopup();
+
+		if (newSample)
+		{
+			sample = newSample;
+			sample->setContext(&ctx);
+			if (geom && sample)
+			{
+				sample->handleMeshChanged(geom.get());
+			}
+			showSample = false;
+		}
+
+		if (geom || sample)
+		{
+			resetCameraAndFog(geom, sample, camx, camy, camz, camr, rx, ry);
+		}
+	}
+}
+
+void LevelSelection()
+{
+	int levelToLoad = -1;
+
+	if (ImGui::BeginPopup("levelSelection"))
+	{
+		ImGui::Text("Select Level");
+		ImGui::Separator();
+		scanDirectory("Meshes", ".obj", files);
+		for (size_t i = 0; i < files.size(); ++i)
+		{
+			if (ImGui::Selectable(files[i].c_str()))
+			{
+				levelToLoad = i;
+				strncpy(meshName, files[i].c_str(), sizeof(meshName));
+			}
+		}
+
+		ImGui::EndPopup();
+	}
+	if (levelToLoad != -1)
+	{
+		meshName[sizeof(meshName) - 1] = '\0';
+		showLevels = false;
+
+		geom.release();
+		geom = 0;
+
+		char path[256];
+		strcpy(path, "Meshes/");
+		strcat(path, meshName);
+
+		geom = std::unique_ptr<InputGeom>(new InputGeom);
+		if (!geom || !geom->loadMesh(&ctx, path))
+		{
+			geom.release();
+			geom = 0;
+
+			showLog = true;
+			ctx.dumpLog("Geom load log %s:", meshName);
+		}
+		if (sample && geom)
+		{
+			sample->handleMeshChanged(geom.get());
+		}
+
+		if (geom || sample)
+		{
+			resetCameraAndFog(geom, sample, camx, camy, camz, camr, rx, ry);
+		}
+
+	}
+}
+
 void PropertiesWindow()
 {
 	if (showProperties)
 	{
 		ImGui::SetNextWindowPos(ImVec2(width - 250 - 10, 10));
 		ImGui::Begin("Properties", &showProperties, ImVec2(250, height - 20), 0.7, ImGuiWindowFlags_::ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_::ImGuiWindowFlags_NoMove | ImGuiWindowFlags_::ImGuiWindowFlags_NoResize | ImGuiWindowFlags_::ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_::ImGuiWindowFlags_NoTitleBar);
-
+		ImGui::PushItemWidth(-100);
 		ImGui::Checkbox("Show Log", &showLog);
 		ImGui::Checkbox("Show Tools", &showTools);
 
 		ImGui::Separator();
-		ImGui::Text("Sample");
-		if (ImGui::Button(sampleName))
+
+		if (ImGui::Button("Sample"))
 		{
-			if (showSample)
-			{
-				showSample = false;
-			}
-			else
-			{
-				showSample = true;
-				showLevels = false;
-				showTestCases = false;
-			}
+			ImGui::OpenPopup("sampleSelection");
 		}
+		ImGui::SameLine();
+		ImGui::Text(sampleName);
+		SampleSelection();
 
 		ImGui::Separator();
-		ImGui::Text("Input Mesh");
-		if (ImGui::Button(meshName))
+		if (ImGui::Button("Mesh"))
 		{
-			if (showLevels)
-			{
-				showLevels = false;
-			}
-			else
-			{
-				showSample = false;
-				showTestCases = false;
-				showLevels = true;
-				scanDirectory("Meshes", ".obj", files);
-			}
+			ImGui::OpenPopup("levelSelection");
 		}
+		ImGui::SameLine();
+		ImGui::Text(meshName);
+		LevelSelection();
 
 		if (geom)
 		{
@@ -151,36 +233,41 @@ void PropertiesWindow()
 				geom->getMesh()->getTriCount() / 1000.0f);
 			ImGui::Text(text);
 		}
-
-		if (geom && sample)
+		if (ImGui::CollapsingHeader("Settings"))
 		{
-			if (ImGui::CollapsingHeader("Settings", nullptr, true))
+			if (geom && sample)
 			{
-				sample->handleSettings();
-
-				if (ImGui::Button("Build"))
+				if (ImGui::TreeNode("Sample Settings"))
 				{
-					ctx.resetLog();
-					if (!sample->handleBuild())
-					{
-						showLog = true;
-					}
-					ctx.dumpLog("Build log %s:", meshName);
+					sample->handleSettings();
 
-					delete test;
-					test = 0;
+					if (ImGui::Button("Build"))
+					{
+						ctx.resetLog();
+						if (!sample->handleBuild())
+						{
+							showLog = true;
+						}
+						ctx.dumpLog("Build log %s:", meshName);
+
+						delete test;
+						test = 0;
+					}
+
+					ImGui::TreePop();
 				}
 			}
-		}
 
-		if (sample)
-		{
-			if (ImGui::CollapsingHeader("Debug Mode", nullptr, true))
+			if (sample)
 			{
-				sample->handleDebugMode();
+				if (ImGui::TreeNode("Debug Mode"))
+				{
+					sample->handleDebugMode();
+					ImGui::TreePop();
+				}
+
 			}
 		}
-
 		ImGui::End();
 	}
 }
@@ -248,18 +335,17 @@ void TestCaseWindow()
 				}
 
 				// Create sample
-				Sample* newSample = 0;
+				std::shared_ptr<Sample> newSample = nullptr;
 				for (int i = 0; i < g_nsamples; ++i)
 				{
 					if (strcmp(g_samples[i].name, test->getSampleName().c_str()) == 0)
 					{
-						newSample = g_samples[i].create();
+						newSample = std::shared_ptr<Sample>(g_samples[i].create());
 						if (newSample) strcpy(sampleName, g_samples[i].name);
 					}
 				}
 				if (newSample)
 				{
-					delete sample;
 					sample = newSample;
 					sample->setContext(&ctx);
 					showSample = false;
@@ -300,33 +386,7 @@ void TestCaseWindow()
 
 				if (geom || sample)
 				{
-					const float* bmin = 0;
-					const float* bmax = 0;
-					if (sample)
-					{
-						bmin = sample->getBoundsMin();
-						bmax = sample->getBoundsMax();
-					}
-					else if (geom)
-					{
-						bmin = geom->getMeshBoundsMin();
-						bmax = geom->getMeshBoundsMax();
-					}
-					// Reset camera and fog to match the mesh bounds.
-					if (bmin && bmax)
-					{
-						camr = sqrtf(rcSqr(bmax[0] - bmin[0]) +
-							rcSqr(bmax[1] - bmin[1]) +
-							rcSqr(bmax[2] - bmin[2])) / 2;
-						camx = (bmax[0] + bmin[0]) / 2 + camr;
-						camy = (bmax[1] + bmin[1]) / 2 + camr;
-						camz = (bmax[2] + bmin[2]) / 2 + camr;
-						camr *= 3;
-					}
-					rx = 45;
-					ry = -45;
-					glFogf(GL_FOG_START, camr*0.2f);
-					glFogf(GL_FOG_END, camr*1.25f);
+					resetCameraAndFog(geom, sample, camx, camy, camz, camr, rx, ry);
 				}
 
 				// Do the tests.
@@ -338,151 +398,6 @@ void TestCaseWindow()
 		ImGui::End();
 	}
 
-}
-
-void SampleSelection()
-{
-	if (showSample)
-	{
-		ImGui::SetNextWindowPos(ImVec2(270, height - 10 - 250));
-		ImGui::Begin("Choose Sample", &showSample, ImVec2(width - 300 - 250, 250), 0.7, ImGuiWindowFlags_::ImGuiWindowFlags_NoMove | ImGuiWindowFlags_::ImGuiWindowFlags_NoResize | ImGuiWindowFlags_::ImGuiWindowFlags_NoSavedSettings);
-		ImGui::PushItemWidth(140);
-		std::vector<const char*> cstrings;
-		for (size_t i = 0; i < g_nsamples; ++i)
-			cstrings.push_back(g_samples[i].name);
-
-		const char** samples = &cstrings[0];
-
-		Sample* newSample = 0;
-		if (ImGui::ListBox("Choose Sample", &selectedSample, samples, g_nsamples))
-		{
-			newSample = g_samples[selectedSample].create();
-			if (newSample)
-				strcpy(sampleName, g_samples[selectedSample].name);
-		}
-
-		if (newSample)
-		{
-			delete sample;
-			sample = newSample;
-			sample->setContext(&ctx);
-			if (geom && sample)
-			{
-				sample->handleMeshChanged(geom.get());
-			}
-			showSample = false;
-		}
-
-		if (geom || sample)
-		{
-			const float* bmin = 0;
-			const float* bmax = 0;
-			if (sample)
-			{
-				bmin = sample->getBoundsMin();
-				bmax = sample->getBoundsMax();
-			}
-			else if (geom)
-			{
-				bmin = geom->getMeshBoundsMin();
-				bmax = geom->getMeshBoundsMax();
-			}
-			// Reset camera and fog to match the mesh bounds.
-			if (bmin && bmax)
-			{
-				camr = sqrtf(rcSqr(bmax[0] - bmin[0]) +
-					rcSqr(bmax[1] - bmin[1]) +
-					rcSqr(bmax[2] - bmin[2])) / 2;
-				camx = (bmax[0] + bmin[0]) / 2 + camr;
-				camy = (bmax[1] + bmin[1]) / 2 + camr;
-				camz = (bmax[2] + bmin[2]) / 2 + camr;
-				camr *= 3;
-			}
-			rx = 45;
-			ry = -45;
-			glFogf(GL_FOG_START, camr*0.1f);
-			glFogf(GL_FOG_END, camr*1.25f);
-		}
-		ImGui::End();
-	}
-}
-
-void LevelSelection()
-{
-	if (showLevels)
-	{
-		ImGui::SetNextWindowPos(ImVec2(270, height - 10 - 250));
-		ImGui::Begin("Choose Level", &showLevels, ImVec2(width - 300 - 250, 250), 0.7, ImGuiWindowFlags_::ImGuiWindowFlags_NoMove | ImGuiWindowFlags_::ImGuiWindowFlags_NoResize | ImGuiWindowFlags_::ImGuiWindowFlags_NoSavedSettings);
-		ImGui::PushItemWidth(140);
-
-		int levelToLoad = -1;
-		std::vector<const char*> cstrings;
-		for (size_t i = 0; i < files.size(); ++i)
-			cstrings.push_back(files[i].c_str());
-
-		const char** fileNames = &cstrings[0];
-		ImGui::ListBox("Choose Level", &levelToLoad, fileNames, files.size(), 3);
-
-		if (levelToLoad != -1)
-		{
-			strncpy(meshName, cstrings[levelToLoad], sizeof(meshName));
-			meshName[sizeof(meshName) - 1] = '\0';
-			showLevels = false;
-
-			geom.release();
-			geom = 0;
-
-			char path[256];
-			strcpy(path, "Meshes/");
-			strcat(path, meshName);
-
-			geom = std::unique_ptr<InputGeom>(new InputGeom);
-			if (!geom || !geom->loadMesh(&ctx, path))
-			{
-				geom.release();
-				geom = 0;
-
-				showLog = true;
-				ctx.dumpLog("Geom load log %s:", meshName);
-			}
-			if (sample && geom)
-			{
-				sample->handleMeshChanged(geom.get());
-			}
-
-			if (geom || sample)
-			{
-				const float* bmin = 0;
-				const float* bmax = 0;
-				if (sample)
-				{
-					bmin = sample->getBoundsMin();
-					bmax = sample->getBoundsMax();
-				}
-				else if (geom)
-				{
-					bmin = geom->getMeshBoundsMin();
-					bmax = geom->getMeshBoundsMax();
-				}
-				// Reset camera and fog to match the mesh bounds.
-				if (bmin && bmax)
-				{
-					camr = sqrtf(rcSqr(bmax[0] - bmin[0]) +
-						rcSqr(bmax[1] - bmin[1]) +
-						rcSqr(bmax[2] - bmin[2])) / 2;
-					camx = (bmax[0] + bmin[0]) / 2 + camr;
-					camy = (bmax[1] + bmin[1]) / 2 + camr;
-					camz = (bmax[2] + bmin[2]) / 2 + camr;
-					camr *= 3;
-				}
-				rx = 45;
-				ry = -45;
-				glFogf(GL_FOG_START, camr*0.1f);
-				glFogf(GL_FOG_END, camr*1.25f);
-			}
-		}
-		ImGui::End();
-	}
 }
 
 int main(int argc, char* argv[])
@@ -608,6 +523,11 @@ int run(int width, int height, bool presentationMode) {
 	glDepthFunc(GL_LEQUAL);
 
 	bool done = false;
+
+	int forward = -1;
+	int reverse = -1;
+	int left = -1;
+	int right = -1;
 	while (!done)
 	{
 		// Handle input events.
@@ -618,7 +538,6 @@ int run(int width, int height, bool presentationMode) {
 
 		while (SDL_PollEvent(&event))
 		{
-			ImGui_ImplSdl_ProcessEvent(&event);
 			switch (event.type)
 			{
 			case SDL_KEYDOWN:
@@ -669,33 +588,7 @@ int run(int width, int height, bool presentationMode) {
 					}
 					if (geom || sample)
 					{
-						const float* bmin = 0;
-						const float* bmax = 0;
-						if (sample)
-						{
-							bmin = sample->getBoundsMin();
-							bmax = sample->getBoundsMax();
-						}
-						else if (geom)
-						{
-							bmin = geom->getMeshBoundsMin();
-							bmax = geom->getMeshBoundsMax();
-						}
-						// Reset camera and fog to match the mesh bounds.
-						if (bmin && bmax)
-						{
-							camr = sqrtf(rcSqr(bmax[0] - bmin[0]) +
-								rcSqr(bmax[1] - bmin[1]) +
-								rcSqr(bmax[2] - bmin[2])) / 2;
-							camx = (bmax[0] + bmin[0]) / 2 + camr;
-							camy = (bmax[1] + bmin[1]) / 2 + camr;
-							camz = (bmax[2] + bmin[2]) / 2 + camr;
-							camr *= 3;
-						}
-						rx = 45;
-						ry = -45;
-						glFogf(GL_FOG_START, camr*0.2f);
-						glFogf(GL_FOG_END, camr*1.25f);
+						resetCameraAndFog(geom, sample, camx, camy, camz, camr, rx, ry);
 					}
 				}
 				else if (event.key.keysym.sym == SDLK_RIGHT)
@@ -706,6 +599,45 @@ int run(int width, int height, bool presentationMode) {
 				{
 					slideShow.prevSlide();
 				}
+
+				// Handle keyboard movement.
+
+				if (event.key.keysym.sym == SDLK_w)
+				{
+					forward = 1;
+				}
+				if (event.key.keysym.sym == SDLK_s)
+				{
+					reverse = 1;
+				}
+				if (event.key.keysym.sym == SDLK_a)
+				{
+					left = 1;
+				}
+				if (event.key.keysym.sym == SDLK_d)
+				{
+					right = 1;
+				}
+				break;
+
+			case SDL_KEYUP:
+				if (event.key.keysym.sym == SDLK_w)
+				{
+					forward = -1;
+				}
+				if (event.key.keysym.sym == SDLK_s)
+				{
+					reverse = -1;
+				}
+				if (event.key.keysym.sym == SDLK_a)
+				{
+					left = -1;
+				}
+				if (event.key.keysym.sym == SDLK_d)
+				{
+					right = -1;
+				}
+
 				break;
 
 			case SDL_MOUSEBUTTONDOWN:
@@ -767,6 +699,7 @@ int run(int width, int height, bool presentationMode) {
 			default:
 				break;
 			}
+			ImGui_ImplSdl_ProcessEvent(&event);
 		}
 
 		Uint32	time = SDL_GetTicks();
@@ -860,16 +793,14 @@ int run(int width, int height, bool presentationMode) {
 		gluUnProject(mx, my, 1.0f, modelviewMatrix, projectionMatrix, viewport, &x, &y, &z);
 		raye[0] = (float)x; raye[1] = (float)y; raye[2] = (float)z;
 
-		// Handle keyboard movement.
-		const Uint8* keystate = SDL_GetKeyboardState(NULL);
-		moveW = rcClamp(moveW + dt * 4 * (keystate[SDL_SCANCODE_W] ? 1 : -1), 0.0f, 1.0f);
-		moveS = rcClamp(moveS + dt * 4 * (keystate[SDL_SCANCODE_S] ? 1 : -1), 0.0f, 1.0f);
-		moveA = rcClamp(moveA + dt * 4 * (keystate[SDL_SCANCODE_A] ? 1 : -1), 0.0f, 1.0f);
-		moveD = rcClamp(moveD + dt * 4 * (keystate[SDL_SCANCODE_D] ? 1 : -1), 0.0f, 1.0f);
-
 		float keybSpeed = 22.0f;
 		if (SDL_GetModState() & KMOD_SHIFT)
 			keybSpeed *= 4.0f;
+
+		moveW = rcClamp(moveW + dt * 4 * forward, 0.0f, 1.0f);
+		moveS = rcClamp(moveS + dt * 4 * reverse, 0.0f, 1.0f);
+		moveA = rcClamp(moveA + dt * 4 * left, 0.0f, 1.0f);
+		moveD = rcClamp(moveD + dt * 4 * right, 0.0f, 1.0f);
 
 		float movex = (moveD - moveA) * keybSpeed * dt;
 		float movey = (moveS - moveW) * keybSpeed * dt + scrollZoom * 2.0f;
@@ -925,8 +856,6 @@ int run(int width, int height, bool presentationMode) {
 		PropertiesWindow();
 		ToolsWindow();
 		TestCaseWindow();
-		SampleSelection();
-		LevelSelection();
 
 		LogWindow();
 
@@ -966,13 +895,12 @@ int run(int width, int height, bool presentationMode) {
 	SDL_DestroyWindow(window);
 	SDL_Quit();
 
-	delete sample;
 	geom.release();
 
 	return 0;
 }
 
-void resetCameraAndFog(const std::unique_ptr<InputGeom>& geom, const std::unique_ptr<Sample>& sample,
+void resetCameraAndFog(const std::unique_ptr<InputGeom>& geom, const std::shared_ptr<Sample>& sample,
 	float& camx, float& camy, float& camz, float& camr, float& rx, float& ry) {
 	if (geom || sample)
 	{

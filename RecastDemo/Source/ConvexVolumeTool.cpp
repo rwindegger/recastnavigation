@@ -124,13 +124,14 @@ void ConvexVolumeTool::reset()
 
 void ConvexVolumeTool::handleMenu()
 {
-	if (ImGui::CollapsingHeader("Shape Options"))
+	if (ImGui::TreeNode("Shape Options"))
 	{
 		ImGui::SliderFloat("Shape Height", &m_boxHeight, 0.1f, 20.0f);
 		ImGui::SliderFloat("Shape Descent", &m_boxDescent, 0.1f, 20.0f);
 		ImGui::SliderFloat("Poly Offset", &m_polyOffset, 0.0f, 10.0f);
+		ImGui::TreePop();
 	}
-	if (ImGui::CollapsingHeader("Area Type"))
+	if (ImGui::TreeNode("Area Type"))
 	{
 		ImGui::CheckboxFlags("Walk", &m_areaMask, AREAFLAGS_WALK);
 		ImGui::CheckboxFlags("Swim", &m_areaMask, AREAFLAGS_SWIM);
@@ -138,6 +139,7 @@ void ConvexVolumeTool::handleMenu()
 		ImGui::CheckboxFlags("Crouch", &m_areaMask, AREAFLAGS_CROUCH);
 		ImGui::CheckboxFlags("Jump", &m_areaMask, AREAFLAGS_JUMP);
 		ImGui::CheckboxFlags("Disabled", &m_areaMask, AREAFLAGS_DISABLED);
+		ImGui::TreePop();
 	}
 
 	if (ImGui::Button("Clear Shape"))

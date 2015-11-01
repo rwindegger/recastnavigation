@@ -139,7 +139,7 @@ void Sample::resetCommonSettings()
 
 void Sample::handleCommonSettings()
 {
-	if (ImGui::CollapsingHeader("Rasterization", nullptr))
+	if (ImGui::TreeNode("Rasterization"))
 	{
 		ImGui::SliderFloat("Cell Size", &m_cellSize, 0.1f, 1.0f, "%.3f");
 		ImGui::SliderFloat("Cell Height", &m_cellHeight, 0.1f, 1.0f, "%.3f");
@@ -153,23 +153,26 @@ void Sample::handleCommonSettings()
 			snprintf(text, 64, "Voxels  %d x %d", gw, gh);
 			ImGui::Text(text);
 		}
+		ImGui::TreePop();
 	}
 
-	if (ImGui::CollapsingHeader("Agent", nullptr))
+	if (ImGui::TreeNode("Agent"))
 	{
 		ImGui::SliderFloat("Height", &m_agentHeight, 0.1f, 5.0f, "%.3f");
 		ImGui::SliderFloat("Radius", &m_agentRadius, 0.0f, 5.0f, "%.3f");
 		ImGui::SliderFloat("Max Climb", &m_agentMaxClimb, 0.1f, 5.0f, "%.3f");
 		ImGui::SliderFloat("Max Slope", &m_agentMaxSlope, 0.0f, 90.0f, "%.2f");
+		ImGui::TreePop();
 	}
 
-	if (ImGui::CollapsingHeader("Region", nullptr))
+	if (ImGui::TreeNode("Region"))
 	{
 		ImGui::SliderFloat("Min Region Size", &m_regionMinSize, 0.0f, 150.0f, "%.2f");
 		ImGui::SliderFloat("Merged Region Size", &m_regionMergeSize, 0.0f, 150.0f, "%.2f");
+		ImGui::TreePop();
 	}
 
-	if (ImGui::CollapsingHeader("Partitioning", nullptr))
+	if (ImGui::TreeNode("Partitioning"))
 	{
 		if (ImGui::RadioButton("Watershed", m_partitionType == SAMPLE_PARTITION_WATERSHED))
 			m_partitionType = SAMPLE_PARTITION_WATERSHED;
@@ -177,19 +180,22 @@ void Sample::handleCommonSettings()
 			m_partitionType = SAMPLE_PARTITION_MONOTONE;
 		if (ImGui::RadioButton("Layers", m_partitionType == SAMPLE_PARTITION_LAYERS))
 			m_partitionType = SAMPLE_PARTITION_LAYERS;
+		ImGui::TreePop();
 	}
 
-	if (ImGui::CollapsingHeader("Polygonization", nullptr))
+	if (ImGui::TreeNode("Polygonization"))
 	{
 		ImGui::SliderFloat("Max Edge Length", &m_edgeMaxLen, 0.0f, 50.0f, "%.2f");
 		ImGui::SliderFloat("Max Edge Error", &m_edgeMaxError, 0.1f, 3.0f, "%.3f");
 		ImGui::SliderFloat("Verts Per Poly", &m_vertsPerPoly, 3.0f, 12.0f, "%.3f");
+		ImGui::TreePop();
 	}
 
-	if (ImGui::CollapsingHeader("Detail Mesh", nullptr))
+	if (ImGui::TreeNode("Detail Mesh"))
 	{
 		ImGui::SliderFloat("Sample Distance", &m_detailSampleDist, 0.0f, 16.0f, "%.3f");
 		ImGui::SliderFloat("Max Sample Error", &m_detailSampleMaxError, 0.0f, 16.0f, "%.3f");
+		ImGui::TreePop();
 	}
 }
 

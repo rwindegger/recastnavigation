@@ -73,7 +73,7 @@ class NavMeshTileTool : public SampleTool
 	Sample_TileMesh* m_sample;
 	float m_hitPos[3];
 	bool m_hitPosSet;
-	
+
 public:
 
 	NavMeshTileTool() :
@@ -220,7 +220,6 @@ void Sample_TileMesh::cleanup()
 	m_dmesh = 0;
 }
 
-
 static const int NAVMESHSET_MAGIC = 'M' << 24 | 'S' << 16 | 'E' << 8 | 'T'; //'MSET';
 static const int NAVMESHSET_VERSION = 1;
 
@@ -343,109 +342,104 @@ dtNavMesh* Sample_TileMesh::loadAll(const char* path)
 void Sample_TileMesh::handleSettings()
 {
 	Sample::handleCommonSettings();
+
+	if (ImGui::TreeNode("Tiling"))
+	{
+		ImGui::SliderFloat("TileSize", &m_tileSize, 16.0f, 1024.0f);
+
+		if (m_geom)
+		{
+			const float* bmin = m_geom->getMeshBoundsMin();
+			const float* bmax = m_geom->getMeshBoundsMax();
+
+			int gw = 0, gh = 0;
+			rcCalcGridSize(bmin, bmax, m_cellSize, &gw, &gh);
+			const int ts = (int)m_tileSize;
+			const int tw = (gw + ts - 1) / ts;
+			const int th = (gh + ts - 1) / ts;
+
+			ImGui::Text("Tiles %d x %d", tw, th);
+
+			// Max tiles and max polys affect how the tile IDs are caculated.
+			// There are 22 bits available for identifying a tile and a polygon.
+			int tileBits = rcMin((int)ilog2(nextPow2(tw*th)), 14);
+			if (tileBits > 14) tileBits = 14;
+			int polyBits = 22 - tileBits;
+			m_maxTiles = 1 << tileBits;
+			m_maxPolysPerTile = 1 << polyBits;
+			ImGui::Text("Max Tiles %d", m_maxTiles);
+			ImGui::Text("Max Polys %d", m_maxPolysPerTile);
+		}
+		else
+		{
+			m_maxTiles = 0;
+			m_maxPolysPerTile = 0;
+		}
+		ImGui::TreePop();
+	}
+
+	if (ImGui::TreeNode("File Operations"))
+	{
+		if (ImGui::Button("Save"))
+		{
+			saveAll("all_tiles_navmesh.bin", m_navMesh);
+		}
+
+		if (ImGui::Button("Load"))
+		{
+			dtFreeNavMesh(m_navMesh);
+			m_navMesh = loadAll("all_tiles_navmesh.bin");
+			m_navQuery->init(m_navMesh, 2048);
+		}
+		ImGui::TreePop();
+	}
+
 	ImGui::Checkbox("Keep Itermediate Results", &m_keepInterResults);
 	ImGui::Checkbox("Build All Tiles", &m_buildAll);
-	ImGui::Text("Tiling");
-	ImGui::SliderFloat("TileSize", &m_tileSize, 16.0f, 1024.0f, "%.3f", 16.0f);
 
-	if (m_geom)
-	{
-		const float* bmin = m_geom->getMeshBoundsMin();
-		const float* bmax = m_geom->getMeshBoundsMax();
-		char text[64];
-		int gw = 0, gh = 0;
-		rcCalcGridSize(bmin, bmax, m_cellSize, &gw, &gh);
-		const int ts = (int)m_tileSize;
-		const int tw = (gw + ts - 1) / ts;
-		const int th = (gh + ts - 1) / ts;
-		snprintf(text, 64, "Tiles  %d x %d", tw, th);
-		ImGui::Text(text);
 
-		// Max tiles and max polys affect how the tile IDs are caculated.
-		// There are 22 bits available for identifying a tile and a polygon.
-		int tileBits = rcMin((int)ilog2(nextPow2(tw*th)), 14);
-		if (tileBits > 14) tileBits = 14;
-		int polyBits = 22 - tileBits;
-		m_maxTiles = 1 << tileBits;
-		m_maxPolysPerTile = 1 << polyBits;
-		snprintf(text, 64, "Max Tiles  %d", m_maxTiles);
-		ImGui::Text(text);
-		snprintf(text, 64, "Max Polys  %d", m_maxPolysPerTile);
-		ImGui::Text(text);
-	}
-	else
-	{
-		m_maxTiles = 0;
-		m_maxPolysPerTile = 0;
-	}
+	ImGui::Text("Build Time: %.1fms", m_totalBuildTimeMs);
 
 	ImGui::Separator();
-
-	ImGui::Indent();
-	ImGui::Indent();
-
-	if (ImGui::Button("Save"))
-	{
-		saveAll("all_tiles_navmesh.bin", m_navMesh);
-	}
-
-	if (ImGui::Button("Load"))
-	{
-		dtFreeNavMesh(m_navMesh);
-		m_navMesh = loadAll("all_tiles_navmesh.bin");
-		m_navQuery->init(m_navMesh, 2048);
-	}
-
-	ImGui::Unindent();
-	ImGui::Unindent();
-
-	char msg[64];
-	snprintf(msg, 64, "Build Time: %.1fms", m_totalBuildTimeMs);
-	ImGui::Text(msg);
-
-	ImGui::Separator();
-
-	ImGui::Separator();
-
 }
 
 void Sample_TileMesh::handleTools()
 {
 	int type = !m_tool ? TOOL_NONE : m_tool->type();
 
-	if (ImGui::RadioButton("Test Navmesh", type == TOOL_NAVMESH_TESTER))
+	if (ImGui::Selectable("Test Navmesh", type == TOOL_NAVMESH_TESTER))
 	{
 		setTool(new NavMeshTesterTool);
 	}
-	if (ImGui::RadioButton("Prune Navmesh", type == TOOL_NAVMESH_PRUNE))
+	if (ImGui::Selectable("Prune Navmesh", type == TOOL_NAVMESH_PRUNE))
 	{
 		setTool(new NavMeshPruneTool);
 	}
-	if (ImGui::RadioButton("Create Tiles", type == TOOL_TILE_EDIT))
+	if (ImGui::Selectable("Create Tiles", type == TOOL_TILE_EDIT))
 	{
 		setTool(new NavMeshTileTool);
 	}
-	if (ImGui::RadioButton("Create Off-Mesh Links", type == TOOL_OFFMESH_CONNECTION))
+	if (ImGui::Selectable("Create Off-Mesh Links", type == TOOL_OFFMESH_CONNECTION))
 	{
 		setTool(new OffMeshConnectionTool);
 	}
-	if (ImGui::RadioButton("Create Convex Volumes", type == TOOL_CONVEX_VOLUME))
+	if (ImGui::Selectable("Create Convex Volumes", type == TOOL_CONVEX_VOLUME))
 	{
 		setTool(new ConvexVolumeTool);
 	}
-	if (ImGui::RadioButton("Create Crowds", type == TOOL_CROWD))
+	if (ImGui::Selectable("Create Crowds", type == TOOL_CROWD))
 	{
 		setTool(new CrowdTool);
 	}
 
-	ImGui::Separator();
-
-	ImGui::Indent();
-
 	if (m_tool)
-		m_tool->handleMenu();
-
-	ImGui::Unindent();
+	{
+		ImGui::Separator();
+		if (ImGui::CollapsingHeader("Selected Tool"))
+		{
+			m_tool->handleMenu();
+		}
+	}
 }
 
 void Sample_TileMesh::handleDebugMode()
@@ -485,43 +479,44 @@ void Sample_TileMesh::handleDebugMode()
 		return;
 
 	ImGui::Text("Draw");
-	if (ImGui::RadioButton("Input Mesh", m_drawMode == DRAWMODE_MESH))
+	ImGui::Separator();
+	if (ImGui::Selectable("Input Mesh", m_drawMode == DRAWMODE_MESH))
 		m_drawMode = DRAWMODE_MESH;
-	if (ImGui::RadioButton("Navmesh", m_drawMode == DRAWMODE_NAVMESH))
+	if (ImGui::Selectable("Navmesh", m_drawMode == DRAWMODE_NAVMESH))
 		m_drawMode = DRAWMODE_NAVMESH;
-	if (ImGui::RadioButton("Navmesh Invis", m_drawMode == DRAWMODE_NAVMESH_INVIS))
+	if (ImGui::Selectable("Navmesh Invis", m_drawMode == DRAWMODE_NAVMESH_INVIS))
 		m_drawMode = DRAWMODE_NAVMESH_INVIS;
-	if (ImGui::RadioButton("Navmesh Trans", m_drawMode == DRAWMODE_NAVMESH_TRANS))
+	if (ImGui::Selectable("Navmesh Trans", m_drawMode == DRAWMODE_NAVMESH_TRANS))
 		m_drawMode = DRAWMODE_NAVMESH_TRANS;
-	if (ImGui::RadioButton("Navmesh BVTree", m_drawMode == DRAWMODE_NAVMESH_BVTREE))
+	if (ImGui::Selectable("Navmesh BVTree", m_drawMode == DRAWMODE_NAVMESH_BVTREE))
 		m_drawMode = DRAWMODE_NAVMESH_BVTREE;
-	if (ImGui::RadioButton("Navmesh Nodes", m_drawMode == DRAWMODE_NAVMESH_NODES))
+	if (ImGui::Selectable("Navmesh Nodes", m_drawMode == DRAWMODE_NAVMESH_NODES))
 		m_drawMode = DRAWMODE_NAVMESH_NODES;
-	if (ImGui::RadioButton("Navmesh Portals", m_drawMode == DRAWMODE_NAVMESH_PORTALS))
+	if (ImGui::Selectable("Navmesh Portals", m_drawMode == DRAWMODE_NAVMESH_PORTALS))
 		m_drawMode = DRAWMODE_NAVMESH_PORTALS;
-	if (ImGui::RadioButton("Voxels", m_drawMode == DRAWMODE_VOXELS))
+	if (ImGui::Selectable("Voxels", m_drawMode == DRAWMODE_VOXELS))
 		m_drawMode = DRAWMODE_VOXELS;
-	if (ImGui::RadioButton("Walkable Voxels", m_drawMode == DRAWMODE_VOXELS_WALKABLE))
+	if (ImGui::Selectable("Walkable Voxels", m_drawMode == DRAWMODE_VOXELS_WALKABLE))
 		m_drawMode = DRAWMODE_VOXELS_WALKABLE;
-	if (ImGui::RadioButton("Compact", m_drawMode == DRAWMODE_COMPACT))
+	if (ImGui::Selectable("Compact", m_drawMode == DRAWMODE_COMPACT))
 		m_drawMode = DRAWMODE_COMPACT;
-	if (ImGui::RadioButton("Compact Distance", m_drawMode == DRAWMODE_COMPACT_DISTANCE))
+	if (ImGui::Selectable("Compact Distance", m_drawMode == DRAWMODE_COMPACT_DISTANCE))
 		m_drawMode = DRAWMODE_COMPACT_DISTANCE;
-	if (ImGui::RadioButton("Compact Regions", m_drawMode == DRAWMODE_COMPACT_REGIONS))
+	if (ImGui::Selectable("Compact Regions", m_drawMode == DRAWMODE_COMPACT_REGIONS))
 		m_drawMode = DRAWMODE_COMPACT_REGIONS;
-	if (ImGui::RadioButton("Region Connections", m_drawMode == DRAWMODE_REGION_CONNECTIONS))
+	if (ImGui::Selectable("Region Connections", m_drawMode == DRAWMODE_REGION_CONNECTIONS))
 		m_drawMode = DRAWMODE_REGION_CONNECTIONS;
-	if (ImGui::RadioButton("Raw Contours", m_drawMode == DRAWMODE_RAW_CONTOURS))
+	if (ImGui::Selectable("Raw Contours", m_drawMode == DRAWMODE_RAW_CONTOURS))
 		m_drawMode = DRAWMODE_RAW_CONTOURS;
-	if (ImGui::RadioButton("Both Contours", m_drawMode == DRAWMODE_BOTH_CONTOURS))
+	if (ImGui::Selectable("Both Contours", m_drawMode == DRAWMODE_BOTH_CONTOURS))
 		m_drawMode = DRAWMODE_BOTH_CONTOURS;
-	if (ImGui::RadioButton("Contours", m_drawMode == DRAWMODE_CONTOURS))
+	if (ImGui::Selectable("Contours", m_drawMode == DRAWMODE_CONTOURS))
 		m_drawMode = DRAWMODE_CONTOURS;
-	if (ImGui::RadioButton("Poly Mesh", m_drawMode == DRAWMODE_POLYMESH))
+	if (ImGui::Selectable("Poly Mesh", m_drawMode == DRAWMODE_POLYMESH))
 		m_drawMode = DRAWMODE_POLYMESH;
-	if (ImGui::RadioButton("Poly Mesh Detail", m_drawMode == DRAWMODE_POLYMESH_DETAIL))
+	if (ImGui::Selectable("Poly Mesh Detail", m_drawMode == DRAWMODE_POLYMESH_DETAIL))
 		m_drawMode = DRAWMODE_POLYMESH_DETAIL;
-
+	ImGui::Separator();
 	if (unavail)
 	{
 		ImGui::Text("Tick 'Keep Itermediate Results'");
@@ -929,7 +924,7 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 	m_cfg.height = m_cfg.tileSize + m_cfg.borderSize * 2;
 	m_cfg.detailSampleDist = m_detailSampleDist < 0.9f ? 0 : m_cellSize * m_detailSampleDist;
 	m_cfg.detailSampleMaxError = m_cellHeight * m_detailSampleMaxError;
-	
+
 	// Expand the heighfield bounding box by border size to find the extents of geometry we need to build this tile.
 	//
 	// This is done in order to make sure that the navmesh tiles connect correctly at the borders,
@@ -957,7 +952,7 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 	m_cfg.bmin[2] -= m_cfg.borderSize * m_cfg.cellSizeXZ;
 	m_cfg.bmax[0] += m_cfg.borderSize * m_cfg.cellSizeXZ;
 	m_cfg.bmax[2] += m_cfg.borderSize * m_cfg.cellSizeXZ;
-	
+
 	// Reset build times gathering.
 	m_ctx->resetTimers();
 
@@ -1000,7 +995,7 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 	const int ncid = rcGetChunksOverlappingRect(chunkyMesh, tbmin, tbmax, cid, 512);
 	if (!ncid)
 		return nullptr;
-	
+
 	m_tileTriCount = 0;
 
 	for (int i = 0; i < ncid; ++i)
@@ -1061,10 +1056,10 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 
 	// (Optional) Mark areas.
 	const ConvexVolume* vols = m_geom->getConvexVolumes();
-	for (int i  = 0; i < m_geom->getConvexVolumeCount(); ++i)
+	for (int i = 0; i < m_geom->getConvexVolumeCount(); ++i)
 		rcMarkConvexPolyArea(m_ctx, vols[i].verts, vols[i].nverts, vols[i].hmin, vols[i].hmax, vols[i].areaMask, *m_chf);
-	
-	
+
+
 	// Partition the heightfield so that we can use simple algorithm later to triangulate the walkable areas.
 	// There are 3 martitioning methods, each with some pros and cons:
 	// 1) Watershed partitioning
@@ -1090,7 +1085,7 @@ unsigned char* Sample_TileMesh::buildTileMesh(const int tx, const int ty, const 
 	//   - can be slow and create a bit ugly tessellation (still better than monotone)
 	//     if you have large open areas with small obstacles (not a problem if you use tiles)
 	//   * good choice to use for tiled navmesh with medium and small sized tiles
-	
+
 	if (m_partitionType == SAMPLE_PARTITION_WATERSHED)
 	{
 		// Prepare for region partitioning, by calculating distance field along the walkable surface.

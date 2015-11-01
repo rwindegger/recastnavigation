@@ -69,9 +69,9 @@ void OffMeshConnectionTool::reset()
 
 void OffMeshConnectionTool::handleMenu()
 {
-	if (ImGui::RadioButton("One Way", !m_bidir))
+	if (ImGui::Selectable("One Way", !m_bidir))
 		m_bidir = false;
-	if (ImGui::RadioButton("Bidirectional", m_bidir))
+	if (ImGui::Selectable("Bidirectional", m_bidir))
 		m_bidir = true;
 }
 
