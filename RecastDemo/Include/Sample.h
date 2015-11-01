@@ -21,6 +21,11 @@
 
 #include "Recast.h"
 #include "SampleInterfaces.h"
+#include "imgui.h"
+#include <stdarg.h>
+
+struct ImVec2;
+struct ImVec4;
 
 enum SamplePartitionType
 {
@@ -103,7 +108,7 @@ protected:
 public:
 	Sample();
 	virtual ~Sample();
-	
+
 	void setContext(BuildContext* ctx) { m_ctx = ctx; }
 	
 	void setTool(SampleTool* tool);
@@ -143,6 +148,8 @@ public:
 
 	void resetCommonSettings();
 	void handleCommonSettings();
+
+	void ImGuiDrawOverlay(const ImVec2 position, const char* id, const ImVec4 &color, const char* fmt, ...);
 };
 
 

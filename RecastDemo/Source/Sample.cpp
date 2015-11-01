@@ -30,10 +30,24 @@
 #include "imgui.h"
 #include "SDL.h"
 #include "SDL_opengl.h"
+#include <stdarg.h>
 
 #ifdef WIN32
 #	define snprintf _snprintf
 #endif
+
+void Sample::ImGuiDrawOverlay(const ImVec2 position, const char* id, const ImVec4 &color, const char* fmt, ...)
+{
+	ImGui::SetNextWindowPos(position);
+	if (ImGui::Begin(id, nullptr, ImVec2(0, 0), 0.0f, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs))
+	{
+		va_list args;
+		va_start(args, fmt);
+		ImGui::TextColoredV(color, fmt, args);
+		va_end(args);
+		ImGui::End();
+	}
+}
 
 Sample::Sample() :
 	m_geom(0),

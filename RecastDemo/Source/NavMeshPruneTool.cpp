@@ -46,7 +46,7 @@ class PolyRefArray
 	inline PolyRefArray(const PolyRefArray&);
 	inline PolyRefArray& operator=(const PolyRefArray&);
 public:
-	
+
 	inline PolyRefArray() : m_data(0), m_size(0), m_cap(0) {}
 	inline PolyRefArray(int n) : m_data(0), m_size(0), m_cap(0) { resize(n); }
 	inline ~PolyRefArray() { dtFree(m_data); }
@@ -63,7 +63,7 @@ public:
 		}
 		m_size = n;
 	}
-	inline void push(dtPolyRef item) { resize(m_size+1); m_data[m_size-1] = item; }
+	inline void push(dtPolyRef item) { resize(m_size + 1); m_data[m_size - 1] = item; }
 	inline dtPolyRef pop() { if (m_size > 0) m_size--; return m_data[m_size]; }
 	inline const dtPolyRef& operator[](int i) const { return m_data[i]; }
 	inline dtPolyRef& operator[](int i) { return m_data[i]; }
@@ -82,7 +82,7 @@ class NavmeshFlags
 		int nflags;
 		dtPolyRef base;
 	};
-	
+
 	const dtNavMesh* m_nav;
 	TileFlags* m_tiles;
 	int m_ntiles;
@@ -92,14 +92,14 @@ public:
 		m_nav(0), m_tiles(0), m_ntiles(0)
 	{
 	}
-	
+
 	~NavmeshFlags()
 	{
 		for (int i = 0; i < m_ntiles; ++i)
 			m_tiles[i].purge();
 		dtFree(m_tiles);
 	}
-	
+
 	bool init(const dtNavMesh* nav)
 	{
 		m_ntiles = nav->getMaxTiles();
@@ -111,7 +111,7 @@ public:
 			return false;
 		}
 		memset(m_tiles, 0, sizeof(TileFlags)*m_ntiles);
-		
+
 		// Alloc flags for each tile.
 		for (int i = 0; i < nav->getMaxTiles(); ++i)
 		{
@@ -128,12 +128,12 @@ public:
 				memset(tf->flags, 0, tf->nflags);
 			}
 		}
-		
+
 		m_nav = nav;
-		
+
 		return false;
 	}
-	
+
 	inline void clearAllFlags()
 	{
 		for (int i = 0; i < m_ntiles; ++i)
@@ -143,7 +143,7 @@ public:
 				memset(tf->flags, 0, tf->nflags);
 		}
 	}
-	
+
 	inline unsigned char getFlags(dtPolyRef ref)
 	{
 		dtAssert(m_nav);
@@ -163,7 +163,7 @@ public:
 		m_nav->decodePolyId(ref, salt, it, ip);
 		m_tiles[it].flags[ip] = flags;
 	}
-	
+
 };
 
 static void floodNavmesh(dtNavMesh* nav, NavmeshFlags* flags, dtPolyRef start, unsigned char flag)
@@ -171,7 +171,7 @@ static void floodNavmesh(dtNavMesh* nav, NavmeshFlags* flags, dtPolyRef start, u
 	// If already visited, skip.
 	if (flags->getFlags(start))
 		return;
-		
+
 	PolyRefArray openList;
 	openList.push(start);
 
@@ -252,7 +252,7 @@ void NavMeshPruneTool::handleMenu()
 	{
 		m_flags->clearAllFlags();
 	}
-	
+
 	if (ImGui::Button("Prune Unselected"))
 	{
 		disableUnvisitedPolys(nav, m_flags);
@@ -273,17 +273,17 @@ void NavMeshPruneTool::handleClick(const float* s, const float* p, bool shift)
 	if (!nav) return;
 	dtNavMeshQuery* query = m_sample->getNavMeshQuery();
 	if (!query) return;
-	
+
 	dtVcopy(m_hitPos, p);
 	m_hitPosSet = true;
-	
+
 	if (!m_flags)
 	{
 		m_flags = new NavmeshFlags;
 		m_flags->init(nav);
 	}
-	
-	const float ext[3] = {2,4,2};
+
+	const float ext[3] = { 2,4,2 };
 	dtQueryFilter filter;
 	dtPolyRef ref = 0;
 	query->findNearestPoly(p, ext, &filter, &ref, 0);
@@ -310,14 +310,14 @@ void NavMeshPruneTool::handleRender()
 	if (m_hitPosSet)
 	{
 		const float s = m_sample->getAgentRadius();
-		const unsigned int col = duRGBA(255,255,255,255);
+		const unsigned int col = duRGBA(255, 255, 255, 255);
 		dd.begin(DU_DRAW_LINES);
-		dd.vertex(m_hitPos[0]-s,m_hitPos[1],m_hitPos[2], col);
-		dd.vertex(m_hitPos[0]+s,m_hitPos[1],m_hitPos[2], col);
-		dd.vertex(m_hitPos[0],m_hitPos[1]-s,m_hitPos[2], col);
-		dd.vertex(m_hitPos[0],m_hitPos[1]+s,m_hitPos[2], col);
-		dd.vertex(m_hitPos[0],m_hitPos[1],m_hitPos[2]-s, col);
-		dd.vertex(m_hitPos[0],m_hitPos[1],m_hitPos[2]+s, col);
+		dd.vertex(m_hitPos[0] - s, m_hitPos[1], m_hitPos[2], col);
+		dd.vertex(m_hitPos[0] + s, m_hitPos[1], m_hitPos[2], col);
+		dd.vertex(m_hitPos[0], m_hitPos[1] - s, m_hitPos[2], col);
+		dd.vertex(m_hitPos[0], m_hitPos[1] + s, m_hitPos[2], col);
+		dd.vertex(m_hitPos[0], m_hitPos[1], m_hitPos[2] - s, col);
+		dd.vertex(m_hitPos[0], m_hitPos[1], m_hitPos[2] + s, col);
 		dd.end();
 	}
 
@@ -334,7 +334,7 @@ void NavMeshPruneTool::handleRender()
 				const dtPolyRef ref = base | (unsigned int)j;
 				if (m_flags->getFlags(ref))
 				{
-					duDebugDrawNavMeshPoly(&dd, *nav, ref, duRGBA(255,255,255,128));
+					duDebugDrawNavMeshPoly(&dd, *nav, ref, duRGBA(255, 255, 255, 128));
 				}
 			}
 		}
@@ -350,5 +350,5 @@ void NavMeshPruneTool::handleRenderOverlay(double* proj, double* model, int* vie
 	// Tool help
 	const int h = view[3];
 
-	ImGui::Text("LMB: Click fill area.");
+	ImGui::TextColored(ImVec4(1.0, 1.0, 1.0, 0.5), "LMB: Click fill area.");
 }

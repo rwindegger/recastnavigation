@@ -524,8 +524,7 @@ void CrowdToolState::handleRenderOverlay(double* proj, double* model, int* view)
 	if (m_targetRef && gluProject((GLdouble)m_targetPos[0], (GLdouble)m_targetPos[1], (GLdouble)m_targetPos[2],
 		model, proj, view, &x, &y, &z))
 	{
-		ImGui::Text("TARGET");
-		//imguiDrawText((int)x, (int)(y+25), IMGUI_ALIGN_CENTER, "TARGET", imguiRGBA(0,0,0,220));
+		m_sample->ImGuiDrawOverlay(ImVec2(x, view[3] - y), "TargetOverlay", ImVec4(0, 0, 0, 0.86), "Target");
 	}
 
 	char label[32];
@@ -551,9 +550,8 @@ void CrowdToolState::handleRenderOverlay(double* proj, double* model, int* view)
 							model, proj, view, &x, &y, &z))
 						{
 							const float heuristic = node->total;// - node->cost;
-							snprintf(label, 32, "%.2f", heuristic);
-							ImGui::Text(label);
-							//imguiDrawText((int)x, (int)y+15, IMGUI_ALIGN_CENTER, label, imguiRGBA(0,0,0,220));
+                            snprintf(label, 32, "NodeOverlay%i%i", i, j);
+							m_sample->ImGuiDrawOverlay(ImVec2(x, view[3] - y), label, ImVec4(0, 0, 0, 0.86), "%.2f", heuristic);
 						}
 					}
 				}
@@ -575,9 +573,8 @@ void CrowdToolState::handleRenderOverlay(double* proj, double* model, int* view)
 				if (gluProject((GLdouble)pos[0], (GLdouble)pos[1] + h, (GLdouble)pos[2],
 					model, proj, view, &x, &y, &z))
 				{
-					snprintf(label, 32, "%d", i);
-					ImGui::Text(label);
-					//imguiDrawText((int)x, (int)y + 15, IMGUI_ALIGN_CENTER, label, imguiRGBA(0, 0, 0, 220));
+                    snprintf(label, 32, "AgentOverlay%i", i);
+					m_sample->ImGuiDrawOverlay(ImVec2(x, view[3] - y), label, ImVec4(0, 0, 0, 0.86), "%i", i);
 				}
 			}
 		}
@@ -605,9 +602,8 @@ void CrowdToolState::handleRenderOverlay(double* proj, double* model, int* view)
 						if (gluProject((GLdouble)nei->npos[0], (GLdouble)nei->npos[1] + radius, (GLdouble)nei->npos[2],
 							model, proj, view, &x, &y, &z))
 						{
-							snprintf(label, 32, "%.3f", ag->neis[j].dist);
-							ImGui::Text(label);
-							//imguiDrawText((int)x, (int)y + 15, IMGUI_ALIGN_CENTER, label, imguiRGBA(255, 255, 255, 220));
+                            snprintf(label, 32, "Neis%i%i", i, j);
+							m_sample->ImGuiDrawOverlay(ImVec2(x, view[3] - y), label, ImVec4(1, 1, 1, 0.86), "%.3f", ag->neis[j].dist);
 						}
 					}
 				}
@@ -626,14 +622,14 @@ void CrowdToolState::handleRenderOverlay(double* proj, double* model, int* view)
 		drawGraph(&gp, &m_crowdTotalTime, 1, "Total", duRGBA(255, 128, 0, 255));
 */
 
-		ImGui::PlotLines("Total", [](void* data, int idx) { 
+		ImGui::PlotLines("Total", [](void* data, int idx) {
 			ValueHistory* vh = (ValueHistory*)data;
 			return vh->getSample(idx);
 		}, &m_crowdTotalTime, 256, 0, "ms", 0.0f, 2.0f, ImVec2(500, 200));
-/*
-		gp.setRect(300, 10, 500, 50, 8);
-		gp.setValueRange(0.0f, 2000.0f, 1, "");
-		drawGraph(&gp, &m_crowdSampleCount, 0, "Sample Count", duRGBA(96, 96, 96, 128));*/
+		/*
+				gp.setRect(300, 10, 500, 50, 8);
+				gp.setValueRange(0.0f, 2000.0f, 1, "");
+				drawGraph(&gp, &m_crowdSampleCount, 0, "Sample Count", duRGBA(96, 96, 96, 128));*/
 
 		ImGui::PlotLines("Total", [](void* data, int idx) {
 			ValueHistory* vh = (ValueHistory*)data;
@@ -908,7 +904,7 @@ void CrowdTool::handleMenu()
 		return;
 	CrowdToolParams* params = m_state->getToolParams();
 
-	if(ImGui::Selectable("Create Agents", m_mode == TOOLMODE_CREATE))
+	if (ImGui::Selectable("Create Agents", m_mode == TOOLMODE_CREATE))
 		m_mode = TOOLMODE_CREATE;
 	if (ImGui::Selectable("Move Target", m_mode == TOOLMODE_MOVE_TARGET))
 		m_mode = TOOLMODE_MOVE_TARGET;
@@ -916,7 +912,7 @@ void CrowdTool::handleMenu()
 		m_mode = TOOLMODE_SELECT;
 	if (ImGui::Selectable("Toggle Polys", m_mode == TOOLMODE_TOGGLE_POLYS))
 		m_mode = TOOLMODE_TOGGLE_POLYS;
-	
+
 	if (ImGui::TreeNode("Options"))
 	{
 		if (ImGui::Checkbox("Optimize Visibility", &params->m_optimizeVis))
@@ -1067,31 +1063,23 @@ void CrowdTool::handleRenderOverlay(double* proj, double* model, int* view)
 
 	if (m_mode == TOOLMODE_CREATE)
 	{
-		ImGui::Text("LMB: add agent.  Shift+LMB: remove agent.");
-		//imguiDrawText(280, ty, IMGUI_ALIGN_LEFT, "LMB: add agent.  Shift+LMB: remove agent.", imguiRGBA(255, 255, 255, 192));
+		ImGui::TextColored(ImVec4(1.0, 1.0, 1.0, 0.75), "LMB: add agent.  Shift+LMB: remove agent.");
 	}
 	else if (m_mode == TOOLMODE_MOVE_TARGET)
 	{
-		ImGui::Text("LMB: set move target.  Shift+LMB: adjust set velocity.");
-		ImGui::Text("Setting velocity will move the agents without pathfinder.");
-		/*imguiDrawText(280, ty, IMGUI_ALIGN_LEFT, "LMB: set move target.  Shift+LMB: adjust set velocity.", imguiRGBA(255, 255, 255, 192));
-		ty -= 20;
-		imguiDrawText(280, ty, IMGUI_ALIGN_LEFT, "Setting velocity will move the agents without pathfinder.", imguiRGBA(255, 255, 255, 192));*/
+		ImGui::TextColored(ImVec4(1.0, 1.0, 1.0, 0.75), "LMB: set move target.  Shift+LMB: adjust set velocity.");
+		ImGui::TextColored(ImVec4(1.0, 1.0, 1.0, 0.75), "Setting velocity will move the agents without pathfinder.");
 	}
 	else if (m_mode == TOOLMODE_SELECT)
 	{
-		ImGui::Text("LMB: select agent.");
-		//imguiDrawText(280, ty, IMGUI_ALIGN_LEFT, "LMB: select agent.", imguiRGBA(255, 255, 255, 192));
+		ImGui::TextColored(ImVec4(1.0, 1.0, 1.0, 0.75), "LMB: select agent.");
 	}
 	ty -= 20;
-	ImGui::Text("SPACE: Run/Pause simulation.  1: Step simulation.");
-	//imguiDrawText(280, ty, IMGUI_ALIGN_LEFT, "SPACE: Run/Pause simulation.  1: Step simulation.", imguiRGBA(255, 255, 255, 192));
+	ImGui::TextColored(ImVec4(1.0, 1.0, 1.0, 0.75), "SPACE: Run/Pause simulation.  1: Step simulation.");
 	ty -= 20;
 
 	if (m_state && m_state->isRunning())
-		ImGui::Text("- RUNNING -");
-	//imguiDrawText(280, ty, IMGUI_ALIGN_LEFT, "- RUNNING -", imguiRGBA(255, 32, 16, 255));
+		ImGui::TextColored(ImVec4(1.0, 0.12, 0.06, 0.5), "- RUNNING -");
 	else
-		ImGui::Text("- PAUSED -");
-	//imguiDrawText(280, ty, IMGUI_ALIGN_LEFT, "- PAUSED -", imguiRGBA(255, 255, 255, 128));
+		ImGui::TextColored(ImVec4(1.0, 1.0, 1.0, 0.5), "- PAUSED -");
 }

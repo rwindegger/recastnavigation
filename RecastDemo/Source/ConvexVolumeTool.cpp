@@ -285,18 +285,17 @@ void ConvexVolumeTool::handleRender()
 	dd.end();
 }
 
-void ConvexVolumeTool::handleRenderOverlay(double* /*proj*/, double* /*model*/, int* view)
+void ConvexVolumeTool::handleRenderOverlay(double* /*proj*/, double* /*model*/, int* /*view*/)
 {
 	// Tool help
-	const int h = view[3];
+
 	if (!m_npts)
 	{
-		ImGui::Text("LMB: Create new shape.  SHIFT+LMB: Delete existing shape (click inside a shape).");
+		ImGui::TextColored(ImVec4(1.0, 1.0, 1.0, 0.5), "LMB: Create new shape.  SHIFT+LMB: Delete existing shape (click inside a shape).");
 	}
 	else
 	{
-		ImGui::Text("Click LMB to add new points. Click on the red point to finish the shape.");
-		ImGui::Text("The shape will be convex hull of all added points.");
+		ImGui::TextColored(ImVec4(1.0, 1.0, 1.0, 0.5), "Click LMB to add new points. Click on the red point to finish the shape.");
+		ImGui::TextColored(ImVec4(1.0, 1.0, 1.0, 0.5), "The shape will be convex hull of all added points.");
 	}
-
 }

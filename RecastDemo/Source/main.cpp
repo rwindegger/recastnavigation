@@ -199,7 +199,7 @@ void PropertiesWindow()
 {
 	if (showProperties)
 	{
-		ImGui::SetNextWindowPos(ImVec2(width - 250 - 10, 10));
+		ImGui::SetNextWindowPos(ImVec2(width - 260, 10));
 		ImGui::Begin("Properties", &showProperties, ImVec2(250, height - 20), 0.7, ImGuiWindowFlags_::ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_::ImGuiWindowFlags_NoMove | ImGuiWindowFlags_::ImGuiWindowFlags_NoResize | ImGuiWindowFlags_::ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_::ImGuiWindowFlags_NoTitleBar);
 		ImGui::PushItemWidth(-100);
 		ImGui::Checkbox("Show Log", &showLog);
@@ -274,7 +274,7 @@ void PropertiesWindow()
 void LogWindow() {
 	if (showLog)
 	{
-		ImGui::SetNextWindowPos(ImVec2(250 + 20, 10));
+		ImGui::SetNextWindowPos(ImVec2(270, 10));
 		ImGui::Begin("Log", &showLog, ImVec2(width - 300 - 250, 200), 0.5, ImGuiWindowFlags_::ImGuiWindowFlags_NoMove | ImGuiWindowFlags_::ImGuiWindowFlags_NoResize | ImGuiWindowFlags_::ImGuiWindowFlags_NoSavedSettings);
 
 		for (int i = 0; i < ctx.getLogCount(); ++i)
@@ -434,11 +434,11 @@ int main(int argc, char* argv[])
 int run(int width, int height, bool presentationMode) {
 	SDL_DisplayMode current;
 	SDL_GetCurrentDisplayMode(0, &current);
-	
+
 	SDL_Window *window;
 	window = SDL_CreateWindow("RecastDemo", SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_OPENGL);
-	
+
 	if (!window)
 	{
 		std::cerr << "Could not create window: %s\n", SDL_GetError();
@@ -506,7 +506,7 @@ int run(int width, int height, bool presentationMode) {
 	bool markerPositionSet = false;
 
 	SlideShow slideShow("slides/");
-	
+
 	glEnable(GL_CULL_FACE);
 
 	float fogColor[4] = { 0.32f, 0.31f, 0.30f, 1.0f };
@@ -534,7 +534,7 @@ int run(int width, int height, bool presentationMode) {
 
 		while (SDL_PollEvent(&event))
 		{
-            ImGui_ImplSdl_ProcessEvent(&event);
+			ImGui_ImplSdl_ProcessEvent(&event);
 			switch (event.type)
 			{
 			case SDL_KEYDOWN:
@@ -826,58 +826,59 @@ int run(int width, int height, bool presentationMode) {
 		gluOrtho2D(0, width, 0, height);
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
-		
+
 		ImGui_ImplSdl_NewFrame(window);
-		ImGui::BeginTooltip();
 
-		if (sample)
+		ImGui::SetNextWindowPos(ImVec2(280, height - 270));
+
+		if (ImGui::Begin("Overlay", nullptr, ImVec2(0, 250), 0.0f, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs))
 		{
-			sample->handleRenderOverlay((double*)projectionMatrix, (double*)modelviewMatrix, (int*)viewport);
-		}
-		if (test && test->handleRenderOverlay((double*)projectionMatrix, (double*)modelviewMatrix, (int*)viewport))
-		{
-			
-		}
-
-		// Help text.
-		if (showMenu)
-		{
-			const char msg[] = "W/S/A/D: Move  RMB: Rotate";
-			ImGui::Text(msg);
-			//imguiDrawText(280, height - 20, IMGUI_ALIGN_LEFT, msg, imguiRGBA(255, 255, 255, 128));
-		}
-
-		PropertiesWindow();
-		ToolsWindow();
-		TestCaseWindow();
-
-		LogWindow();
-
-		slideShow.updateAndDraw(dt, (float)width, (float)height);
-
-		// Marker
-
-		if (markerPositionSet && gluProject((GLdouble)markerPosition[0], (GLdouble)markerPosition[1], (GLdouble)markerPosition[2],
-			modelviewMatrix, projectionMatrix, viewport, &x, &y, &z))
-		{
-			// Draw marker circle
-			glLineWidth(5.0f);
-			glColor4ub(240, 220, 0, 196);
-			glBegin(GL_LINE_LOOP);
-			const float r = 25.0f;
-			for (int i = 0; i < 20; ++i)
+			// Help text.
+			if (showMenu)
 			{
-				const float a = (float)i / 20.0f * RC_PI * 2;
-				const float fx = (float)x + cosf(a)*r;
-				const float fy = (float)y + sinf(a)*r;
-				glVertex2f(fx, fy);
+				ImGui::TextColored(ImVec4(1.0, 1.0, 1.0, 0.75), "W/S/A/D: Move  RMB: Rotate");
 			}
-			glEnd();
-			glLineWidth(1.0f);
-		}
 
+			if (sample)
+			{
+				sample->handleRenderOverlay((double*)projectionMatrix, (double*)modelviewMatrix, (int*)viewport);
+			}
+			if (test && test->handleRenderOverlay((double*)projectionMatrix, (double*)modelviewMatrix, (int*)viewport))
+			{
+
+			}
+
+			PropertiesWindow();
+			ToolsWindow();
+			TestCaseWindow();
+
+			LogWindow();
+
+			slideShow.updateAndDraw(dt, (float)width, (float)height);
+
+			// Marker
+
+			if (markerPositionSet && gluProject((GLdouble)markerPosition[0], (GLdouble)markerPosition[1], (GLdouble)markerPosition[2],
+				modelviewMatrix, projectionMatrix, viewport, &x, &y, &z))
+			{
+				// Draw marker circle
+				glLineWidth(5.0f);
+				glColor4ub(240, 220, 0, 196);
+				glBegin(GL_LINE_LOOP);
+				const float r = 25.0f;
+				for (int i = 0; i < 20; ++i)
+				{
+					const float a = (float)i / 20.0f * RC_PI * 2;
+					const float fx = (float)x + cosf(a)*r;
+					const float fy = (float)y + sinf(a)*r;
+					glVertex2f(fx, fy);
+				}
+				glEnd();
+				glLineWidth(1.0f);
+			}
+			ImGui::End();
+		}
 		glEnable(GL_DEPTH_TEST);
-		ImGui::EndTooltip();
 		ImGui::Render();
 		SDL_GL_SwapWindow(window);
 	}

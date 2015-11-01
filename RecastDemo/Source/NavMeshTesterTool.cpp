@@ -1396,17 +1396,17 @@ void NavMeshTesterTool::handleRenderOverlay(double* proj, double* model, int* vi
 	if (m_sposSet && gluProject((GLdouble)m_spos[0], (GLdouble)m_spos[1], (GLdouble)m_spos[2],
 		model, proj, view, &x, &y, &z))
 	{
-		ImGui::Text("Start");
+		m_sample->ImGuiDrawOverlay(ImVec2(x, view[3] - y), "StartOverlay", ImVec4(0, 0, 0, 0.86), "Start");
 	}
 	if (m_eposSet && gluProject((GLdouble)m_epos[0], (GLdouble)m_epos[1], (GLdouble)m_epos[2],
 		model, proj, view, &x, &y, &z))
 	{
-		ImGui::Text("End");
+		m_sample->ImGuiDrawOverlay(ImVec2(x, view[3] - y), "EndOverlay", ImVec4(0, 0, 0, 0.86), "End");
 	}
 
 	// Tool help
 	const int h = view[3];
-	ImGui::Text("LMB+SHIFT: Set start location  LMB: Set end location");
+	ImGui::TextColored(ImVec4(1.0, 1.0, 1.0, 0.5),"LMB+SHIFT: Set start location  LMB: Set end location");
 }
 
 void NavMeshTesterTool::drawAgent(const float* pos, float r, float h, float c, const unsigned int col)
