@@ -49,10 +49,8 @@
 #	define snprintf _snprintf
 #endif
 
-
 // This value specifies how many layers (or "floors") each navmesh tile is expected to have.
 static const int EXPECTED_LAYERS_PER_TILE = 4;
-
 
 static bool isectSegAABB(const float* sp, const float* sq,
 						 const float* amin, const float* amax,
@@ -99,9 +97,6 @@ static int calcLayerBufferSize(const int gridWidth, const int gridHeight)
 	const int gridSize = gridWidth * gridHeight;
 	return headerSize + gridSize*4;
 }
-
-
-
 
 struct FastLZCompressor : public dtTileCacheCompressor
 {
@@ -221,9 +216,6 @@ struct MeshProcess : public dtTileCacheMeshProcess
 		}
 	}
 };
-
-
-
 
 static const int MAX_LAYERS = 32;
 
@@ -446,7 +438,6 @@ static int rasterizeTileLayers(BuildContext* ctx, InputGeom* geom,
 	return n;
 }
 
-
 void drawTiles(duDebugDraw* dd, dtTileCache* tc)
 {
 	unsigned int fcol[6];
@@ -574,7 +565,6 @@ void drawDetail(duDebugDraw* dd, dtTileCache* tc, const int tx, const int ty, in
 	}
 }
 
-
 void drawDetailOverlay(const dtTileCache* tc, const int tx, const int ty, double* proj, double* model, int* view)
 {
 	dtCompressedTileRef tiles[MAX_LAYERS];
@@ -656,9 +646,6 @@ void drawObstacles(duDebugDraw* dd, const dtTileCache* tc)
 		duDebugDrawCylinderWire(dd, bmin[0],bmin[1],bmin[2], bmax[0],bmax[1],bmax[2], duDarkenCol(col), 2);
 	}
 }
-
-
-
 
 class TempObstacleHilightTool : public SampleTool
 {
@@ -814,10 +801,6 @@ public:
 	virtual void handleRender() {}
 	virtual void handleRenderOverlay(double* /*proj*/, double* /*model*/, int* /*view*/) { }
 };
-
-
-
-
 
 Sample_TempObstacles::Sample_TempObstacles() :
 	m_keepInterResults(false),
