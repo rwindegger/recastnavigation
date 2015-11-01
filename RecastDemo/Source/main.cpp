@@ -82,7 +82,6 @@ bool showLevels = false;
 bool showSample = false;
 bool showTestCases = false;
 
-bool mouseOverMenu = false;
 
 char sampleName[64] = "Choose Sample...";
 char meshName[128] = "Choose Mesh...";
@@ -435,13 +434,11 @@ int main(int argc, char* argv[])
 int run(int width, int height, bool presentationMode) {
 	SDL_DisplayMode current;
 	SDL_GetCurrentDisplayMode(0, &current);
-
-
+	
 	SDL_Window *window;
 	window = SDL_CreateWindow("RecastDemo", SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_OPENGL);
-
-
+	
 	if (!window)
 	{
 		std::cerr << "Could not create window: %s\n", SDL_GetError();
@@ -509,8 +506,7 @@ int run(int width, int height, bool presentationMode) {
 	bool markerPositionSet = false;
 
 	SlideShow slideShow("slides/");
-
-
+	
 	glEnable(GL_CULL_FACE);
 
 	float fogColor[4] = { 0.32f, 0.31f, 0.30f, 1.0f };
@@ -538,6 +534,7 @@ int run(int width, int height, bool presentationMode) {
 
 		while (SDL_PollEvent(&event))
 		{
+            ImGui_ImplSdl_ProcessEvent(&event);
 			switch (event.type)
 			{
 			case SDL_KEYDOWN:
@@ -643,7 +640,7 @@ int run(int width, int height, bool presentationMode) {
 			case SDL_MOUSEBUTTONDOWN:
 				if (event.button.button == SDL_BUTTON_RIGHT)
 				{
-					if (!mouseOverMenu)
+					if (!ImGui::IsMouseHoveringAnyWindow())
 					{
 						// Rotate view
 						rotate = true;
@@ -661,7 +658,7 @@ int run(int width, int height, bool presentationMode) {
 				if (event.button.button == SDL_BUTTON_RIGHT)
 				{
 					rotate = false;
-					if (!mouseOverMenu && !movedDuringRotate)
+					if (!ImGui::IsMouseHoveringAnyWindow() && !movedDuringRotate)
 					{
 						processHitTest = true;
 						processHitTestShift = true;
@@ -669,7 +666,7 @@ int run(int width, int height, bool presentationMode) {
 				}
 				else if (event.button.button == SDL_BUTTON_LEFT)
 				{
-					if (!mouseOverMenu)
+					if (!ImGui::IsMouseHoveringAnyWindow())
 					{
 						processHitTest = true;
 						processHitTestShift = (SDL_GetModState() & KMOD_SHIFT) ? true : false;
@@ -699,7 +696,6 @@ int run(int width, int height, bool presentationMode) {
 			default:
 				break;
 			}
-			ImGui_ImplSdl_ProcessEvent(&event);
 		}
 
 		Uint32	time = SDL_GetTicks();
@@ -830,9 +826,7 @@ int run(int width, int height, bool presentationMode) {
 		gluOrtho2D(0, width, 0, height);
 		glMatrixMode(GL_MODELVIEW);
 		glLoadIdentity();
-
-		mouseOverMenu = false;
-
+		
 		ImGui_ImplSdl_NewFrame(window);
 		ImGui::BeginTooltip();
 
@@ -842,7 +836,7 @@ int run(int width, int height, bool presentationMode) {
 		}
 		if (test && test->handleRenderOverlay((double*)projectionMatrix, (double*)modelviewMatrix, (int*)viewport))
 		{
-			mouseOverMenu = true;
+			
 		}
 
 		// Help text.
