@@ -1406,7 +1406,7 @@ void NavMeshTesterTool::handleRenderOverlay(double* proj, double* model, int* vi
 
 	// Tool help
 	const int h = view[3];
-	ImGui::TextColored(ImVec4(1.0, 1.0, 1.0, 0.5),"LMB+SHIFT: Set start location  LMB: Set end location");
+	ImGui::TextColored(ImVec4(1.0, 1.0, 1.0, 0.5), "LMB+SHIFT: Set start location  LMB: Set end location");
 }
 
 void NavMeshTesterTool::drawAgent(const float* pos, float r, float h, float c, const unsigned int col)

@@ -663,9 +663,7 @@ void Sample_TileMesh::handleRenderOverlay(double* proj, double* model, int* view
 	if (m_tileBuildTime > 0.0f && gluProject((GLdouble)(m_tileBmin[0] + m_tileBmax[0]) / 2, (GLdouble)(m_tileBmin[1] + m_tileBmax[1]) / 2, (GLdouble)(m_tileBmin[2] + m_tileBmax[2]) / 2,
 		model, proj, view, &x, &y, &z))
 	{
-		char text[32];
-		snprintf(text, 32, "%.3fms / %dTris / %.1fkB", m_tileBuildTime, m_tileTriCount, m_tileMemUsage);
-		ImGui::Text(text);
+		this->ImGuiDrawOverlay(ImVec2(x, view[3] - y), "Tile", ImVec4(0, 0, 0, 0.86), "%.3fms / %dTris / %.1fkB", m_tileBuildTime, m_tileTriCount, m_tileMemUsage);
 	}
 
 	if (m_tool)

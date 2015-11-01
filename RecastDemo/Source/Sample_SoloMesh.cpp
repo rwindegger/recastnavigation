@@ -86,10 +86,7 @@ void Sample_SoloMesh::handleSettings()
 
 	ImGui::Checkbox("Keep Intermediate Results", &m_keepInterResults);
 	ImGui::Separator();
-
-	char msg[64];
-	snprintf(msg, 64, "Build Time: %.1fms", m_totalBuildTimeMs);
-	ImGui::Text(msg);
+	ImGui::Text("Build Time: %.1fms", m_totalBuildTimeMs);
 	ImGui::Separator();
 }
 
