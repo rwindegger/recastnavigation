@@ -1,6 +1,8 @@
+# Recast & Detour
 
-Recast & Detour
-===============
+[![The zlib/libpng License](https://img.shields.io/badge/license-zlib-green.svg)](http://opensource.org/licenses/zlib)
+[![ImGui Status](https://img.shields.io/badge/ImGui-6b23fca-green.svg)](https://github.com/ocornut/imgui)
+[![FastLZ Status](https://img.shields.io/badge/FastLZ-f121734-green.svg)](https://github.com/ariya/FastLZ)
 
 ![screenshot of a navmesh baked with the sample program](/RecastDemo/screenshot.png?raw=true)
 
@@ -32,6 +34,10 @@ Detour offers simple static navigation mesh which is suitable for many simple ca
 ## Recast Demo
 
 You can find a comprehensive demo project in RecastDemo folder. It is a kitchen sink demo containing all the functionality of the library. If you are new to Recast & Detour, check out [Sample_SoloMesh.cpp](/RecastDemo/Source/Sample_SoloMesh.cpp) to get started with building navmeshes and [NavMeshTesterTool.cpp](/RecastDemo/Source/NavMeshTesterTool.cpp) to see how Detour can be used to find paths.
+
+### Included Submodules
+
+The project uses a set of submodules mapped into the Contrib folder.
 
 ### Building RecastDemo
 
