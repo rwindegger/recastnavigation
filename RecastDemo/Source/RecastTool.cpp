@@ -57,9 +57,9 @@ RecastTool::~RecastTool()
 {
 	geom.release();
 	ImGui::Shutdown();
-	SDL_DestroyRenderer(m_Renderer);
+	m_Renderer.release();
 	SDL_GL_DeleteContext(m_GLContext);
-	SDL_DestroyWindow(m_Window);
+	m_Window.release();
 	SDL_Quit();
 }
 
@@ -92,8 +92,10 @@ void RecastTool::InitSDL2()
 
 void RecastTool::InitWindow(int width, int height)
 {
-	m_Window = SDL_CreateWindow("RecastDemo", SDL_WINDOWPOS_CENTERED,
-		SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_OPENGL);
+	m_Window = std::unique_ptr<SDL_Window, std::function<void(SDL_Window*)>>(
+		SDL_CreateWindow("RecastDemo", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_OPENGL),
+		[](SDL_Window* f) { SDL_DestroyWindow(f); }
+	);
 
 	if (!m_Window)
 	{
@@ -106,13 +108,13 @@ void RecastTool::InitWindow(int width, int height)
 
 void RecastTool::InitContext()
 {
-	m_GLContext = SDL_GL_CreateContext(m_Window);
+	m_GLContext = SDL_GL_CreateContext(m_Window.get());
 
 	if (!m_GLContext)
 	{
 		std::stringstream s = std::stringstream();
 		s << "Could not create context: %s\n", SDL_GetError();
-		SDL_DestroyWindow(m_Window);
+		m_Window.release();
 		SDL_Quit();
 		throw std::runtime_error(s.str());
 	}
@@ -121,14 +123,17 @@ void RecastTool::InitContext()
 void RecastTool::InitRenderer()
 {
 
-	m_Renderer = SDL_CreateRenderer(m_Window, 0, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+	m_Renderer = std::unique_ptr<SDL_Renderer, std::function<void(SDL_Renderer*)>>(
+		SDL_CreateRenderer(m_Window.get(), 0, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC),
+		[](SDL_Renderer* f) { SDL_DestroyRenderer(f); }
+	);
 
 	if (!m_Renderer)
 	{
 		std::stringstream s = std::stringstream();
 		s << "Could not create Renderer: %s\n", SDL_GetError();
 		SDL_GL_DeleteContext(m_GLContext);
-		SDL_DestroyWindow(m_Window);
+		m_Window.release();
 		SDL_Quit();
 		throw std::runtime_error(s.str());
 	}
@@ -136,13 +141,13 @@ void RecastTool::InitRenderer()
 
 void RecastTool::InitImGui()
 {
-	if (!ImGui_ImplSdl_Init(m_Window))
+	if (!ImGui_ImplSdl_Init(m_Window.get()))
 	{
 		std::stringstream s = std::stringstream();
 		s << "Could not init GUI renderer.\n";
-		SDL_DestroyRenderer(m_Renderer);
+		m_Renderer.release();
 		SDL_GL_DeleteContext(m_GLContext);
-		SDL_DestroyWindow(m_Window);
+		m_Window.release();
 		SDL_Quit();
 		throw std::runtime_error(s.str());
 	}
@@ -563,8 +568,8 @@ void RecastTool::RenderPropertiesWindow()
 						}
 						ctx.dumpLog("Build log %s:", meshName);
 
-						delete test;
-						test = 0;
+						test.release();
+						test = nullptr;
 					}
 
 					ImGui::TreePop();
@@ -638,14 +643,14 @@ void RecastTool::RenderTestCaseWindow()
 			char path[256];
 			strcpy(path, "Tests/");
 			strcat(path, cstrings[testToLoad]);
-			test = new TestCase;
+			test = std::unique_ptr<TestCase>(new TestCase);
 			if (test)
 			{
 				// Load the test.
 				if (!test->load(path))
 				{
-					delete test;
-					test = 0;
+					test.release();
+					test = nullptr;
 				}
 
 				// Create sample
@@ -776,7 +781,7 @@ void RecastTool::Render(float dt)
 	glDisable(GL_FOG);
 
 	this->RenderGui(dt);
-	SDL_GL_SwapWindow(m_Window);
+	SDL_GL_SwapWindow(m_Window.get());
 }
 
 void RecastTool::RenderGui(float dt)
@@ -789,7 +794,7 @@ void RecastTool::RenderGui(float dt)
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	ImGui_ImplSdl_NewFrame(m_Window);
+	ImGui_ImplSdl_NewFrame(m_Window.get());
 
 	ImGui::SetNextWindowPos(ImVec2(280, m_Height - 270));
 	if (ImGui::Begin("Overlay", nullptr, ImVec2(0, 250), 0.0f, ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoInputs))
@@ -804,16 +809,19 @@ void RecastTool::RenderGui(float dt)
 		{
 			sample->handleRenderOverlay((double*)projectionMatrix, (double*)modelviewMatrix, (int*)viewport);
 		}
+
 		if (test && test->handleRenderOverlay((double*)projectionMatrix, (double*)modelviewMatrix, (int*)viewport))
 		{
 
 		}
 
-		this->RenderPropertiesWindow();
-		this->RenderToolsWindow();
-		this->RenderTestCaseWindow();
-		this->RenderLogWindow();
-
+		if (showMenu)
+		{
+			this->RenderPropertiesWindow();
+			this->RenderToolsWindow();
+			this->RenderTestCaseWindow();
+			this->RenderLogWindow();
+		}
 		slideShow.updateAndDraw(dt, (float)m_Width, (float)m_Height);
 
 		// Marker

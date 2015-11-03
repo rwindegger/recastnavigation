@@ -41,15 +41,17 @@
 #include <iomanip>
 #include <cstdlib>
 #include <stdexcept>
+#include <functional>
 
 #pragma once
 
 class RecastTool
 {
 private:
-	SDL_Window *m_Window;
+	std::unique_ptr<SDL_Window, std::function<void(SDL_Window*)>> m_Window = nullptr;
 	SDL_GLContext m_GLContext;
-	SDL_Renderer *m_Renderer;
+	std::unique_ptr<SDL_Renderer, std::function<void(SDL_Renderer*)>> m_Renderer = nullptr;
+
 	int m_Width;
 	int m_Height;
 	bool m_PresentationMode;
@@ -106,7 +108,7 @@ private:
 
 	std::unique_ptr<InputGeom> geom = nullptr;
 	std::shared_ptr<Sample> sample = nullptr;
-	TestCase* test = 0;
+	std::unique_ptr<TestCase> test = nullptr;
 
 	BuildContext ctx;
 
