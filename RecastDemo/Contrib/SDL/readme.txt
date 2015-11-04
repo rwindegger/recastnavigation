@@ -1,1 +1,1 @@
-Download SDL Developer Libraries from http://www.libsdl.org and unzip them here.
+Download SDL Developer Libraries from https://buildbot.libsdl.org/sdl-builds/sdl-visualstudio/?C=M;O=D and unzip them here.

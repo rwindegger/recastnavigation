@@ -6,3 +6,7 @@
 	path = RecastDemo/Contrib/FastLZ
 	url = https://github.com/ariya/FastLZ
 	branch = master
+[submodule "RecastDemo/Contrib/stb"]
+	path = RecastDemo/Contrib/stb
+	url = https://github.com/nothings/stb.git
+	branch = master

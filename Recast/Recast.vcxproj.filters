@@ -1,0 +1,69 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Include">
+      <UniqueIdentifier>{14C7E3FF-6483-FB4E-8609-D7DD74A677D1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{AAA80D69-5C3F-644E-9ECC-ABC5C46D7A5C}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Include\Recast.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\RecastAlloc.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\RecastAssert.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\CompactHeightfield.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Heightfield.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Util.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Vector.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Source\Recast.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RecastAlloc.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RecastArea.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RecastContour.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RecastFilter.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RecastLayers.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RecastMesh.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RecastMeshDetail.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RecastRasterization.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RecastRegion.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\CompactHeightfield.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,100 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.23107.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DebugUtils", "DebugUtils\DebugUtils.vcxproj", "{4EE33160-BC79-BF45-9958-361201AF1A5C}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Detour", "Detour\Detour.vcxproj", "{4AED77DF-9F81-1743-9B8F-CCC65DDBEB82}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DetourCrowd", "DetourCrowd\DetourCrowd.vcxproj", "{3B1DB923-9509-3245-B04A-8C88458A8CBE}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DetourTileCache", "DetourTileCache\DetourTileCache.vcxproj", "{7CD5C1D2-EA92-AF4F-B8DD-995C85EDC3A1}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Recast", "Recast\Recast.vcxproj", "{4A2F720A-8A1B-C746-930D-8FA110BF3D0A}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RecastDemo", "RecastDemo\RecastDemo.vcxproj", "{DB1EB5AA-8626-B443-BCF4-4716598458C0}"
+	ProjectSection(ProjectDependencies) = postProject
+		{4EE33160-BC79-BF45-9958-361201AF1A5C} = {4EE33160-BC79-BF45-9958-361201AF1A5C}
+		{4AED77DF-9F81-1743-9B8F-CCC65DDBEB82} = {4AED77DF-9F81-1743-9B8F-CCC65DDBEB82}
+		{3B1DB923-9509-3245-B04A-8C88458A8CBE} = {3B1DB923-9509-3245-B04A-8C88458A8CBE}
+		{7CD5C1D2-EA92-AF4F-B8DD-995C85EDC3A1} = {7CD5C1D2-EA92-AF4F-B8DD-995C85EDC3A1}
+		{4A2F720A-8A1B-C746-930D-8FA110BF3D0A} = {4A2F720A-8A1B-C746-930D-8FA110BF3D0A}
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Common", "Common", "{AFB7C96F-509C-40A4-BF53-4D74D56AAC44}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Include", "Include", "{435C6BA3-7317-4471-8064-98564503D8DF}"
+	ProjectSection(SolutionItems) = preProject
+		Common\include\SharedConfig.h = Common\include\SharedConfig.h
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8C73F3B0-B790-4081-9915-6A8F714F1510}"
+	ProjectSection(SolutionItems) = preProject
+		Doxyfile = Doxyfile
+		License.txt = License.txt
+		README.md = README.md
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Debug|x64 = Debug|x64
+		Release|Win32 = Release|Win32
+		Release|x64 = Release|x64
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4EE33160-BC79-BF45-9958-361201AF1A5C}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4EE33160-BC79-BF45-9958-361201AF1A5C}.Debug|Win32.Build.0 = Debug|Win32
+		{4EE33160-BC79-BF45-9958-361201AF1A5C}.Debug|x64.ActiveCfg = Debug|x64
+		{4EE33160-BC79-BF45-9958-361201AF1A5C}.Debug|x64.Build.0 = Debug|x64
+		{4EE33160-BC79-BF45-9958-361201AF1A5C}.Release|Win32.ActiveCfg = Release|Win32
+		{4EE33160-BC79-BF45-9958-361201AF1A5C}.Release|Win32.Build.0 = Release|Win32
+		{4EE33160-BC79-BF45-9958-361201AF1A5C}.Release|x64.ActiveCfg = Release|x64
+		{4EE33160-BC79-BF45-9958-361201AF1A5C}.Release|x64.Build.0 = Release|x64
+		{4AED77DF-9F81-1743-9B8F-CCC65DDBEB82}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4AED77DF-9F81-1743-9B8F-CCC65DDBEB82}.Debug|Win32.Build.0 = Debug|Win32
+		{4AED77DF-9F81-1743-9B8F-CCC65DDBEB82}.Debug|x64.ActiveCfg = Debug|x64
+		{4AED77DF-9F81-1743-9B8F-CCC65DDBEB82}.Debug|x64.Build.0 = Debug|x64
+		{4AED77DF-9F81-1743-9B8F-CCC65DDBEB82}.Release|Win32.ActiveCfg = Release|Win32
+		{4AED77DF-9F81-1743-9B8F-CCC65DDBEB82}.Release|Win32.Build.0 = Release|Win32
+		{4AED77DF-9F81-1743-9B8F-CCC65DDBEB82}.Release|x64.ActiveCfg = Release|x64
+		{4AED77DF-9F81-1743-9B8F-CCC65DDBEB82}.Release|x64.Build.0 = Release|x64
+		{3B1DB923-9509-3245-B04A-8C88458A8CBE}.Debug|Win32.ActiveCfg = Debug|Win32
+		{3B1DB923-9509-3245-B04A-8C88458A8CBE}.Debug|Win32.Build.0 = Debug|Win32
+		{3B1DB923-9509-3245-B04A-8C88458A8CBE}.Debug|x64.ActiveCfg = Debug|x64
+		{3B1DB923-9509-3245-B04A-8C88458A8CBE}.Debug|x64.Build.0 = Debug|x64
+		{3B1DB923-9509-3245-B04A-8C88458A8CBE}.Release|Win32.ActiveCfg = Release|Win32
+		{3B1DB923-9509-3245-B04A-8C88458A8CBE}.Release|Win32.Build.0 = Release|Win32
+		{3B1DB923-9509-3245-B04A-8C88458A8CBE}.Release|x64.ActiveCfg = Release|x64
+		{3B1DB923-9509-3245-B04A-8C88458A8CBE}.Release|x64.Build.0 = Release|x64
+		{7CD5C1D2-EA92-AF4F-B8DD-995C85EDC3A1}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7CD5C1D2-EA92-AF4F-B8DD-995C85EDC3A1}.Debug|Win32.Build.0 = Debug|Win32
+		{7CD5C1D2-EA92-AF4F-B8DD-995C85EDC3A1}.Debug|x64.ActiveCfg = Debug|x64
+		{7CD5C1D2-EA92-AF4F-B8DD-995C85EDC3A1}.Debug|x64.Build.0 = Debug|x64
+		{7CD5C1D2-EA92-AF4F-B8DD-995C85EDC3A1}.Release|Win32.ActiveCfg = Release|Win32
+		{7CD5C1D2-EA92-AF4F-B8DD-995C85EDC3A1}.Release|Win32.Build.0 = Release|Win32
+		{7CD5C1D2-EA92-AF4F-B8DD-995C85EDC3A1}.Release|x64.ActiveCfg = Release|x64
+		{7CD5C1D2-EA92-AF4F-B8DD-995C85EDC3A1}.Release|x64.Build.0 = Release|x64
+		{4A2F720A-8A1B-C746-930D-8FA110BF3D0A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4A2F720A-8A1B-C746-930D-8FA110BF3D0A}.Debug|Win32.Build.0 = Debug|Win32
+		{4A2F720A-8A1B-C746-930D-8FA110BF3D0A}.Debug|x64.ActiveCfg = Debug|x64
+		{4A2F720A-8A1B-C746-930D-8FA110BF3D0A}.Debug|x64.Build.0 = Debug|x64
+		{4A2F720A-8A1B-C746-930D-8FA110BF3D0A}.Release|Win32.ActiveCfg = Release|Win32
+		{4A2F720A-8A1B-C746-930D-8FA110BF3D0A}.Release|Win32.Build.0 = Release|Win32
+		{4A2F720A-8A1B-C746-930D-8FA110BF3D0A}.Release|x64.ActiveCfg = Release|x64
+		{4A2F720A-8A1B-C746-930D-8FA110BF3D0A}.Release|x64.Build.0 = Release|x64
+		{DB1EB5AA-8626-B443-BCF4-4716598458C0}.Debug|Win32.ActiveCfg = Debug|Win32
+		{DB1EB5AA-8626-B443-BCF4-4716598458C0}.Debug|Win32.Build.0 = Debug|Win32
+		{DB1EB5AA-8626-B443-BCF4-4716598458C0}.Debug|x64.ActiveCfg = Debug|x64
+		{DB1EB5AA-8626-B443-BCF4-4716598458C0}.Release|Win32.ActiveCfg = Release|Win32
+		{DB1EB5AA-8626-B443-BCF4-4716598458C0}.Release|Win32.Build.0 = Release|Win32
+		{DB1EB5AA-8626-B443-BCF4-4716598458C0}.Release|x64.ActiveCfg = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{435C6BA3-7317-4471-8064-98564503D8DF} = {AFB7C96F-509C-40A4-BF53-4D74D56AAC44}
+	EndGlobalSection
+EndGlobal

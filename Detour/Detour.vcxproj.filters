@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClInclude Include="Include\DetourAlloc.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DetourAssert.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DetourCommon.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DetourMath.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DetourNavMesh.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DetourNavMeshBuilder.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DetourNavMeshQuery.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DetourNode.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DetourStatus.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Source\DetourAlloc.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\DetourCommon.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\DetourNavMesh.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\DetourNavMeshBuilder.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\DetourNavMeshQuery.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\DetourNode.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source">
+      <UniqueIdentifier>{d6498df8-3faf-419f-b961-9bd98eb3296e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Include">
+      <UniqueIdentifier>{28396dbf-74dc-41c0-a1e0-3384bded1e45}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

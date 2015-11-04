@@ -1,0 +1,332 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{DB1EB5AA-8626-B443-BCF4-4716598458C0}</ProjectGuid>
+    <RootNamespace>RecastDemo</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <TargetPlatformVersion>10.0.10069.0</TargetPlatformVersion>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <OutDir>$(SolutionDir)Bin\Debug\</OutDir>
+    <IntDir>obj\Debug\RecastDemo\</IntDir>
+    <TargetName>RecastDemo</TargetName>
+    <TargetExt>.exe</TargetExt>
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <TargetName>RecastDemo</TargetName>
+    <TargetExt>.exe</TargetExt>
+    <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)Bin\Debug\</OutDir>
+    <IntDir>obj\Debug\RecastDemo\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)Bin\Release</OutDir>
+    <IntDir>obj\Release\RecastDemo\</IntDir>
+    <TargetName>RecastDemo</TargetName>
+    <TargetExt>.exe</TargetExt>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <TargetName>RecastDemo</TargetName>
+    <TargetExt>.exe</TargetExt>
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)Bin\Release</OutDir>
+    <IntDir>obj\Release\RecastDemo\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>STB_TRUETYPE_IMPLEMENTATION;STB_IMAGE_IMPLEMENTATION;STB_RECT_PACK_IMPLEMENTATION;DEBUG;WIN32;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <SmallerTypeCheck>true</SmallerTypeCheck>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level4</WarningLevel>
+      <ExceptionHandling>false</ExceptionHandling>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <ProgramDataBaseFileName>$(OutDir)RecastDemo.pdb</ProgramDataBaseFileName>
+      <AdditionalIncludeDirectories>$(SolutionDir)Common\Include;$(SolutionDir)RecastDemo\Contrib\imgui\examples\sdl_opengl_example;$(SolutionDir)RecastDemo\Include;$(SolutionDir)RecastDemo\Contrib\stb;$(SolutionDir)RecastDemo\Contrib\fastlz;$(SolutionDir)DebugUtils\Include;$(SolutionDir)Detour\Include;$(SolutionDir)DetourCrowd\Include;$(SolutionDir)DetourTileCache\Include;$(SolutionDir)Recast\Include;$(SolutionDir)RecastDemo\Contrib\SDL\include;$(SolutionDir)RecastDemo\Contrib\imgui</AdditionalIncludeDirectories>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>DEBUG;WIN32;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>Include;Contrib;Contrib\fastlz;..\DebugUtils\Include;..\Detour\Include;..\DetourCrowd\Include;..\DetourTileCache\Include;..\Recast\Include;Contrib\SDL\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>opengl32.lib;glu32.lib;sdl2main.lib;sdl2.lib;Recast.lib;DebugUtils.lib;Detour.lib;DetourCrowd.lib;DetourTileCache.lib</AdditionalDependencies>
+      <OutputFile>$(OutDir)RecastDemo.exe</OutputFile>
+      <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
+      <AdditionalLibraryDirectories>$(SolutionDir)lib\Debug;$(SolutionDir)RecastDemo\Contrib\SDL\lib\win32</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>STB_TRUETYPE_IMPLEMENTATION;STB_IMAGE_IMPLEMENTATION;STB_RECT_PACK_IMPLEMENTATION;DEBUG;WIN32;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <SmallerTypeCheck>true</SmallerTypeCheck>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level4</WarningLevel>
+      <ExceptionHandling>false</ExceptionHandling>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ProgramDataBaseFileName>$(OutDir)RecastDemo.pdb</ProgramDataBaseFileName>
+      <AdditionalIncludeDirectories>$(SolutionDir)Common\Include;$(SolutionDir)RecastDemo\Contrib\imgui\examples\sdl_opengl_example;$(SolutionDir)RecastDemo\Include;$(SolutionDir)RecastDemo\Contrib\stb;$(SolutionDir)RecastDemo\Contrib\fastlz;$(SolutionDir)DebugUtils\Include;$(SolutionDir)Detour\Include;$(SolutionDir)DetourCrowd\Include;$(SolutionDir)DetourTileCache\Include;$(SolutionDir)Recast\Include;$(SolutionDir)RecastDemo\Contrib\SDL\include;$(SolutionDir)RecastDemo\Contrib\imgui</AdditionalIncludeDirectories>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>DEBUG;WIN32;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>Include;Contrib;Contrib\fastlz;..\DebugUtils\Include;..\Detour\Include;..\DetourCrowd\Include;..\DetourTileCache\Include;..\Recast\Include;Contrib\SDL\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>opengl32.lib;glu32.lib;sdl2main.lib;sdl2.lib;Recast.lib;DebugUtils.lib;Detour.lib;DetourCrowd.lib;DetourTileCache.lib</AdditionalDependencies>
+      <OutputFile>$(OutDir)RecastDemo.exe</OutputFile>
+      <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
+      <AdditionalLibraryDirectories>$(SolutionDir)lib\Debug;$(SolutionDir)RecastDemo\Contrib\SDL\lib\win32</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>Full</Optimization>
+      <AdditionalIncludeDirectories>$(SolutionDir)Common\Include;$(SolutionDir)RecastDemo\Contrib\imgui\examples\sdl_opengl_example;$(SolutionDir)RecastDemo\Include;$(SolutionDir)RecastDemo\Contrib\stb;$(SolutionDir)RecastDemo\Contrib\fastlz;$(SolutionDir)DebugUtils\Include;$(SolutionDir)Detour\Include;$(SolutionDir)DetourCrowd\Include;$(SolutionDir)DetourTileCache\Include;$(SolutionDir)Recast\Include;$(SolutionDir)RecastDemo\Contrib\SDL\include;$(SolutionDir)RecastDemo\Contrib\imgui</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>STB_TRUETYPE_IMPLEMENTATION;STB_IMAGE_IMPLEMENTATION;STB_RECT_PACK_IMPLEMENTATION;NDEBUG;WIN32;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>false</MinimalRebuild>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level4</WarningLevel>
+      <ExceptionHandling>false</ExceptionHandling>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ProgramDataBaseFileName>$(OutDir)RecastDemo.pdb</ProgramDataBaseFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;WIN32;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>Include;Contrib;Contrib\fastlz;..\DebugUtils\Include;..\Detour\Include;..\DetourCrowd\Include;..\DetourTileCache\Include;..\Recast\Include;Contrib\SDL\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>opengl32.lib;glu32.lib;sdl2main.lib;sdl2.lib;Recast.lib;DebugUtils.lib;Detour.lib;DetourCrowd.lib;DetourTileCache.lib</AdditionalDependencies>
+      <OutputFile>$(OutDir)RecastDemo.exe</OutputFile>
+      <AdditionalLibraryDirectories>$(SolutionDir)lib\Release;$(SolutionDir)RecastDemo\Contrib\SDL\SDL2-2.0.3\lib\x86</AdditionalLibraryDirectories>
+      <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <Optimization>Full</Optimization>
+      <AdditionalIncludeDirectories>$(SolutionDir)Common\Include;$(SolutionDir)RecastDemo\Contrib\imgui\examples\sdl_opengl_example;$(SolutionDir)RecastDemo\Include;$(SolutionDir)RecastDemo\Contrib\stb;$(SolutionDir)RecastDemo\Contrib\fastlz;$(SolutionDir)DebugUtils\Include;$(SolutionDir)Detour\Include;$(SolutionDir)DetourCrowd\Include;$(SolutionDir)DetourTileCache\Include;$(SolutionDir)Recast\Include;$(SolutionDir)RecastDemo\Contrib\SDL\include;$(SolutionDir)RecastDemo\Contrib\imgui</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>STB_TRUETYPE_IMPLEMENTATION;STB_IMAGE_IMPLEMENTATION;STB_RECT_PACK_IMPLEMENTATION;NDEBUG;WIN32;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>false</MinimalRebuild>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level4</WarningLevel>
+      <ExceptionHandling>false</ExceptionHandling>
+      <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <FloatingPointModel>Fast</FloatingPointModel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ProgramDataBaseFileName>$(OutDir)RecastDemo.pdb</ProgramDataBaseFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>NDEBUG;WIN32;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>Include;Contrib;Contrib\fastlz;..\DebugUtils\Include;..\Detour\Include;..\DetourCrowd\Include;..\DetourTileCache\Include;..\Recast\Include;Contrib\SDL\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ResourceCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>opengl32.lib;glu32.lib;sdl2main.lib;sdl2.lib;Recast.lib;DebugUtils.lib;Detour.lib;DetourCrowd.lib;DetourTileCache.lib</AdditionalDependencies>
+      <OutputFile>$(OutDir)RecastDemo.exe</OutputFile>
+      <AdditionalLibraryDirectories>$(SolutionDir)lib\Release;$(SolutionDir)RecastDemo\Contrib\SDL\lib\win32</AdditionalLibraryDirectories>
+      <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="Contrib\imgui\examples\sdl_opengl_example\imgui_impl_sdl.h" />
+    <ClInclude Include="Contrib\imgui\imconfig.h" />
+    <ClInclude Include="Contrib\imgui\imgui.h" />
+    <ClInclude Include="Contrib\imgui\imgui_internal.h" />
+    <ClInclude Include="Contrib\stb\stb_image.h" />
+    <ClInclude Include="Contrib\stb\stb_rect_pack.h" />
+    <ClInclude Include="Contrib\stb\stb_textedit.h" />
+    <ClInclude Include="Contrib\stb\stb_truetype.h" />
+    <ClInclude Include="Include\ChunkyTriMesh.h" />
+    <ClInclude Include="Include\ConvexVolumeTool.h" />
+    <ClInclude Include="Include\CrowdTool.h" />
+    <ClInclude Include="Include\Filelist.h" />
+    <ClInclude Include="Include\InputGeom.h" />
+    <ClInclude Include="Include\MeshLoaderObj.h" />
+    <ClInclude Include="Include\NavMeshPruneTool.h" />
+    <ClInclude Include="Include\NavMeshTesterTool.h" />
+    <ClInclude Include="Include\OffMeshConnectionTool.h" />
+    <ClInclude Include="Include\PerfTimer.h" />
+    <ClInclude Include="Include\RecastTool.h" />
+    <ClInclude Include="Include\Sample.h" />
+    <ClInclude Include="Include\SampleInterfaces.h" />
+    <ClInclude Include="Include\Sample_Debug.h" />
+    <ClInclude Include="Include\Sample_SoloMesh.h" />
+    <ClInclude Include="Include\Sample_TempObstacles.h" />
+    <ClInclude Include="Include\Sample_TileMesh.h" />
+    <ClInclude Include="Include\SDLMain.h" />
+    <ClInclude Include="Include\SlideShow.h" />
+    <ClInclude Include="Include\TestCase.h" />
+    <ClInclude Include="Include\ValueHistory.h" />
+    <ClInclude Include="Contrib\fastlz\fastlz.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Contrib\imgui\examples\sdl_opengl_example\imgui_impl_sdl.cpp" />
+    <ClCompile Include="Contrib\imgui\imgui.cpp" />
+    <ClCompile Include="Contrib\imgui\imgui_demo.cpp" />
+    <ClCompile Include="Contrib\imgui\imgui_draw.cpp" />
+    <ClCompile Include="Source\ChunkyTriMesh.cpp" />
+    <ClCompile Include="Source\ConvexVolumeTool.cpp" />
+    <ClCompile Include="Source\CrowdTool.cpp" />
+    <ClCompile Include="Source\Filelist.cpp" />
+    <ClCompile Include="Source\InputGeom.cpp" />
+    <ClCompile Include="Source\main.cpp" />
+    <ClCompile Include="Source\MeshLoaderObj.cpp" />
+    <ClCompile Include="Source\NavMeshPruneTool.cpp" />
+    <ClCompile Include="Source\NavMeshTesterTool.cpp" />
+    <ClCompile Include="Source\OffMeshConnectionTool.cpp" />
+    <ClCompile Include="Source\PerfTimer.cpp" />
+    <ClCompile Include="Source\RecastTool.cpp" />
+    <ClCompile Include="Source\Sample.cpp" />
+    <ClCompile Include="Source\SampleInterfaces.cpp" />
+    <ClCompile Include="Source\Sample_Debug.cpp" />
+    <ClCompile Include="Source\Sample_SoloMesh.cpp" />
+    <ClCompile Include="Source\Sample_TempObstacles.cpp" />
+    <ClCompile Include="Source\Sample_TileMesh.cpp" />
+    <ClCompile Include="Source\SlideShow.cpp" />
+    <ClCompile Include="Source\TestCase.cpp" />
+    <ClCompile Include="Source\ValueHistory.cpp" />
+    <ClCompile Include="Contrib\fastlz\fastlz.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="DebugUtils.vcxproj">
+      <Project>{4EE33160-BC79-BF45-9958-361201AF1A5C}</Project>
+    </ProjectReference>
+    <ProjectReference Include="Detour.vcxproj">
+      <Project>{4AED77DF-9F81-1743-9B8F-CCC65DDBEB82}</Project>
+    </ProjectReference>
+    <ProjectReference Include="DetourCrowd.vcxproj">
+      <Project>{3B1DB923-9509-3245-B04A-8C88458A8CBE}</Project>
+    </ProjectReference>
+    <ProjectReference Include="DetourTileCache.vcxproj">
+      <Project>{7CD5C1D2-EA92-AF4F-B8DD-995C85EDC3A1}</Project>
+    </ProjectReference>
+    <ProjectReference Include="Recast.vcxproj">
+      <Project>{4A2F720A-8A1B-C746-930D-8FA110BF3D0A}</Project>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Meshes\dungeon.obj">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Meshes\nav_test.obj">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Tests\movement_test.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Tests\nav_mesh_test.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Tests\raycast_test.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="DroidSans.ttf">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ToRootFile Include="$(SolutionDir)RecastDemo\Contrib\SDL\lib\win32\SDL2.dll" />
+  </ItemGroup>
+  <Target Name="CopyFilesToRoot" AfterTargets="Build">
+    <Copy SourceFiles="@(ToRootFile)" DestinationFolder="$(OutDir)" />
+  </Target>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

@@ -3,6 +3,7 @@
 [![The zlib/libpng License](https://img.shields.io/badge/license-zlib-green.svg)](http://opensource.org/licenses/zlib)
 [![ImGui Status](https://img.shields.io/badge/ImGui-b168c72-green.svg)](https://github.com/ocornut/imgui)
 [![FastLZ Status](https://img.shields.io/badge/FastLZ-f121734-green.svg)](https://github.com/ariya/FastLZ)
+[![stb single-file public domain libraries for C/C++](https://img.shields.io/badge/stb-702c5bf-green.svg)](https://github.com/nothings/stb)
 
 ![screenshot of a navmesh baked with the sample program](/RecastDemo/screenshot.png?raw=true)
 

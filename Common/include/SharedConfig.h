@@ -5,8 +5,6 @@
 //#define DT_POLYREF64
 
 //#define DT_USE64BITAREAFLAGS
-//
-//#define DT_USE64BITAREAFLAGS
 
 #include <stdint.h>
 

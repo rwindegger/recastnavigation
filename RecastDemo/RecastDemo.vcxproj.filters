@@ -1,0 +1,201 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Include">
+      <UniqueIdentifier>{43C11D56-ACEF-FF4C-90AD-0AE8DD25BD74}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source">
+      <UniqueIdentifier>{CC471092-F180-D84F-B2D0-98E9A3DA62B3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Contrib">
+      <UniqueIdentifier>{BE860EFB-83BA-ED45-9E4D-AA849A6851D3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Contrib\fastlz">
+      <UniqueIdentifier>{C8862E03-3E2A-5240-8585-B6518ABA6517}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Contrib\imgui">
+      <UniqueIdentifier>{dcdd008d-00e6-40aa-a96a-67f4cae925b4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Contrib\imgui\examples">
+      <UniqueIdentifier>{8b68c7df-850f-4134-938b-fbecc319e5d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Contrib\imgui\examples\sdl_opengl_example">
+      <UniqueIdentifier>{11ee81c4-b1cb-4b6f-997e-53ff6fb325c0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Contrib\stb">
+      <UniqueIdentifier>{b6508536-c72c-4660-9f37-879ce2273ce5}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Include\ChunkyTriMesh.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\ConvexVolumeTool.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\CrowdTool.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Filelist.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\InputGeom.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MeshLoaderObj.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\NavMeshPruneTool.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\NavMeshTesterTool.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\OffMeshConnectionTool.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\PerfTimer.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Sample.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\SampleInterfaces.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Sample_Debug.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Sample_SoloMesh.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Sample_TempObstacles.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Sample_TileMesh.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\SDLMain.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\SlideShow.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\TestCase.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\ValueHistory.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Contrib\fastlz\fastlz.h">
+      <Filter>Contrib\fastlz</Filter>
+    </ClInclude>
+    <ClInclude Include="Contrib\imgui\imconfig.h">
+      <Filter>Contrib\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Contrib\imgui\imgui.h">
+      <Filter>Contrib\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Contrib\imgui\imgui_internal.h">
+      <Filter>Contrib\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Contrib\imgui\examples\sdl_opengl_example\imgui_impl_sdl.h">
+      <Filter>Contrib\imgui\examples\sdl_opengl_example</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\RecastTool.h">
+      <Filter>Include</Filter>
+    </ClInclude>
+    <ClInclude Include="Contrib\stb\stb_image.h">
+      <Filter>Contrib\stb</Filter>
+    </ClInclude>
+    <ClInclude Include="Contrib\stb\stb_rect_pack.h">
+      <Filter>Contrib\stb</Filter>
+    </ClInclude>
+    <ClInclude Include="Contrib\stb\stb_textedit.h">
+      <Filter>Contrib\stb</Filter>
+    </ClInclude>
+    <ClInclude Include="Contrib\stb\stb_truetype.h">
+      <Filter>Contrib\stb</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Source\ChunkyTriMesh.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\ConvexVolumeTool.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\CrowdTool.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Filelist.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\InputGeom.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\main.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\MeshLoaderObj.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\NavMeshPruneTool.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\NavMeshTesterTool.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\OffMeshConnectionTool.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\PerfTimer.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Sample.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\SampleInterfaces.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Sample_Debug.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Sample_SoloMesh.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Sample_TempObstacles.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Sample_TileMesh.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\SlideShow.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\TestCase.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\ValueHistory.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="Contrib\fastlz\fastlz.c">
+      <Filter>Contrib\fastlz</Filter>
+    </ClCompile>
+    <ClCompile Include="Contrib\imgui\imgui.cpp">
+      <Filter>Contrib\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="Contrib\imgui\imgui_demo.cpp">
+      <Filter>Contrib\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="Contrib\imgui\imgui_draw.cpp">
+      <Filter>Contrib\imgui</Filter>
+    </ClCompile>
+    <ClCompile Include="Contrib\imgui\examples\sdl_opengl_example\imgui_impl_sdl.cpp">
+      <Filter>Contrib\imgui\examples\sdl_opengl_example</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\RecastTool.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
