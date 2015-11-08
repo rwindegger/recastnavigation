@@ -20,21 +20,21 @@ after_build:
   # Copy all required files to output
   - ps: >-
     mkdir .\output\bin
-	mkdir .\output\lib
-	mkdir .\output\include
-	Copy-Item .\Bin\Release -Destination .\output\bin -Recurse -Container
-	Copy-Item .\Lib\Release\*.lib -Destination .\output\lib
-	Get-ChildItem .\Common\Include -Filter "*.h" | % { Copy-Item -Path $_.FullName -Destination ".\output\include\$($_.Name)" }
-	Get-ChildItem .\DebugUtils\Include -Filter "*.h" | % { Copy-Item -Path $_.FullName -Destination ".\output\include\$($_.Name)" }
-	Get-ChildItem .\Detour\Include -Filter "*.h" | % { Copy-Item -Path $_.FullName -Destination ".\output\include\$($_.Name)" }
-	Get-ChildItem .\DetourCrowd\Include -Filter "*.h" | % { Copy-Item -Path $_.FullName -Destination ".\output\include\$($_.Name)" }
-	Get-ChildItem .\DetourTileCache\Include -Filter "*.h" | % { Copy-Item -Path $_.FullName -Destination ".\output\include\$($_.Name)" }
-	Get-ChildItem .\Recast\Include -Filter "*.h" | % { Copy-Item -Path $_.FullName -Destination ".\output\include\$($_.Name)" }
-	Copy-Item .\License.txt .\output\License.txt
+    mkdir .\output\lib
+    mkdir .\output\include
+    Copy-Item .\Bin\Release -Destination .\output\bin -Recurse -Container
+    Copy-Item .\Lib\Release\*.lib -Destination .\output\lib
+    Get-ChildItem .\Common\Include -Filter "*.h" | % { Copy-Item -Path $_.FullName -Destination ".\output\include\$($_.Name)" }
+    Get-ChildItem .\DebugUtils\Include -Filter "*.h" | % { Copy-Item -Path $_.FullName -Destination ".\output\include\$($_.Name)" }
+    Get-ChildItem .\Detour\Include -Filter "*.h" | % { Copy-Item -Path $_.FullName -Destination ".\output\include\$($_.Name)" }
+    Get-ChildItem .\DetourCrowd\Include -Filter "*.h" | % { Copy-Item -Path $_.FullName -Destination ".\output\include\$($_.Name)" }
+    Get-ChildItem .\DetourTileCache\Include -Filter "*.h" | % { Copy-Item -Path $_.FullName -Destination ".\output\include\$($_.Name)" }
+    Get-ChildItem .\Recast\Include -Filter "*.h" | % { Copy-Item -Path $_.FullName -Destination ".\output\include\$($_.Name)" }
+    Copy-Item .\License.txt .\output\License.txt
   - cmd: >-
-	cd output
-	7z a release.zip *
-	cd ..
+    cd output
+    7z a release.zip *
+    cd ..
   - ps: Move-Item .\output\release.zip '.\recastnavigation-$($env:APPVEYOR_BUILD_VERSION).zip'
 
 artifacts:
