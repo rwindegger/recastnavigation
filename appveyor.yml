@@ -15,3 +15,19 @@ platform: Win32
 
 build:
   project: recastnavigation.sln
+
+after_build:
+  # Copy all required files to output
+  - ps: Copy-Item .\Bin\Release -Desitnation .\output\bin -Recurse -Container
+  - ps: Copy-Item .\Lib\Release\*.lib -Destination .\output\lib; 
+  - ps: mkdir .\output\include
+  - ps: Get-ChildItem .\DebugUtils\Include -Filter "*.h" | % { Copy-Item -Path $_.FullName -Destination ".\output\include\$($_.Name)" }
+  - ps: Get-ChildItem .\Detour*\Include -Filter "*.h" | % { Copy-Item -Path $_.FullName -Destination ".\output\include\$($_.Name)" }
+  - ps: Get-ChildItem .\Recast\Include -Filter "*.h" | % { Copy-Item -Path $_.FullName -Destination ".\output\include\$($_.Name)" }
+  - ps: Copy-Item .\License.txt .\output\License.txt
+  - cd ouput
+  - 7z a release.zip *
+
+artifacts:
+- path: output\release.zip
+  name: "recastnavigation-{version}.zip"
