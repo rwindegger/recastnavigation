@@ -7,6 +7,9 @@ install:
   # Extract it and put it in the right place.
   - cd RecastDemo/Contrib && 7z x SDL.zip && cd ../..
 
+  # Fetch the submodules
+  - git submodule update --init --recursive
+
 configuration: Release
 platform: Win32
 
