@@ -18,16 +18,22 @@ build:
 
 after_build:
   # Copy all required files to output
+  - ps: mkdir .\output\bin
   - ps: Copy-Item .\Bin\Release -Destination .\output\bin -Recurse -Container
-  - ps: Copy-Item .\Lib\Release\*.lib -Destination .\output\lib; 
+  - ps: mkdir .\output\lib
+  - ps: Copy-Item .\Lib\Release\*.lib -Destination .\output\lib
   - ps: mkdir .\output\include
+  - ps: Get-ChildItem .\Common\Include -Filter "*.h" | % { Copy-Item -Path $_.FullName -Destination ".\output\include\$($_.Name)" }
   - ps: Get-ChildItem .\DebugUtils\Include -Filter "*.h" | % { Copy-Item -Path $_.FullName -Destination ".\output\include\$($_.Name)" }
-  - ps: Get-ChildItem .\Detour*\Include -Filter "*.h" | % { Copy-Item -Path $_.FullName -Destination ".\output\include\$($_.Name)" }
+  - ps: Get-ChildItem .\Detour\Include -Filter "*.h" | % { Copy-Item -Path $_.FullName -Destination ".\output\include\$($_.Name)" }
+  - ps: Get-ChildItem .\DetourCrowd\Include -Filter "*.h" | % { Copy-Item -Path $_.FullName -Destination ".\output\include\$($_.Name)" }
+  - ps: Get-ChildItem .\DetourTileCache\Include -Filter "*.h" | % { Copy-Item -Path $_.FullName -Destination ".\output\include\$($_.Name)" }
   - ps: Get-ChildItem .\Recast\Include -Filter "*.h" | % { Copy-Item -Path $_.FullName -Destination ".\output\include\$($_.Name)" }
   - ps: Copy-Item .\License.txt .\output\License.txt
   - cd output
   - 7z a release.zip *
+  - cd ..
+  - ps: Move-Item .\output\release.zip .\recastnavigation-%appveyor_build_version%.zip
 
 artifacts:
-- path: output\release.zip
-  name: "recastnavigation-{version}.zip"
+- path: recastnavigation-{version}.zip
