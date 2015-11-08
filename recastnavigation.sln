@@ -31,6 +31,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Include", "Include", "{435C
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8C73F3B0-B790-4081-9915-6A8F714F1510}"
 	ProjectSection(SolutionItems) = preProject
+		appveyor.yml = appveyor.yml
 		Doxyfile = Doxyfile
 		License.txt = License.txt
 		README.md = README.md

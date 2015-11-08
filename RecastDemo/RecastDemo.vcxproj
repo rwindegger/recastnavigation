@@ -186,7 +186,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>opengl32.lib;glu32.lib;sdl2main.lib;sdl2.lib;Recast.lib;DebugUtils.lib;Detour.lib;DetourCrowd.lib;DetourTileCache.lib</AdditionalDependencies>
       <OutputFile>$(OutDir)RecastDemo.exe</OutputFile>
-      <AdditionalLibraryDirectories>$(SolutionDir)lib\Release;$(SolutionDir)RecastDemo\Contrib\SDL\SDL2-2.0.3\lib\x86</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(SolutionDir)lib\Release;$(SolutionDir)RecastDemo\Contrib\SDL\lib\x86</AdditionalLibraryDirectories>
       <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
     </Link>
   </ItemDefinitionGroup>
