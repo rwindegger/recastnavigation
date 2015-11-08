@@ -1,0 +1,12 @@
+os: Visual Studio 2015version: 1.0.{build}
+install:
+  # Download SDL.
+  - ps: Start-FileDownload 'https://buildbot.libsdl.org/sdl-builds/sdl-visualstudio/sdl-visualstudio-2568.zip' 'RecastDemo/Contrib/SDL.zip'
+  
+  # Extract it and put it in the right place.
+  - cd RecastDemo/Contrib && 7z x SDL.zip
+
+configuration: Release
+platform: Win32
+build:
+  project: recastnavigation.sln
