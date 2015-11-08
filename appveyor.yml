@@ -25,7 +25,7 @@ after_build:
   - ps: Get-ChildItem .\Detour*\Include -Filter "*.h" | % { Copy-Item -Path $_.FullName -Destination ".\output\include\$($_.Name)" }
   - ps: Get-ChildItem .\Recast\Include -Filter "*.h" | % { Copy-Item -Path $_.FullName -Destination ".\output\include\$($_.Name)" }
   - ps: Copy-Item .\License.txt .\output\License.txt
-  - cd ouput
+  - cd output
   - 7z a release.zip *
 
 artifacts:
