@@ -50,5 +50,5 @@ after_build:
     cd ..
 
     Move-Item .\output\release.zip ".\recastnavigation-$($env:APPVEYOR_BUILD_VERSION).zip"
-artifacts:
-- path: recastnavigation-{version}.zip
+
+    Push-AppveyorArtifact ".\recastnavigation-$($env:APPVEYOR_BUILD_VERSION).zip"
