@@ -4,6 +4,7 @@
 [![ImGui Status](https://img.shields.io/badge/ImGui-e4fb14a-green.svg)](https://github.com/ocornut/imgui)
 [![FastLZ Status](https://img.shields.io/badge/FastLZ-f121734-green.svg)](https://github.com/ariya/FastLZ)
 [![stb single-file public domain libraries for C/C++](https://img.shields.io/badge/stb-3f73dfd-green.svg)](https://github.com/nothings/stb)
+[![Build status](https://ci.appveyor.com/api/projects/status/4ar8t1hni26o7g2b?svg=true)](https://ci.appveyor.com/project/rwindegger/recastnavigation)
 
 ![screenshot of a navmesh baked with the sample program](/RecastDemo/screenshot.png?raw=true)
 
