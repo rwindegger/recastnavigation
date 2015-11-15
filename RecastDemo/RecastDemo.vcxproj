@@ -242,7 +242,7 @@
     <ClInclude Include="Include\NavMeshTesterTool.h" />
     <ClInclude Include="Include\OffMeshConnectionTool.h" />
     <ClInclude Include="Include\PerfTimer.h" />
-    <ClInclude Include="Include\RecastTool.h" />
+    <ClInclude Include="Include\RecastToolKit.h" />
     <ClInclude Include="Include\Sample.h" />
     <ClInclude Include="Include\SampleInterfaces.h" />
     <ClInclude Include="Include\Sample_Debug.h" />
@@ -271,7 +271,7 @@
     <ClCompile Include="Source\NavMeshTesterTool.cpp" />
     <ClCompile Include="Source\OffMeshConnectionTool.cpp" />
     <ClCompile Include="Source\PerfTimer.cpp" />
-    <ClCompile Include="Source\RecastTool.cpp" />
+    <ClCompile Include="Source\RecastToolKit.cpp" />
     <ClCompile Include="Source\Sample.cpp" />
     <ClCompile Include="Source\SampleInterfaces.cpp" />
     <ClCompile Include="Source\Sample_Debug.cpp" />

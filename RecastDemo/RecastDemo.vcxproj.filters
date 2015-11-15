@@ -102,9 +102,6 @@
     <ClInclude Include="Contrib\imgui\examples\sdl_opengl_example\imgui_impl_sdl.h">
       <Filter>Contrib\imgui\examples\sdl_opengl_example</Filter>
     </ClInclude>
-    <ClInclude Include="Include\RecastTool.h">
-      <Filter>Include</Filter>
-    </ClInclude>
     <ClInclude Include="Contrib\stb\stb_image.h">
       <Filter>Contrib\stb</Filter>
     </ClInclude>
@@ -116,6 +113,9 @@
     </ClInclude>
     <ClInclude Include="Contrib\stb\stb_truetype.h">
       <Filter>Contrib\stb</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\RecastToolKit.h">
+      <Filter>Include</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -194,7 +194,7 @@
     <ClCompile Include="Contrib\imgui\examples\sdl_opengl_example\imgui_impl_sdl.cpp">
       <Filter>Contrib\imgui\examples\sdl_opengl_example</Filter>
     </ClCompile>
-    <ClCompile Include="Source\RecastTool.cpp">
+    <ClCompile Include="Source\RecastToolKit.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
