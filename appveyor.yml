@@ -53,7 +53,7 @@ after_build:
     Copy-Item .\License.txt .\output\License.txt
 
   # Generate build artifact and push it to appveyor
-- ps : >-
+- ps: >-
     cd output
 
     7z a release.zip *
@@ -63,6 +63,6 @@ after_build:
     Move-Item .\output\release.zip ".\recastnavigation-$($env:APPVEYOR_BUILD_VERSION).zip"
 
     Push-AppveyorArtifact ".\recastnavigation-$($env:APPVEYOR_BUILD_VERSION).zip"
+
   # Generate doxygen output
-- ps : >-
-    doxygen.exe .\Doxyfile
+- ps: doxygen.exe .\Doxyfile
