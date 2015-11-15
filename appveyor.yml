@@ -1,5 +1,8 @@
+# Set image for the build
 os: Visual Studio 2015
+# Set version for the build
 version: 1.0.{build}
+# Install required build dependencies
 install:
   # Download SDL.
   - ps: Start-FileDownload 'https://buildbot.libsdl.org/sdl-builds/sdl-visualstudio/sdl-visualstudio-2568.zip' 'RecastDemo/Contrib/SDL.zip'
@@ -10,12 +13,18 @@ install:
   # Fetch the submodules
   - git submodule update --init --recursive
 
+  # Install doxygen
+  - choco install doxygen.portable
+
+# Set Configuration and Platform for the build
 configuration: Release
 platform: Win32
 
+# Start the build
 build:
   project: recastnavigation.sln
 
+# Execute after build commands
 after_build:
   # Copy all required files to output
 - ps: >-
@@ -43,6 +52,8 @@ after_build:
 
     Copy-Item .\License.txt .\output\License.txt
 
+  # Generate build artifact and push it to appveyor
+- ps : >-
     cd output
 
     7z a release.zip *
@@ -52,3 +63,6 @@ after_build:
     Move-Item .\output\release.zip ".\recastnavigation-$($env:APPVEYOR_BUILD_VERSION).zip"
 
     Push-AppveyorArtifact ".\recastnavigation-$($env:APPVEYOR_BUILD_VERSION).zip"
+  # Generate doxygen output
+- ps : >-
+    doxygen.exe .\Doxyfile
