@@ -15,7 +15,7 @@
 //    misrepresented as being the original software.
 // 3. This notice may not be removed or altered from any source distribution.
 //
-#include "RecastTool.h"
+#include "RecastToolKit.h"
 
 
 struct SampleItem
@@ -39,7 +39,7 @@ static SampleItem g_samples[] =
 
 static const int g_nsamples = sizeof(g_samples) / sizeof(SampleItem);
 
-RecastTool::RecastTool(int width, int height, bool presentationMode) :slideShow("slides/")
+RecastToolKit::RecastToolKit(int width, int height, bool presentationMode) :slideShow("slides/")
 {
 	m_Width = width;
 	m_Height = height;
@@ -53,7 +53,7 @@ RecastTool::RecastTool(int width, int height, bool presentationMode) :slideShow(
 	this->InitImGui();
 }
 
-RecastTool::~RecastTool()
+RecastToolKit::~RecastToolKit()
 {
 	geom.release();
 	ImGui::Shutdown();
@@ -63,7 +63,7 @@ RecastTool::~RecastTool()
 	SDL_Quit();
 }
 
-void RecastTool::InitSDL2()
+void RecastToolKit::InitSDL2()
 {
 	// Init SDL
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
@@ -90,7 +90,7 @@ void RecastTool::InitSDL2()
 	glEnable(GL_MULTISAMPLE);
 }
 
-void RecastTool::InitWindow(int width, int height)
+void RecastToolKit::InitWindow(int width, int height)
 {
 	m_Window = std::unique_ptr<SDL_Window, std::function<void(SDL_Window*)>>(
 		SDL_CreateWindow("RecastDemo", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, SDL_WINDOW_OPENGL),
@@ -106,7 +106,7 @@ void RecastTool::InitWindow(int width, int height)
 	}
 }
 
-void RecastTool::InitContext()
+void RecastToolKit::InitContext()
 {
 	m_GLContext = SDL_GL_CreateContext(m_Window.get());
 
@@ -120,7 +120,7 @@ void RecastTool::InitContext()
 	}
 }
 
-void RecastTool::InitRenderer()
+void RecastToolKit::InitRenderer()
 {
 
 	m_Renderer = std::unique_ptr<SDL_Renderer, std::function<void(SDL_Renderer*)>>(
@@ -139,7 +139,7 @@ void RecastTool::InitRenderer()
 	}
 }
 
-void RecastTool::InitImGui()
+void RecastToolKit::InitImGui()
 {
 	if (!ImGui_ImplSdl_Init(m_Window.get()))
 	{
@@ -156,7 +156,7 @@ void RecastTool::InitImGui()
 	io.Fonts->AddFontFromFileTTF("DroidSans.ttf", 15.0);
 }
 
-bool RecastTool::HandleKeyDown(SDL_Event *e)
+bool RecastToolKit::HandleKeyDown(SDL_Event *e)
 {
 	// Handle any key presses here.
 	if (e->key.keysym.sym == SDLK_ESCAPE)
@@ -237,7 +237,7 @@ bool RecastTool::HandleKeyDown(SDL_Event *e)
 	return true;
 }
 
-bool RecastTool::HandleKeyUp(SDL_Event *e)
+bool RecastToolKit::HandleKeyUp(SDL_Event *e)
 {
 	if (e->key.keysym.sym == SDLK_w)
 	{
@@ -258,7 +258,7 @@ bool RecastTool::HandleKeyUp(SDL_Event *e)
 	return true;
 }
 
-bool RecastTool::HandleMouseButtonDown(SDL_Event *e)
+bool RecastToolKit::HandleMouseButtonDown(SDL_Event *e)
 {
 	if (e->button.button == SDL_BUTTON_RIGHT)
 	{
@@ -276,7 +276,7 @@ bool RecastTool::HandleMouseButtonDown(SDL_Event *e)
 	return true;
 }
 
-bool RecastTool::HandleMouseButtonUp(SDL_Event *e)
+bool RecastToolKit::HandleMouseButtonUp(SDL_Event *e)
 {
 	// Handle mouse clicks here.
 	if (e->button.button == SDL_BUTTON_RIGHT)
@@ -299,7 +299,7 @@ bool RecastTool::HandleMouseButtonUp(SDL_Event *e)
 	return true;
 }
 
-bool RecastTool::HandleMouseMotion(SDL_Event *e)
+bool RecastToolKit::HandleMouseMotion(SDL_Event *e)
 {
 	mx = e->motion.x;
 	my = m_Height - 1 - e->motion.y;
@@ -315,7 +315,7 @@ bool RecastTool::HandleMouseMotion(SDL_Event *e)
 	return true;
 }
 
-void RecastTool::HandleInput()
+void RecastToolKit::HandleInput()
 {
 	// Handle input events.
 	SDL_Event event;
@@ -348,7 +348,7 @@ void RecastTool::HandleInput()
 	}
 }
 
-float RecastTool::UpdateTimeStamp()
+float RecastToolKit::UpdateTimeStamp()
 {
 	Uint32	time = SDL_GetTicks();
 	float	dt = (time - m_LastTime) / 1000.0f;
@@ -357,7 +357,7 @@ float RecastTool::UpdateTimeStamp()
 	return dt;
 }
 
-void RecastTool::ProcessHitTest()
+void RecastToolKit::ProcessHitTest()
 {
 	// Hit test mesh.
 	if (processHitTest && geom && sample)
@@ -391,7 +391,7 @@ void RecastTool::ProcessHitTest()
 	}
 }
 
-void RecastTool::UpdateSimulation(float dt)
+void RecastToolKit::UpdateSimulation(float dt)
 {
 	// Update sample simulation.
 	const float SIM_RATE = 20;
@@ -407,7 +407,7 @@ void RecastTool::UpdateSimulation(float dt)
 	}
 }
 
-void RecastTool::ClampFrameRate(float dt)
+void RecastToolKit::ClampFrameRate(float dt)
 {
 	// Clamp the framerate so that we do not hog all the CPU.
 	const float MIN_FRAME_TIME = 1.0f / 40.0f;
@@ -419,7 +419,7 @@ void RecastTool::ClampFrameRate(float dt)
 	}
 }
 
-void RecastTool::RenderSampleSelection()
+void RecastToolKit::RenderSampleSelection()
 {
 	std::shared_ptr<Sample> newSample = nullptr;
 
@@ -460,7 +460,7 @@ void RecastTool::RenderSampleSelection()
 	}
 }
 
-void RecastTool::RenderLevelSelection()
+void RecastToolKit::RenderLevelSelection()
 {
 	int levelToLoad = -1;
 
@@ -514,7 +514,7 @@ void RecastTool::RenderLevelSelection()
 	}
 }
 
-void RecastTool::RenderPropertiesWindow()
+void RecastToolKit::RenderPropertiesWindow()
 {
 	if (showProperties)
 	{
@@ -590,7 +590,7 @@ void RecastTool::RenderPropertiesWindow()
 	}
 }
 
-void RecastTool::RenderToolsWindow()
+void RecastToolKit::RenderToolsWindow()
 {
 	// Tools
 	if (!showTestCases && showTools)
@@ -605,7 +605,7 @@ void RecastTool::RenderToolsWindow()
 	}
 }
 
-void RecastTool::RenderLogWindow()
+void RecastToolKit::RenderLogWindow()
 {
 	if (showLog)
 	{
@@ -619,7 +619,7 @@ void RecastTool::RenderLogWindow()
 	}
 }
 
-void RecastTool::RenderTestCaseWindow()
+void RecastToolKit::RenderTestCaseWindow()
 {
 	// Test cases
 	if (showTestCases)
@@ -718,7 +718,7 @@ void RecastTool::RenderTestCaseWindow()
 	}
 }
 
-void RecastTool::Update(float dt)
+void RecastToolKit::Update(float dt)
 {
 	// Update and render
 	glViewport(0, 0, m_Width, m_Height);
@@ -771,7 +771,7 @@ void RecastTool::Update(float dt)
 	camz += movey * (float)modelviewMatrix[10];
 }
 
-void RecastTool::Render(float dt)
+void RecastToolKit::Render(float dt)
 {
 	glEnable(GL_FOG);
 	if (sample)
@@ -784,7 +784,7 @@ void RecastTool::Render(float dt)
 	SDL_GL_SwapWindow(m_Window.get());
 }
 
-void RecastTool::RenderGui(float dt)
+void RecastToolKit::RenderGui(float dt)
 {
 	// Render GUI
 	glDisable(GL_DEPTH_TEST);
@@ -851,7 +851,7 @@ void RecastTool::RenderGui(float dt)
 	ImGui::Render();
 }
 
-void RecastTool::Run()
+void RecastToolKit::Run()
 {
 	m_LastTime = SDL_GetTicks();
 
@@ -880,7 +880,7 @@ void RecastTool::Run()
 	}
 }
 
-void RecastTool::DrawMarker(float markerPosition[3], GLdouble projectionMatrix[16], GLdouble modelviewMatrix[16], GLint viewport[4])
+void RecastToolKit::DrawMarker(float markerPosition[3], GLdouble projectionMatrix[16], GLdouble modelviewMatrix[16], GLint viewport[4])
 {
 	GLdouble windowCoords[3];
 	if (gluProject((GLdouble)markerPosition[0], (GLdouble)markerPosition[1], (GLdouble)markerPosition[2],
@@ -903,7 +903,7 @@ void RecastTool::DrawMarker(float markerPosition[3], GLdouble projectionMatrix[1
 	}
 }
 
-void RecastTool::ResetCameraAndFog(const std::unique_ptr<InputGeom>& geom, const std::shared_ptr<Sample>& sample, float & camx, float & camy, float & camz, float & camr, float & rx, float & ry)
+void RecastToolKit::ResetCameraAndFog(const std::unique_ptr<InputGeom>& geom, const std::shared_ptr<Sample>& sample, float & camx, float & camy, float & camz, float & camr, float & rx, float & ry)
 {
 	if (geom || sample)
 	{

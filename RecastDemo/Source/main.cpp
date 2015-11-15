@@ -16,7 +16,7 @@
 // 3. This notice may not be removed or altered from any source distribution.
 //
 
-#include "RecastTool.h"
+#include "RecastToolKit.h"
 
 #define _USE_MATH_DEFINES
 #include <stdio.h>
@@ -37,7 +37,7 @@ int width = 1440, height = 900;
 int main(int argc, char* argv[])
 {
 	bool presentationMode = false;
-	RecastTool* tool = new RecastTool(width, height, presentationMode);
+	RecastToolKit* tool = new RecastToolKit(width, height, presentationMode);
 	tool->Run();
 	delete tool;
 

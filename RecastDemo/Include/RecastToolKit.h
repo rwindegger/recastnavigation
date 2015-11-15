@@ -45,7 +45,7 @@
 
 #pragma once
 
-class RecastTool
+class RecastToolKit
 {
 private:
 	std::unique_ptr<SDL_Window, std::function<void(SDL_Window*)>> m_Window = nullptr;
@@ -145,8 +145,8 @@ private:
 	bool HandleMouseButtonUp(SDL_Event *e);
 	bool HandleMouseMotion(SDL_Event *e);
 public:
-	RecastTool(int width, int height, bool presentationMode);
-	~RecastTool();
+	RecastToolKit(int width, int height, bool presentationMode);
+	~RecastToolKit();
 	void Run();
 	void DrawMarker(float markerPosition[3], GLdouble projectionMatrix[16], GLdouble modelviewMatrix[16], GLint viewport[4]);
 	void ResetCameraAndFog(const std::unique_ptr<InputGeom>& geom, const std::shared_ptr<Sample>& sample, float& camx, float& camy, float& camz, float& camr, float& rx, float& ry);
