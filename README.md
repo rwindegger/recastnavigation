@@ -1,7 +1,7 @@
 # Recast & Detour
 
 [![The zlib/libpng License](https://img.shields.io/badge/license-zlib-green.svg)](http://opensource.org/licenses/zlib)
-[![ImGui Status](https://img.shields.io/badge/ImGui-f87deff-green.svg)](https://github.com/ocornut/imgui)
+[![ImGui Status](https://img.shields.io/badge/ImGui-5809508-green.svg)](https://github.com/ocornut/imgui)
 [![FastLZ Status](https://img.shields.io/badge/FastLZ-f121734-green.svg)](https://github.com/ariya/FastLZ)
 [![stb single-file public domain libraries for C/C++](https://img.shields.io/badge/stb-3f73dfd-green.svg)](https://github.com/nothings/stb)
 [![Build status](https://ci.appveyor.com/api/projects/status/4ar8t1hni26o7g2b?svg=true)](https://ci.appveyor.com/project/rwindegger/recastnavigation)
