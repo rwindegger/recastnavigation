@@ -78,11 +78,12 @@ on_success:
   - git config --global user.email "rene@windegger.wtf"
   - git config --global user.name "Automated Build"
   - cd .\Docs\html
+  - git checkout gh-pages
   - git add *
   - git commit -m "Automated build updated Documentation."
   - git show-ref
-  - git push origin HEAD:/refs/remotes/origin/gh-pages
+  - git push origin gh-pages
   - cd ..\..
   - git add .\Docs\html
   - git commit -m "Automated build updated Documentation."
-  - git push origin HEAD:/refs/remotes/origin/master
+  - git push origin master
