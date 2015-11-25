@@ -1,10 +1,11 @@
 # Recast & Detour
 
+[![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg)](http://rwindegger.github.io/recastnavigation)
+[![Build status](https://ci.appveyor.com/api/projects/status/4ar8t1hni26o7g2b?svg=true)](https://ci.appveyor.com/project/rwindegger/recastnavigation)
 [![The zlib/libpng License](https://img.shields.io/badge/license-zlib-green.svg)](http://opensource.org/licenses/zlib)
 [![ImGui Status](https://img.shields.io/badge/ImGui-60b75d7-green.svg)](https://github.com/ocornut/imgui)
 [![FastLZ Status](https://img.shields.io/badge/FastLZ-f121734-green.svg)](https://github.com/ariya/FastLZ)
 [![stb single-file public domain libraries for C/C++](https://img.shields.io/badge/stb-657eda2-green.svg)](https://github.com/nothings/stb)
-[![Build status](https://ci.appveyor.com/api/projects/status/4ar8t1hni26o7g2b?svg=true)](https://ci.appveyor.com/project/rwindegger/recastnavigation)
 
 ![screenshot of a navmesh baked with the sample program](/RecastDemo/screenshot.png?raw=true)
 
