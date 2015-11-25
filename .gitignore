@@ -277,3 +277,5 @@ Storage.dat
 Index.dat
 output/
 Docs/xml/
+Docs/_build/
+RecastDemo/imgui.ini
