@@ -38,10 +38,27 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{F29D2884-FF12-435B-A8F8-1201D3D5FFB0}"
+	ProjectSection(SolutionItems) = preProject
+		Docs\DoxygenLayout.xml = Docs\DoxygenLayout.xml
+		Docs\footer.html = Docs\footer.html
+		Docs\header.html = Docs\header.html
+		Docs\Readme.md = Docs\Readme.md
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Extern", "Extern", "{3F603262-3C94-4CEF-A70D-BC75D900E276}"
 	ProjectSection(SolutionItems) = preProject
 		Docs\Extern\Recast_api.txt = Docs\Extern\Recast_api.txt
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Images", "Images", "{6CD78021-C2AE-424A-B4D3-FBFD71C67413}"
+	ProjectSection(SolutionItems) = preProject
+		Docs\Images\recast_intro.png = Docs\Images\recast_intro.png
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Conceptual", "Conceptual", "{26723809-A3E9-452F-81FF-2188A5612371}"
+	ProjectSection(SolutionItems) = preProject
+		Docs\Conceptual\license_c.txt = Docs\Conceptual\license_c.txt
+		Docs\Conceptual\mainpage_c.txt = Docs\Conceptual\mainpage_c.txt
 	EndProjectSection
 EndProject
 Global
@@ -105,5 +122,7 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{435C6BA3-7317-4471-8064-98564503D8DF} = {AFB7C96F-509C-40A4-BF53-4D74D56AAC44}
 		{3F603262-3C94-4CEF-A70D-BC75D900E276} = {F29D2884-FF12-435B-A8F8-1201D3D5FFB0}
+		{6CD78021-C2AE-424A-B4D3-FBFD71C67413} = {F29D2884-FF12-435B-A8F8-1201D3D5FFB0}
+		{26723809-A3E9-452F-81FF-2188A5612371} = {F29D2884-FF12-435B-A8F8-1201D3D5FFB0}
 	EndGlobalSection
 EndGlobal
