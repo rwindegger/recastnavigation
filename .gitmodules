@@ -10,3 +10,7 @@
 	path = RecastDemo/Contrib/stb
 	url = https://github.com/nothings/stb.git
 	branch = master
+[submodule "Docs/html"]
+	path = Docs/html
+	url = https://github.com/rwindegger/recastnavigation.git
+	branch = gh-pages
