@@ -57,33 +57,35 @@ after_build:
 
     Copy-Item .\License.txt .\output\License.txt
 
-  # Generate build artifact and push it to appveyor
-- ps: >-
-    cd output
 
-    7z a release.zip *
-
-    cd ..
-
-    Move-Item .\output\release.zip ".\recastnavigation-$($env:APPVEYOR_BUILD_VERSION).zip"
-
-    Push-AppveyorArtifact ".\recastnavigation-$($env:APPVEYOR_BUILD_VERSION).zip"
 
   # Generate doxygen output
+- ps: Add-Content .\Doxyfile "PROJECT_NUMBER = $($env:APPVEYOR_BUILD_VERSION)"
 - ps: doxygen.exe .\Doxyfile
 
 on_success:
+  # Generate build artifact and push it to appveyor
+  - cd output
+  - 7z a release.zip *
+  - cd ..
+  - ps: Move-Item .\output\release.zip ".\recastnavigation-$($env:APPVEYOR_BUILD_VERSION).zip"
+  - ps: Push-AppveyorArtifact ".\recastnavigation-$($env:APPVEYOR_BUILD_VERSION).zip"
+
+  # Setup Git
   - git config --global credential.helper store
   - ps: Add-Content "$env:USERPROFILE\.git-credentials" "https://$($env:access_token):x-oauth-basic@github.com`n"
   - git config --global user.email "rene@windegger.wtf"
   - git config --global user.name "Automated Build"
+  # Checkout master
+  - git checkout master
+  # Build Documentation and commit to gh-pages
   - cd .\Docs\html
   - git checkout gh-pages
   - git add *
   - git commit -m "Automated build updated Documentation."
-  - git show-ref
   - git push origin gh-pages
   - cd ..\..
+  # Update the Documentation submodule.
   - git add .\Docs\html
   - git commit -m "Automated build updated Documentation."
   - git push origin master
