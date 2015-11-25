@@ -81,8 +81,8 @@ on_success:
   - git add *
   - git commit -m "Automated build updated Documentation."
   - git show-ref
-  - git push origin gh-pages
+  - git push origin HEAD:/refs/remotes/origin/gh-pages
   - cd ..\..
   - git add .\Docs\html
   - git commit -m "Automated build updated Documentation."
-  - git push origin master
+  - git push origin HEAD:/refs/remotes/origin/master
