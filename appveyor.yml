@@ -2,6 +2,11 @@
 os: Visual Studio 2015
 # Set version for the build
 version: 1.0.{build}
+
+environment:
+  access_token:
+    secure: +VlrBqO8lzeI+ASXb0sRHQdZAVvKsDqCQq2SdqDRtgy0BcZFaL7SjJVuumXiOc+M
+
 # Install required build dependencies
 install:
   # Download SDL.
@@ -66,3 +71,17 @@ after_build:
 
   # Generate doxygen output
 - ps: doxygen.exe .\Doxyfile
+
+on_success:
+  - git config --global credential.helper store
+  - ps: Add-Content "$env:USERPROFILE\.git-credentials" "https://$($env:access_token):x-oauth-basic@github.com`n"
+  - git config --global user.email "rene@windegger.wtf"
+  - git config --global user.name "Automated Build"
+  - cd .\Docs\html
+  - git add *
+  - git commit -m "Automated build updated Documentation."
+  - git push
+  - cd ..\..
+  - git add .\Docs\html
+  - git commit -m "Automated build updated Documentation."
+  - git push
