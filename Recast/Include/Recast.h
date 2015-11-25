@@ -150,23 +150,23 @@ protected:
 	///  @param[in]		category	The category of the message.
 	///  @param[in]		msg			The formatted message.
 	///  @param[in]		len			The length of the formatted message.
-	virtual void doLog(const rcLogCategory /*category*/, const char* /*msg*/, const int /*len*/) {}
+	virtual void doLog(const rcLogCategory category, const char* msg, const int len) {}
 
 	/// Clears all timers. (Resets all to unused.)
 	virtual void doResetTimers() {}
 
 	/// Starts the specified performance timer.
 	///  @param[in]		label	The category of timer.
-	virtual void doStartTimer(const rcTimerLabel /*label*/) {}
+	virtual void doStartTimer(const rcTimerLabel label) {}
 
 	/// Stops the specified performance timer.
 	///  @param[in]		label	The category of the timer.
-	virtual void doStopTimer(const rcTimerLabel /*label*/) {}
+	virtual void doStopTimer(const rcTimerLabel label) {}
 
 	/// Returns the total accumulated time of the specified performance timer.
 	///  @param[in]		label	The category of the timer.
 	///  @return The accumulated time of the timer, or -1 if timers are disabled or the timer has never been started.
-	virtual int doGetAccumulatedTime(const rcTimerLabel /*label*/) const { return -1; }
+	virtual int doGetAccumulatedTime(const rcTimerLabel label) const { return -1; }
 
 	/// True if logging is enabled.
 	bool m_logEnabled;
@@ -208,8 +208,7 @@ struct rcConfig
 
 	/// Minimum floor to 'ceiling' height that will still allow the floor area to 
 	/// be considered walkable. [Limit: >= 3] [Units: vx] 
-	int walkableHeightStand;
-	int walkableHeightCrouch;
+	int walkableHeight;
 
 	/// Maximum ledge height that is considered to still be traversable. [Limit: >=0] [Units: vx] 
 	int walkableClimb;
@@ -245,18 +244,17 @@ struct rcConfig
 	float detailSampleMaxError;
 };
 
+
 /// Represents a span in a heightfield.
 /// @see rcHeightfield
 struct rcSpan
 {
-	/// Defines the number of bits allocated to rcSpan::smin and rcSpan::smax.
-	static const int RC_SPAN_HEIGHT_BITS = 16;
-	/// Defines the maximum value for rcSpan::smin and rcSpan::smax.
-	static const int RC_SPAN_MAX_HEIGHT = (1 << RC_SPAN_HEIGHT_BITS) - 1;
+	static const int RC_SPAN_HEIGHT_BITS = 16; ///< Defines the number of bits allocated to rcSpan::smin and rcSpan::smax.
+	static const int RC_SPAN_MAX_HEIGHT = (1 << RC_SPAN_HEIGHT_BITS) - 1; ///< Defines the maximum value for rcSpan::smin and rcSpan::smax.
 
 	unsigned int smin : RC_SPAN_HEIGHT_BITS;	///< The lower limit of the span. [Limit: < #smax]
 	unsigned int smax : RC_SPAN_HEIGHT_BITS;	///< The upper limit of the span. [Limit: <= #RC_SPAN_MAX_HEIGHT]
-	navAreaMask areaMask;            ///< The area id assigned to the span.
+	navAreaMask areaMask;            ///< The area assigned to the span.
 
 	rcSpan* next;								///< The next span higher up in column.
 };
@@ -300,7 +298,7 @@ struct rcCompactSpan
 	unsigned short minY;				///< The lower extent of the span. (Measured from the heightfield's base.)
 	unsigned short regionID;			///< The id of the region the span belongs to. (Or zero if not in a region.)
 	unsigned int connectionData : 24;	///< Packed neighbor connection data.
-	unsigned int height : 8;			///< The height of the span.  (Measured from #y.)
+	unsigned int height : 8;			///< The height of the span.  (Measured from #minY.)
 };
 
 /// A compact, static heightfield representing unobstructed space.
@@ -603,6 +601,7 @@ void rcMarkConvexPolyArea(rcContext* ctx, const float* verts, const int nverts,
 ///  @ingroup recast
 ///  @param[in]		verts		The vertices of the polygon [Form: (x, y, z) * @p nverts]
 ///  @param[in]		nverts		The number of vertices in the polygon.
+///  @param[in]		offset		The offset on the XY Plane.
 ///  @param[out]	outVerts	The offset vertices (should hold up to 2 * @p nverts) [Form: (x, y, z) * return value]
 ///  @param[in]		maxOutVerts	The max number of vertices that can be stored to @p outVerts.
 ///  @returns Number of vertices in the offset polygon or 0 if too few vertices in @p outVerts.
@@ -615,10 +614,10 @@ int rcOffsetPoly(const float* verts, const int nverts, const float offset,
 ///  @param[in]		pos		The center of the base of the cylinder. [Form: (x, y, z)] 
 ///  @param[in]		r		The radius of the cylinder.
 ///  @param[in]		h		The height of the cylinder.
-///  @param[in]		areaId	The area id to apply. [Limit: <= #RC_WALKABLE_AREA]
+///  @param[in]		areaMask	The area mask to apply. [Limit: <= #RC_WALKABLE_AREA]
 ///  @param[in,out]	chf	A populated compact heightfield.
 void rcMarkCylinderArea(rcContext* ctx, const float* pos,
-	const float r, const float h, navAreaMask areaId,
+	const float r, const float h, navAreaMask areaMask,
 	rcCompactHeightfield& chf);
 
 /// Builds region data for the heightfield using watershed partitioning. 

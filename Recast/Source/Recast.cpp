@@ -211,8 +211,6 @@ bool rcCreateHeightfield(rcContext* ctx, rcHeightfield& hf, int width, int heigh
 						 const float* bmin, const float* bmax,
 						 float cs, float ch)
 {
-	rcIgnoreUnused(ctx);
-	
 	hf.width = width;
 	hf.height = height;
 	rcVcopy(hf.bmin, bmin);
@@ -244,12 +242,10 @@ static void calcTriNormal(const float* v0, const float* v1, const float* v2, flo
 /// 
 /// @see rcHeightfield, rcClearUnwalkableTriangles, rcRasterizeTriangles
 void rcMarkWalkableTriangles(rcContext* ctx, const float walkableSlopeAngle,
-							 const float* verts, int /*nv*/,
+							 const float* verts, int nv,
 							 const int* tris, int nt,
-							 navAreaMask* areaMask)
-{
-	rcIgnoreUnused(ctx);
-	
+							 navAreaMask* areaMasks)
+{	
 	const float walkableThr = cosf(walkableSlopeAngle/180.0f*RC_PI);
 
 	float norm[3];
@@ -260,7 +256,7 @@ void rcMarkWalkableTriangles(rcContext* ctx, const float walkableSlopeAngle,
 		calcTriNormal(&verts[tri[0]*3], &verts[tri[1]*3], &verts[tri[2]*3], norm);
 		// Check if the face is walkable.
 		if (norm[1] > walkableThr)
-			areaMask[i] = RC_WALKABLE_AREA;
+			areaMasks[i] = RC_WALKABLE_AREA;
 	}
 }
 
@@ -273,12 +269,10 @@ void rcMarkWalkableTriangles(rcContext* ctx, const float walkableSlopeAngle,
 /// 
 /// @see rcHeightfield, rcClearUnwalkableTriangles, rcRasterizeTriangles
 void rcClearUnwalkableTriangles(rcContext* ctx, const float walkableSlopeAngle,
-								const float* verts, int /*nv*/,
+								const float* verts, int nv,
 								const int* tris, int nt,
 								navAreaMask* areaMasks)
-{
-	rcIgnoreUnused(ctx);
-	
+{	
 	const float walkableThr = cosf(walkableSlopeAngle/180.0f*RC_PI);
 	
 	float norm[3];
@@ -294,9 +288,7 @@ void rcClearUnwalkableTriangles(rcContext* ctx, const float walkableSlopeAngle,
 }
 
 int rcGetHeightFieldSpanCount(rcContext* ctx, rcHeightfield& hf)
-{
-	rcIgnoreUnused(ctx);
-	
+{	
 	const int w = hf.width;
 	const int h = hf.height;
 	int spanCount = 0;

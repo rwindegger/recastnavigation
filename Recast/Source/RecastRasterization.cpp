@@ -161,11 +161,11 @@ static void addSpan(rcHeightfield& hf, const int x, const int y,
 /// from the existing span, the span flags are merged.
 ///
 /// @see rcHeightfield, rcSpan.
-void rcAddSpan(rcContext* /*ctx*/, rcHeightfield& hf, const int x, const int y,
+void rcAddSpan(rcContext* ctx, rcHeightfield& hf, const int x, const int y,
 			   const unsigned short smin, const unsigned short smax,
 			   const navAreaMask areaMask, const int flagMergeThr )
 {
-//	rcAssert(ctx);
+	rcAssert(ctx);
 	addSpan(hf, x,y, smin, smax, areaMask, flagMergeThr);
 }
 
@@ -351,8 +351,8 @@ void rcRasterizeTriangle(rcContext* ctx, const float* v0, const float* v1, const
 /// Spans will only be added for triangles that overlap the heightfield grid.
 ///
 /// @see rcHeightfield
-void rcRasterizeTriangles(rcContext* ctx, const float* verts, const int /*nv*/,
-						  const int* tris, const navAreaMask* areaMask, const int nt,
+void rcRasterizeTriangles(rcContext* ctx, const float* verts, const int nv,
+						  const int* tris, const navAreaMask* areaMasks, const int nt,
 						  rcHeightfield& solid, const int flagMergeThr)
 {
 	rcAssert(ctx);
@@ -368,7 +368,7 @@ void rcRasterizeTriangles(rcContext* ctx, const float* verts, const int /*nv*/,
 		const float* v1 = &verts[tris[i*3+1]*3];
 		const float* v2 = &verts[tris[i*3+2]*3];
 		// Rasterize.
-		rasterizeTri(v0, v1, v2, areaMask[i], solid, solid.bmin, solid.bmax, solid.cs, ics, ich, flagMergeThr);
+		rasterizeTri(v0, v1, v2, areaMasks[i], solid, solid.bmin, solid.bmax, solid.cs, ics, ich, flagMergeThr);
 	}
 	
 	ctx->stopTimer(RC_TIMER_RASTERIZE_TRIANGLES);
@@ -379,8 +379,8 @@ void rcRasterizeTriangles(rcContext* ctx, const float* verts, const int /*nv*/,
 /// Spans will only be added for triangles that overlap the heightfield grid.
 ///
 /// @see rcHeightfield
-void rcRasterizeTriangles(rcContext* ctx, const float* verts, const int /*nv*/,
-						  const unsigned short* tris, const navAreaMask* areaMask, const int nt,
+void rcRasterizeTriangles(rcContext* ctx, const float* verts, const int nv,
+						  const unsigned short* tris, const navAreaMask* areaMasks, const int nt,
 						  rcHeightfield& solid, const int flagMergeThr)
 {
 	rcAssert(ctx);
@@ -396,7 +396,7 @@ void rcRasterizeTriangles(rcContext* ctx, const float* verts, const int /*nv*/,
 		const float* v1 = &verts[tris[i*3+1]*3];
 		const float* v2 = &verts[tris[i*3+2]*3];
 		// Rasterize.
-		rasterizeTri(v0, v1, v2, areaMask[i], solid, solid.bmin, solid.bmax, solid.cs, ics, ich, flagMergeThr);
+		rasterizeTri(v0, v1, v2, areaMasks[i], solid, solid.bmin, solid.bmax, solid.cs, ics, ich, flagMergeThr);
 	}
 	
 	ctx->stopTimer(RC_TIMER_RASTERIZE_TRIANGLES);
@@ -407,7 +407,7 @@ void rcRasterizeTriangles(rcContext* ctx, const float* verts, const int /*nv*/,
 /// Spans will only be added for triangles that overlap the heightfield grid.
 ///
 /// @see rcHeightfield
-void rcRasterizeTriangles(rcContext* ctx, const float* verts, const navAreaMask* areaMask, const int nt,
+void rcRasterizeTriangles(rcContext* ctx, const float* verts, const navAreaMask* areaMasks, const int nt,
 						  rcHeightfield& solid, const int flagMergeThr)
 {
 	rcAssert(ctx);
@@ -423,7 +423,7 @@ void rcRasterizeTriangles(rcContext* ctx, const float* verts, const navAreaMask*
 		const float* v1 = &verts[(i*3+1)*3];
 		const float* v2 = &verts[(i*3+2)*3];
 		// Rasterize.
-		rasterizeTri(v0, v1, v2, areaMask[i], solid, solid.bmin, solid.bmax, solid.cs, ics, ich, flagMergeThr);
+		rasterizeTri(v0, v1, v2, areaMasks[i], solid, solid.bmin, solid.bmax, solid.cs, ics, ich, flagMergeThr);
 	}
 	
 	ctx->stopTimer(RC_TIMER_RASTERIZE_TRIANGLES);

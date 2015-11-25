@@ -12,11 +12,6 @@
 /// @name General helper functions
 /// @{
 
-/// Used to ignore a function parameter.  VS complains about unused parameters
-/// and this silences the warning.
-///  @param [in] _ Unused parameter
-template<class T> void rcIgnoreUnused(const T&) { }
-
 /// Swaps the values of the two parameters.
 ///  @param[in,out]	a	Value A
 ///  @param[in,out]	b	Value B

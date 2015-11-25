@@ -346,8 +346,8 @@ static int rasterizeTileLayers(BuildContext* ctx, InputGeom* geom,
 	// remove unwanted overhangs caused by the conservative rasterization
 	// as well as filter spans where the character cannot possibly stand.
 	rcFilterLowHangingWalkableObstacles(ctx, tcfg.walkableClimb, *rc.solid);
-	rcFilterLedgeSpans(ctx, tcfg.walkableHeightStand, tcfg.walkableClimb, *rc.solid);
-	rcFilterWalkableLowHeightSpans(ctx, tcfg.walkableHeightStand, *rc.solid);
+	rcFilterLedgeSpans(ctx, tcfg.walkableHeight, tcfg.walkableClimb, *rc.solid);
+	rcFilterWalkableLowHeightSpans(ctx, tcfg.walkableHeight, *rc.solid);
 	
 	
 	rc.chf = rcAllocCompactHeightfield();
@@ -356,7 +356,7 @@ static int rasterizeTileLayers(BuildContext* ctx, InputGeom* geom,
 		ctx->log(RC_LOG_ERROR, "buildNavigation: Out of memory 'chf'.");
 		return 0;
 	}
-	if (!rcBuildCompactHeightfield(ctx, tcfg.walkableHeightStand, tcfg.walkableClimb, *rc.solid, *rc.chf))
+	if (!rcBuildCompactHeightfield(ctx, tcfg.walkableHeight, tcfg.walkableClimb, *rc.solid, *rc.chf))
 	{
 		ctx->log(RC_LOG_ERROR, "buildNavigation: Could not build compact data.");
 		return 0;
@@ -384,7 +384,7 @@ static int rasterizeTileLayers(BuildContext* ctx, InputGeom* geom,
 		ctx->log(RC_LOG_ERROR, "buildNavigation: Out of memory 'lset'.");
 		return 0;
 	}
-	if (!rcBuildHeightfieldLayers(ctx, *rc.chf, tcfg.borderSize, tcfg.walkableHeightStand, *rc.lset))
+	if (!rcBuildHeightfieldLayers(ctx, *rc.chf, tcfg.borderSize, tcfg.walkableHeight, *rc.lset))
 	{
 		ctx->log(RC_LOG_ERROR, "buildNavigation: Could not build heighfield layers.");
 		return 0;
@@ -1189,8 +1189,7 @@ bool Sample_TempObstacles::handleBuild()
 	cfg.cellSizeXZ = m_cellSize;
 	cfg.cellSizeY = m_cellHeight;
 	cfg.walkableSlopeAngle = m_agentMaxSlope;
-	cfg.walkableHeightCrouch = (int)ceilf(m_agentHeight / cfg.cellSizeY);
-	cfg.walkableHeightStand = (int)ceilf(m_agentHeight / cfg.cellSizeY);
+	cfg.walkableHeight = (int)ceilf(m_agentHeight / cfg.cellSizeY);
 	cfg.walkableClimb = (int)floorf(m_agentMaxClimb / cfg.cellSizeY);
 	cfg.walkableRadius = (int)ceilf(m_agentRadius / cfg.cellSizeXZ);
 	cfg.maxEdgeLen = (int)(m_edgeMaxLen / m_cellSize);

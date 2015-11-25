@@ -53,8 +53,8 @@ bool rcCreateHeightfield(rcContext* ctx, rcHeightfield& hf, int width, int heigh
 ///  @param[in]		nv					The number of vertices.
 ///  @param[in]		tris				The triangle vertex indices. [(vertA, vertB, vertC) * @p nt]
 ///  @param[in]		nt					The number of triangles.
-///  @param[out]	areas				The triangle area ids. [Length: >= @p nt]
-void rcMarkWalkableTriangles(rcContext* ctx, const float walkableSlopeAngle, const float* verts, int nv, const int* tris, int nt, navAreaMask* areaMask);
+///  @param[out]	areaMasks				The triangle area ids. [Length: >= @p nt]
+void rcMarkWalkableTriangles(rcContext* ctx, const float walkableSlopeAngle, const float* verts, int nv, const int* tris, int nt, navAreaMask* areaMasks);
 
 /// Sets the area id of all triangles with a slope greater than or equal to the specified value to #RC_NULL_AREA.
 ///  @ingroup recast
@@ -65,8 +65,8 @@ void rcMarkWalkableTriangles(rcContext* ctx, const float walkableSlopeAngle, con
 ///  @param[in]		nv					The number of vertices.
 ///  @param[in]		tris				The triangle vertex indices. [(vertA, vertB, vertC) * @p nt]
 ///  @param[in]		nt					The number of triangles.
-///  @param[out]	areas				The triangle area ids. [Length: >= @p nt]
-void rcClearUnwalkableTriangles(rcContext* ctx, const float walkableSlopeAngle, const float* verts, int nv, const int* tris, int nt, navAreaMask* areaMask);
+///  @param[out]	areaMasks			The triangle area masks. [Length: >= @p nt]
+void rcClearUnwalkableTriangles(rcContext* ctx, const float walkableSlopeAngle, const float* verts, int nv, const int* tris, int nt, navAreaMask* areaMasks);
 
 /// Adds a span to the specified heightfield.
 ///  @ingroup recast
@@ -77,10 +77,10 @@ void rcClearUnwalkableTriangles(rcContext* ctx, const float walkableSlopeAngle, 
 ///  @param[in]		y				The height index where the span is to be added.
 ///  								[Limits: 0 <= value < rcHeightfield::height]
 ///  @param[in]		smin			The minimum height of the span. [Limit: < @p smax] [Units: vx]
-///  @param[in]		smax			The maximum height of the span. [Limit: <= #RC_SPAN_MAX_HEIGHT] [Units: vx]
-///  @param[in]		area			The area id of the span. [Limit: <= #RC_WALKABLE_AREA)
+///  @param[in]		smax			The maximum height of the span. [Limit: <= #rcSpan::RC_SPAN_MAX_HEIGHT] [Units: vx]
+///  @param[in]		areaMask		The area of the span. [Limit: <= #RC_WALKABLE_AREA)
 ///  @param[in]		flagMergeThr	The merge theshold. [Limit: >= 0] [Units: vx]
-void rcAddSpan(rcContext* ctx, rcHeightfield& hf, const int x, const int y, const unsigned short smin, const unsigned short smax, const navAreaMask area, const int flagMergeThr);
+void rcAddSpan(rcContext* ctx, rcHeightfield& hf, const int x, const int y, const unsigned short smin, const unsigned short smax, const navAreaMask areaMask, const int flagMergeThr);
 
 /// Rasterizes a triangle into the specified heightfield.
 ///  @ingroup recast
@@ -88,11 +88,11 @@ void rcAddSpan(rcContext* ctx, rcHeightfield& hf, const int x, const int y, cons
 ///  @param[in]		v0				Triangle vertex 0 [(x, y, z)]
 ///  @param[in]		v1				Triangle vertex 1 [(x, y, z)]
 ///  @param[in]		v2				Triangle vertex 2 [(x, y, z)]
-///  @param[in]		area			The area id of the triangle. [Limit: <= #RC_WALKABLE_AREA]
+///  @param[in]		areaMask			The area id of the triangle. [Limit: <= #RC_WALKABLE_AREA]
 ///  @param[in,out]	solid			An initialized heightfield.
 ///  @param[in]		flagMergeThr	The distance where the walkable flag is favored over the non-walkable flag.
 ///  								[Limit: >= 0] [Units: vx]
-void rcRasterizeTriangle(rcContext* ctx, const float* v0, const float* v1, const float* v2, const navAreaMask area, rcHeightfield& solid, const int flagMergeThr = 1);
+void rcRasterizeTriangle(rcContext* ctx, const float* v0, const float* v1, const float* v2, const navAreaMask areaMask, rcHeightfield& solid, const int flagMergeThr = 1);
 
 /// Rasterizes an indexed triangle mesh into the specified heightfield.
 ///  @ingroup recast
@@ -100,12 +100,12 @@ void rcRasterizeTriangle(rcContext* ctx, const float* v0, const float* v1, const
 ///  @param[in]		verts			The vertices. [(x, y, z) * @p nv]
 ///  @param[in]		nv				The number of vertices.
 ///  @param[in]		tris			The triangle indices. [(vertA, vertB, vertC) * @p nt]
-///  @param[in]		areas			The area id's of the triangles. [Limit: <= #RC_WALKABLE_AREA] [Size: @p nt]
+///  @param[in]		areaMasks		The area masks of the triangles. [Limit: <= #RC_WALKABLE_AREA] [Size: @p nt]
 ///  @param[in]		nt				The number of triangles.
 ///  @param[in,out]	solid			An initialized heightfield.
 ///  @param[in]		flagMergeThr	The distance where the walkable flag is favored over the non-walkable flag.
 ///  								[Limit: >= 0] [Units: vx]
-void rcRasterizeTriangles(rcContext* ctx, const float* verts, const int nv, const int* tris, const navAreaMask* areas, const int nt, rcHeightfield& solid, const int flagMergeThr = 1);
+void rcRasterizeTriangles(rcContext* ctx, const float* verts, const int nv, const int* tris, const navAreaMask* areaMasks, const int nt, rcHeightfield& solid, const int flagMergeThr = 1);
 
 /// Rasterizes an indexed triangle mesh into the specified heightfield.
 ///  @ingroup recast
@@ -113,23 +113,23 @@ void rcRasterizeTriangles(rcContext* ctx, const float* verts, const int nv, cons
 ///  @param[in]		verts		The vertices. [(x, y, z) * @p nv]
 ///  @param[in]		nv			The number of vertices.
 ///  @param[in]		tris		The triangle indices. [(vertA, vertB, vertC) * @p nt]
-///  @param[in]		areas		The area id's of the triangles. [Limit: <= #RC_WALKABLE_AREA] [Size: @p nt]
+///  @param[in]		areaMasks	The area masks of the triangles. [Limit: <= #RC_WALKABLE_AREA] [Size: @p nt]
 ///  @param[in]		nt			The number of triangles.
 ///  @param[in,out]	solid		An initialized heightfield.
 ///  @param[in]		flagMergeThr	The distance where the walkable flag is favored over the non-walkable flag.
 ///  							[Limit: >= 0] [Units: vx]
-void rcRasterizeTriangles(rcContext* ctx, const float* verts, const int nv, const unsigned short* tris, const navAreaMask* areas, const int nt, rcHeightfield& solid, const int flagMergeThr = 1);
+void rcRasterizeTriangles(rcContext* ctx, const float* verts, const int nv, const unsigned short* tris, const navAreaMask* areaMasks, const int nt, rcHeightfield& solid, const int flagMergeThr = 1);
 
 /// Rasterizes triangles into the specified heightfield.
 ///  @ingroup recast
 ///  @param[in,out]	ctx				The build context to use during the operation.
 ///  @param[in]		verts			The triangle vertices. [(ax, ay, az, bx, by, bz, cx, by, cx) * @p nt]
-///  @param[in]		areas			The area id's of the triangles. [Limit: <= #RC_WALKABLE_AREA] [Size: @p nt]
+///  @param[in]		areaMasks			The area id's of the triangles. [Limit: <= #RC_WALKABLE_AREA] [Size: @p nt]
 ///  @param[in]		nt				The number of triangles.
 ///  @param[in,out]	solid			An initialized heightfield.
 ///  @param[in]		flagMergeThr	The distance where the walkable flag is favored over the non-walkable flag.
 ///  								[Limit: >= 0] [Units: vx]
-void rcRasterizeTriangles(rcContext* ctx, const float* verts, const navAreaMask* areas, const int nt, rcHeightfield& solid, const int flagMergeThr = 1);
+void rcRasterizeTriangles(rcContext* ctx, const float* verts, const navAreaMask* areaMasks, const int nt, rcHeightfield& solid, const int flagMergeThr = 1);
 
 /// Marks non-walkable spans as walkable if their maximum is within @p walkableClimp of a walkable neihbor.
 ///  @ingroup recast

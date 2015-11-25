@@ -263,9 +263,6 @@ void NavMeshPruneTool::handleMenu()
 
 void NavMeshPruneTool::handleClick(const float* s, const float* p, bool shift)
 {
-	rcIgnoreUnused(s);
-	rcIgnoreUnused(shift);
-
 	if (!m_sample) return;
 	InputGeom* geom = m_sample->getInputGeom();
 	if (!geom) return;
@@ -344,9 +341,6 @@ void NavMeshPruneTool::handleRender()
 
 void NavMeshPruneTool::handleRenderOverlay(double* proj, double* model, int* view)
 {
-	rcIgnoreUnused(model);
-	rcIgnoreUnused(proj);
-
 	// Tool help
 	const int h = view[3];
 

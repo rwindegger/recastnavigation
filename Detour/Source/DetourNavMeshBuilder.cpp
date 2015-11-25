@@ -629,7 +629,8 @@ bool dtCreateNavMeshData(dtNavMeshCreateParams* params, unsigned char** outData,
 	return true;
 }
 
-bool dtNavMeshHeaderSwapEndian(unsigned char* data, const int /*dataSize*/)
+/// @par
+bool dtNavMeshHeaderSwapEndian(unsigned char* data, const int dataSize)
 {
 	dtMeshHeader* header = (dtMeshHeader*)data;
 	
@@ -681,7 +682,7 @@ bool dtNavMeshHeaderSwapEndian(unsigned char* data, const int /*dataSize*/)
 /// Call #dtNavMeshHeaderSwapEndian() first on the data if the data is expected to be in wrong endianess 
 /// to start with. Call #dtNavMeshHeaderSwapEndian() after the data has been swapped if converting from 
 /// native to foreign endianess.
-bool dtNavMeshDataSwapEndian(unsigned char* data, const int /*dataSize*/)
+bool dtNavMeshDataSwapEndian(unsigned char* data, const int dataSize)
 {
 	// Make sure the data is in right format.
 	dtMeshHeader* header = (dtMeshHeader*)data;

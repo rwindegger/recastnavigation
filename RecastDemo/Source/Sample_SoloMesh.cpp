@@ -372,8 +372,7 @@ bool Sample_SoloMesh::handleBuild()
 	m_cfg.cellSizeXZ = m_cellSize;
 	m_cfg.cellSizeY = m_cellHeight;
 	m_cfg.walkableSlopeAngle = m_agentMaxSlope;
-	m_cfg.walkableHeightCrouch = (int)ceilf(m_agentHeight / m_cfg.cellSizeY);
-	m_cfg.walkableHeightStand = (int)ceilf(m_agentHeight / m_cfg.cellSizeY);
+	m_cfg.walkableHeight = (int)ceilf(m_agentHeight / m_cfg.cellSizeY);
 	m_cfg.walkableClimb = (int)floorf(m_agentMaxClimb / m_cfg.cellSizeY);
 	m_cfg.walkableRadius = (int)ceilf(m_agentRadius / m_cfg.cellSizeXZ);
 	m_cfg.maxEdgeLen = (int)(m_edgeMaxLen / m_cellSize);
@@ -449,8 +448,8 @@ bool Sample_SoloMesh::handleBuild()
 	// remove unwanted overhangs caused by the conservative rasterization
 	// as well as filter spans where the character cannot possibly stand.
 	rcFilterLowHangingWalkableObstacles(m_ctx, m_cfg.walkableClimb, *m_solid);
-	rcFilterLedgeSpans(m_ctx, m_cfg.walkableHeightStand, m_cfg.walkableClimb, *m_solid);
-	rcFilterWalkableLowHeightSpans(m_ctx, m_cfg.walkableHeightStand, *m_solid);
+	rcFilterLedgeSpans(m_ctx, m_cfg.walkableHeight, m_cfg.walkableClimb, *m_solid);
+	rcFilterWalkableLowHeightSpans(m_ctx, m_cfg.walkableHeight, *m_solid);
 
 
 	//
@@ -466,7 +465,7 @@ bool Sample_SoloMesh::handleBuild()
 		m_ctx->log(RC_LOG_ERROR, "buildNavigation: Out of memory 'chf'.");
 		return false;
 	}
-	if (!rcBuildCompactHeightfield(m_ctx, m_cfg.walkableHeightStand, m_cfg.walkableClimb, *m_solid, *m_chf))
+	if (!rcBuildCompactHeightfield(m_ctx, m_cfg.walkableHeight, m_cfg.walkableClimb, *m_solid, *m_chf))
 	{
 		m_ctx->log(RC_LOG_ERROR, "buildNavigation: Could not build compact data.");
 		return false;

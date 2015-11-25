@@ -466,7 +466,7 @@ public:
 
 	/// Sets the user defined flags for the specified polygon.
 	///  @param[in]	ref		The polygon reference.
-	///  @param[in]	flags	The new flags for the polygon.
+	///  @param[in]	areaMask	The new flags for the polygon.
 	/// @return The status flags for the operation.
 	dtStatus setPolyFlags(dtPolyRef ref, navAreaMask areaMask);
 

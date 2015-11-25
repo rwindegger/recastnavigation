@@ -90,7 +90,7 @@ public:
 	///@{
 
 	/// Returns the traversal cost of the area.
-	///  @param[in]		i		The id of the area.
+	///  @param[in]		areaMask		The id of the area.
 	/// @returns The traversal cost of the area.
 	inline float getAreaCost( navAreaMask areaMask ) const
 	{
@@ -105,7 +105,7 @@ public:
 	}
 
 	/// Sets the traversal cost of the area.
-	///  @param[in]		i		The id of the area.
+	///  @param[in]		areaMask		The id of the area.
 	///  @param[in]		cost	The new cost of traversing the area.
 	inline void setAreaCost( navAreaMask areaMask, const float cost )
 	{
@@ -405,7 +405,7 @@ public:
 	///  							the start of the ray. [(x, y, z)]
 	///  @param[in]		endPos		The position to cast the ray toward. [(x, y, z)]
 	///  @param[in]		filter		The polygon filter to apply to the query.
-	///  @param[in]		flags		govern how the raycast behaves. See dtRaycastOptions
+	///  @param[in]		options		govern how the raycast behaves. See dtRaycastOptions
 	///  @param[out]	hit			Pointer to a raycast hit structure which will be filled by the results.
 	///  @param[in]		prevRef		parent of start ref. Used during for cost calculation [opt]
 	/// @returns The status flags for the query.
@@ -458,6 +458,7 @@ public:
 	/// The location is not exactly constrained by the circle, but it limits the visited polygons.
 	///  @param[in]		startRef		The reference id of the polygon where the search starts.
 	///  @param[in]		centerPos		The center of the search circle. [(x, y, z)]
+	///  @param[in]		maxRadius		The maximum radius for generating points in.
 	///  @param[in]		filter			The polygon filter to apply to the query.
 	///  @param[in]		frand			Function returning a random number [0..1).
 	///  @param[out]	randomRef		The reference id of the random location.

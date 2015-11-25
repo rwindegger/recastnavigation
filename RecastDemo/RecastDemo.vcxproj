@@ -284,23 +284,6 @@
     <ClCompile Include="Contrib\fastlz\fastlz.c" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="DebugUtils.vcxproj">
-      <Project>{4EE33160-BC79-BF45-9958-361201AF1A5C}</Project>
-    </ProjectReference>
-    <ProjectReference Include="Detour.vcxproj">
-      <Project>{4AED77DF-9F81-1743-9B8F-CCC65DDBEB82}</Project>
-    </ProjectReference>
-    <ProjectReference Include="DetourCrowd.vcxproj">
-      <Project>{3B1DB923-9509-3245-B04A-8C88458A8CBE}</Project>
-    </ProjectReference>
-    <ProjectReference Include="DetourTileCache.vcxproj">
-      <Project>{7CD5C1D2-EA92-AF4F-B8DD-995C85EDC3A1}</Project>
-    </ProjectReference>
-    <ProjectReference Include="Recast.vcxproj">
-      <Project>{4A2F720A-8A1B-C746-930D-8FA110BF3D0A}</Project>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="Meshes\dungeon.obj">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

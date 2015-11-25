@@ -40,7 +40,7 @@ values are derived during the build process. Not all parameters
 are used for all build processes.
 
 Units are usually in voxels (vx) or world units (wu).  The units for voxels, 
-grid size, and cell size are all based on the values of #cs and #ch.
+grid size, and cell size are all based on the values of #cellSizeXZ and #cellSizeY.
 
 In this documentation, the term 'field' refers to heightfield and
 contour data structures that define spacial information using an integer
@@ -63,19 +63,19 @@ impact on the borders around internal obstructions.
 
 This field is only used when building multi-tile meshes.
 
-@var rcConfig::cs
+@var rcConfig::cellSizeXZ
 @par
 
-@p cs and #ch define voxel/grid/cell size.  So their values have significant 
+@p cellSizeXZ and #cellSizeY define voxel/grid/cell size.  So their values have significant 
 side effects on all parameters defined in voxel units.
 
 The minimum value for this parameter depends on the platform's floating point 
 accuracy, with the practical minimum usually around 0.05.
 
-@var rcConfig::ch
+@var rcConfig::cellSizeY
 @par
 
-#cs and @p ch define voxel/grid/cell size.  So their values have significant 
+#cellSizeY and @p cellSizeXZ define voxel/grid/cell size.  So their values have significant 
 side effects on all parameters defined in voxel units.
 
 The minimum value for this parameter depends on the platform's floating point 
@@ -440,7 +440,7 @@ Edge 4->8 is shared with polygon 21.
 Edges 3->4 and 4->8 are border edges not shared with any other polygon.
 </pre>
 
-@var rcPolyMesh::areas
+@var rcPolyMesh::areaMasks
 @par
 
 The standard build process assigns the value of #RC_WALKABLE_AREA to all walkable polygons.

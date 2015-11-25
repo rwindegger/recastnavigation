@@ -37,6 +37,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Docs", "Docs", "{F29D2884-FF12-435B-A8F8-1201D3D5FFB0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Extern", "Extern", "{3F603262-3C94-4CEF-A70D-BC75D900E276}"
+	ProjectSection(SolutionItems) = preProject
+		Docs\Extern\Recast_api.txt = Docs\Extern\Recast_api.txt
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -97,5 +104,6 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{435C6BA3-7317-4471-8064-98564503D8DF} = {AFB7C96F-509C-40A4-BF53-4D74D56AAC44}
+		{3F603262-3C94-4CEF-A70D-BC75D900E276} = {F29D2884-FF12-435B-A8F8-1201D3D5FFB0}
 	EndGlobalSection
 EndGlobal
